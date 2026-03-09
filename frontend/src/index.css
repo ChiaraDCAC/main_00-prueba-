@@ -1,0 +1,241 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Lato', system-ui, -apple-system, sans-serif;
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-[#3879a3] text-white hover:bg-[#2d6285];
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-lg shadow-md dark:shadow-gray-800 p-6 border border-gray-200 dark:border-gray-800;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg
+           bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           placeholder:text-gray-400 dark:placeholder:text-gray-500;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+
+  .badge-secondary {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300;
+  }
+}
+
+/* Animaciones de slide para cards de personas */
+@keyframes slideInFromRight {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideInFromLeft {
+  from { transform: translateX(-110%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.slide-in-right { animation: slideInFromRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }
+.slide-in-left  { animation: slideInFromLeft  0.3s cubic-bezier(0.4,0,0.2,1) both; }
+
+@layer base {
+  :root {
+    /* Modo Claro - Colores profesionales con marca #3879a3 */
+    --background: 210 20% 98%;
+    --foreground: 210 25% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 25% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 25% 15%;
+    --primary: 203 47% 43%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 15% 93%;
+    --secondary-foreground: 210 20% 25%;
+    --muted: 210 15% 95%;
+    --muted-foreground: 210 10% 45%;
+    --accent: 203 40% 94%;
+    --accent-foreground: 203 47% 35%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 13% 87%;
+    --input: 210 13% 87%;
+    --ring: 203 47% 43%;
+    --chart-1: 203 47% 43%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+  }
+  .dark {
+    /* Modo Oscuro - Fondo oscuro con marca #3879a3 */
+    --background: 210 25% 9%;
+    --foreground: 210 20% 95%;
+    --card: 210 25% 12%;
+    --card-foreground: 210 20% 95%;
+    --popover: 210 25% 12%;
+    --popover-foreground: 210 20% 95%;
+    --primary: 203 55% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 18%;
+    --secondary-foreground: 210 15% 90%;
+    --muted: 210 20% 16%;
+    --muted-foreground: 210 10% 60%;
+    --accent: 203 30% 20%;
+    --accent-foreground: 203 55% 65%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 20% 20%;
+    --input: 210 20% 20%;
+    --ring: 203 55% 50%;
+    --chart-1: 203 55% 55%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Modern animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Glass effect utility */
+.glass {
+  @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-[#3879a3] to-[#4a8bb8];
+}
+
