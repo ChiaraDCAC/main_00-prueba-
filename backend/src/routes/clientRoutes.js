@@ -18,6 +18,7 @@ router.use('/:clientId/authorities', authorityRoutes);
 
 // CRUD de clientes
 router.get('/', auth, clientController.list);
+router.post('/onboarding', auth, clientController.createOnboarding);
 router.get('/:id', auth, clientController.getById);
 router.get('/:id/audit', auth, authorize('admin', 'supervisor', 'auditor'), clientController.getAuditHistory);
 

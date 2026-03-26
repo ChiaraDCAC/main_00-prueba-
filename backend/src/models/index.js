@@ -67,7 +67,7 @@ const Client = sequelize.define('Client', {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM('pendiente', 'aprobado', 'rechazado', 'baja'),
+    type: DataTypes.ENUM('pendiente', 'aprobado', 'rechazado', 'baja', 'bloqueado', 'en_proceso'),
     defaultValue: 'pendiente',
   },
   // Datos comunes
@@ -1291,6 +1291,133 @@ const CaseEvidence = sequelize.define('CaseEvidence', {
   },
 });
 
+// DatosGenerales - Personas físicas (nuevas o existentes en DCAC)
+const DatosGenerales = sequelize.define('DatosGenerales', {
+  uuid: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  nombre: { type: DataTypes.STRING, allowNull: false },
+  apellido: { type: DataTypes.STRING, allowNull: false },
+  dni: { type: DataTypes.STRING },
+  cuit: { type: DataTypes.STRING(13) },
+  sexo: { type: DataTypes.STRING },
+  nacionalidad: { type: DataTypes.STRING },
+  fechaNacimiento: { type: DataTypes.DATEONLY },
+  calle: { type: DataTypes.STRING },
+  numero: { type: DataTypes.STRING },
+  piso: { type: DataTypes.STRING },
+  depto: { type: DataTypes.STRING },
+  localidad: { type: DataTypes.STRING },
+  provincia: { type: DataTypes.STRING },
+  codigoPostal: { type: DataTypes.STRING },
+  email: { type: DataTypes.STRING },
+  telefono: { type: DataTypes.STRING },
+  fechaEmisionDni: { type: DataTypes.DATEONLY },
+  fechaVencimientoDni: { type: DataTypes.DATEONLY },
+  nroTramiteDni: { type: DataTypes.STRING },
+  dniVigente: { type: DataTypes.BOOLEAN },
+});
+
+// DatosGeneralesSociedades - Relación M:N entre personas y sociedades
+const DatosGeneralesSociedades = sequelize.define('DatosGeneralesSociedades', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  uuid: { type: DataTypes.UUID, allowNull: false },
+  id_sociedad: { type: DataTypes.UUID, allowNull: false },
+  rol: { type: DataTypes.STRING }, // socio, representante, apoderado, etc.
+});
+
+// SAData - Datos específicos Sociedad Anónima
+const SAData = sequelize.define('SAData', {
+  sa_id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  id_sociedad: { type: DataTypes.UUID, allowNull: false },
+  duracionSocietaria: { type: DataTypes.STRING },
+  capitalSuscripto: { type: DataTypes.DECIMAL(15, 2) },
+  mandatoVigente: { type: DataTypes.BOOLEAN },
+  anioInicioMandato: { type: DataTypes.INTEGER },
+  anioFinMandato: { type: DataTypes.INTEGER },
+  totalAccionesEmitidas: { type: DataTypes.INTEGER },
+  fechaUltimaAnotacionLibro: { type: DataTypes.DATEONLY },
+  denominacionSocialCoincide: { type: DataTypes.BOOLEAN },
+  poderVerificadoVigente: { type: DataTypes.BOOLEAN },
+  observacionesPoder: { type: DataTypes.TEXT },
+  fechaDdjjBf: { type: DataTypes.DATEONLY },
+  observacionesDdjjBf: { type: DataTypes.TEXT },
+  completadoPor: { type: DataTypes.UUID },
+  completadoAt: { type: DataTypes.DATE },
+});
+
+// SRLData - Datos específicos Sociedad de Responsabilidad Limitada
+const SRLData = sequelize.define('SRLData', {
+  srl_id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  id_sociedad: { type: DataTypes.UUID, allowNull: false },
+  plazo: { type: DataTypes.STRING },
+  capitalSocial: { type: DataTypes.DECIMAL(15, 2) },
+  fechaAsamblea: { type: DataTypes.DATEONLY },
+  mandatoVigente: { type: DataTypes.BOOLEAN },
+  inicioMandato: { type: DataTypes.INTEGER },
+  finMandato: { type: DataTypes.INTEGER },
+  totalCuotasEmitidas: { type: DataTypes.INTEGER },
+  fechaUltimaAnotacion: { type: DataTypes.DATEONLY },
+  losDatosCoincidentArca: { type: DataTypes.BOOLEAN },
+  poderVerificadoVigente: { type: DataTypes.BOOLEAN },
+  observacionesPoder: { type: DataTypes.TEXT },
+  fechaDdjjBf: { type: DataTypes.DATEONLY },
+  observacionesDdjjBf: { type: DataTypes.TEXT },
+  fechaDdjjPep: { type: DataTypes.DATEONLY },
+  observacionesDdjjPep: { type: DataTypes.TEXT },
+  completadoPor: { type: DataTypes.UUID },
+  completadoAt: { type: DataTypes.DATE },
+});
+
+// SHData - Datos específicos Sociedad de Hecho
+const SHData = sequelize.define('SHData', {
+  sh_id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  id_sociedad: { type: DataTypes.UUID, allowNull: false },
+  fechaConstitucion: { type: DataTypes.DATEONLY },
+  calle: { type: DataTypes.STRING },
+  numero: { type: DataTypes.STRING },
+  piso: { type: DataTypes.STRING },
+  depto: { type: DataTypes.STRING },
+  localidad: { type: DataTypes.STRING },
+  provincia: { type: DataTypes.STRING },
+  codigoPostal: { type: DataTypes.STRING },
+  objetoSociedad: { type: DataTypes.TEXT },
+  duracion: { type: DataTypes.STRING },
+  capital: { type: DataTypes.DECIMAL(15, 2) },
+  fechaDeclaracionBf: { type: DataTypes.DATEONLY },
+  observacionBf: { type: DataTypes.TEXT },
+  fechaDeclaracionPep: { type: DataTypes.DATEONLY },
+  observacionPep: { type: DataTypes.TEXT },
+  completadoPor: { type: DataTypes.UUID },
+  completadoAt: { type: DataTypes.DATE },
+});
+
+// SucesionData - Datos específicos Sucesión / Sucesión Indivisa
+const SucesionData = sequelize.define('SucesionData', {
+  sucesion_id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  id_sociedad: { type: DataTypes.UUID, allowNull: false },
+  juzgado: { type: DataTypes.STRING },
+  nroExpediente: { type: DataTypes.STRING },
+  caratula: { type: DataTypes.STRING },
+  tipoSucesion: { type: DataTypes.STRING },
+  estadoTramite: { type: DataTypes.STRING },
+  existeAdministrador: { type: DataTypes.BOOLEAN },
+  fechaDesignacionAdministrador: { type: DataTypes.DATEONLY },
+  estadoAceptacionCargo: { type: DataTypes.STRING },
+  completadoPor: { type: DataTypes.UUID },
+  completadoAt: { type: DataTypes.DATE },
+});
+
+// MonotributistaData - Datos específicos Monotributista
+const MonotributistaData = sequelize.define('MonotributistaData', {
+  monotributista_id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  id_sociedad: { type: DataTypes.UUID, allowNull: false },
+  completadoPor: { type: DataTypes.UUID },
+  completadoAt: { type: DataTypes.DATE },
+});
+
+// DatosGenerales associations
+DatosGenerales.hasMany(DatosGeneralesSociedades, { foreignKey: 'uuid', as: 'sociedades' });
+DatosGeneralesSociedades.belongsTo(DatosGenerales, { foreignKey: 'uuid' });
+
 // InvestigationCase associations
 Alert.hasOne(InvestigationCase, { foreignKey: 'alertId', as: 'investigationCase' });
 InvestigationCase.belongsTo(Alert, { foreignKey: 'alertId' });
@@ -1331,4 +1458,11 @@ module.exports = {
   InvestigationCase,
   DocumentRequest,
   CaseEvidence,
+  DatosGenerales,
+  DatosGeneralesSociedades,
+  SAData,
+  SRLData,
+  SHData,
+  SucesionData,
+  MonotributistaData,
 };
