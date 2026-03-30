@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Explicación DER — HC DCAC Compliance</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 30px; color: #222; font-size: 14px; }
+h1 { text-align: center; color: #1F3864; font-size: 22px; margin-bottom: 4px; }
+.subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 28px; }
+.card { background: #fff; border-radius: 10px; padding: 24px 28px; box-shadow: 0 2px 14px rgba(0,0,0,0.1); margin-bottom: 24px; }
+.card h2 { color: #1F3864; font-size: 16px; margin-bottom: 14px; border-bottom: 2px solid #1F3864; padding-bottom: 6px; }
+.card h3 { color: #1F3864; font-size: 13px; margin: 18px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+p { margin-bottom: 10px; line-height: 1.6; }
+.ejemplo { background: #F0F4FF; border-left: 4px solid #1F3864; padding: 12px 16px; border-radius: 4px; margin: 12px 0; font-size: 13px; }
+.ejemplo strong { color: #1F3864; }
+.nota { background: #FFF8E1; border-left: 4px solid #FFC107; padding: 12px 16px; border-radius: 4px; font-size: 13px; color: #6D4C00; margin: 12px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; }
+th { background: #1F3864; color: white; padding: 8px 12px; text-align: left; }
+td { padding: 7px 12px; border-bottom: 1px solid #eee; }
+tr:nth-child(even) { background: #fafafa; }
+.tag { display: inline-block; background: #E3EAFF; color: #1F3864; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: bold; margin: 2px; }
+.flecha { color: #1F3864; font-weight: bold; }
+ul { padding-left: 20px; margin: 8px 0; }
+li { margin-bottom: 6px; line-height: 1.5; }
+.grupo { background: #F8F9FF; border: 1px solid #D0D8F0; border-radius: 8px; padding: 16px; margin: 14px 0; }
+.grupo-titulo { font-weight: bold; color: #1F3864; margin-bottom: 10px; font-size: 13px; }
+@media print { body { background: white; padding: 10px; } .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<h1>📚 Explicación del Diagrama Entidad–Relación</h1>
+<p class="subtitle">HC DCAC · Sistema de Compliance · Guía completa con ejemplos</p>
+
+<!-- ==================== INTRODUCCION ==================== -->
+<div class="card">
+  <h2>¿Qué es este sistema y para qué sirve?</h2>
+  <p>Este sistema permite gestionar el proceso de <strong>alta de clientes PSP</strong> (Plataforma de Servicios de Pago). Cuando una sociedad quiere operar con HC DCAC, debe pasar por un proceso de compliance: presentar documentación, identificar a las personas que la integran, y ser evaluada por analistas internos.</p>
+  <p>El diagrama muestra <strong>cómo se organiza la información</strong> en la base de datos. Cada tabla guarda un tipo de dato específico, y las flechas entre tablas indican cómo se relacionan entre sí.</p>
+
+  <div class="ejemplo">
+    <strong>Ejemplo general:</strong> La sociedad <em>"Textiles del Norte SA"</em> inicia su proceso de alta. El sistema registra sus datos, los documentos que presenta, las personas que la integran (director, accionistas, apoderado), y cada acción que realizan los analistas durante la revisión.
+  </div>
+</div>
+
+<!-- ==================== GRUPO 1: USUARIOS INTERNOS ==================== -->
+<div class="card">
+  <h2>👤 Grupo 1 — Usuarios Internos del Sistema</h2>
+  <p>Son los analistas y responsables de HC DCAC que utilizan la herramienta de compliance.</p>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Tabla: USUARIOS</div>
+    <p>Guarda los datos de cada persona que trabaja en HC DCAC y usa el sistema.</p>
+    <p><strong>Niveles de acceso:</strong></p>
+    <ul>
+      <li><span class="tag">nivel_1</span> Oficial de Cumplimiento — puede aprobar, rechazar y tomar todas las decisiones</li>
+      <li><span class="tag">nivel_2</span> Analista Administrativo — puede cargar datos y gestionar documentos</li>
+      <li><span class="tag">nivel_3</span> Solo lectura — puede consultar pero no modificar nada</li>
+    </ul>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong><br>
+      • María García → nivel_1 (Oficial de Cumplimiento)<br>
+      • Juan Pérez → nivel_2 (Analista)<br>
+      • Laura Díaz → nivel_3 (Auditoría, solo consulta)
+    </div>
+  </div>
+</div>
+
+<!-- ==================== GRUPO 2: SOCIEDADES ==================== -->
+<div class="card">
+  <h2>🏢 Grupo 2 — Sociedades (Clientes PSP)</h2>
+  <p>Son las empresas o personas que solicitan el alta para operar como clientes PSP.</p>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Tabla: SOCIEDADES_TAG</div>
+    <p>Es una tabla que <strong>ya existe en producción</strong>. Contiene los datos maestros de cada sociedad: razón social, CUIT, tipo y estado. Esta tabla no la crea el sistema de compliance — la lee desde el sistema existente.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo de registros:</strong>
+      <table>
+        <tr><th>id_sociedad</th><th>razon_social</th><th>cuit_cuil</th><th>tipo_sociedad</th><th>estado</th></tr>
+        <tr><td>uuid-001</td><td>Textiles del Norte SA</td><td>30-12345678-9</td><td>SA</td><td>activo</td></tr>
+        <tr><td>uuid-002</td><td>Comercio del Sur SRL</td><td>30-98765432-1</td><td>SRL</td><td>activo</td></tr>
+        <tr><td>uuid-003</td><td>Sucesión García</td><td>20-11223344-5</td><td>sucesion</td><td>activo</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Tabla: USUARIOS_SOCIEDAD</div>
+    <p>Guarda los datos personales de cada persona vinculada a una sociedad: directores, socios, apoderados, herederos, etc. <strong>Una persona puede aparecer en múltiples sociedades</strong>, por eso no está directamente ligada a una sociedad específica — esa conexión se hace a través de la tabla intermedia.</p>
+    <p>También incluye si la persona <strong>es PEP</strong> (Persona Expuesta Políticamente) y el resultado del screening.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong><br>
+      • Carlos Rodríguez (DNI 25.111.222) — es director en "Textiles del Norte SA" y también socio en "Comercio del Sur SRL"<br>
+      → Se guarda <strong>una sola vez</strong> en USUARIOS_SOCIEDAD<br>
+      → Su vínculo con cada sociedad se registra en USUARIOS_SOCIEDAD_TAG
+    </div>
+
+    <h3 style="color:#1F3864;font-size:13px;margin:20px 0 10px 0;text-transform:uppercase;letter-spacing:0.5px;">Esquema de Firmas</h3>
+    <p>Al dar de alta un usuario, se recopilan datos sobre su perfil de firma para que el analista pueda determinar luego quién está apto para operar la cuenta PSP. Estos campos forman parte de los datos generales del usuario.</p>
+
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin:12px 0;">
+      <tr style="background:#1F3864;color:white;">
+        <th style="padding:8px 12px;text-align:left;">Campo</th>
+        <th style="padding:8px 12px;text-align:left;">Valores</th>
+        <th style="padding:8px 12px;text-align:left;">Condición para mostrarse</th>
+      </tr>
+      <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>cargo_societario</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">gerente / director / presidente / vicepresidente / apoderado / ninguno</td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Siempre</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>rol_interno</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Texto libre</td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Solo si cargo ≠ presidente y ≠ vicepresidente</td></tr>
+      <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>alcance_actos</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">general / crédito / pagos / compras / bancos / alta_cvu / ninguno</td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Siempre (selección múltiple)</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>limite_tipo</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">sin_limite / hasta_x / rango_x_a_y</td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Solo si alcance incluye pagos, crédito o compras</td></tr>
+      <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>limite_monto_hasta</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Monto en pesos</td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Solo si limite_tipo = hasta_x o rango_x_a_y</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>limite_monto_desde</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Monto en pesos</td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Solo si limite_tipo = rango_x_a_y</td></tr>
+      <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>tipo_firma</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">individual / conjunta / obligatoria_casos / ninguna</td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Siempre</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:7px 12px;"><strong>tipo_firma_casos</strong></td><td style="padding:7px 12px;">Texto libre (describir cuáles casos)</td><td style="padding:7px 12px;">Solo si tipo_firma = obligatoria_casos</td></tr>
+    </table>
+
+    <div class="nota">
+      💡 <strong>Lógica condicional resumida:</strong><br><br>
+      • <strong>rol_interno</strong> → no se muestra si cargo = <em>presidente</em> o <em>vicepresidente</em><br>
+      • <strong>limite_tipo / montos</strong> → solo aparecen si el alcance incluye pagos, crédito o compras<br>
+      &nbsp;&nbsp;&nbsp;— Si elige <em>hasta_x</em>: ingresar un monto máximo<br>
+      &nbsp;&nbsp;&nbsp;— Si elige <em>rango_x_a_y</em>: ingresar monto desde y monto hasta<br>
+      • <strong>tipo_firma_casos</strong> → solo aparece si tipo_firma = <em>obligatoria_casos</em> (aclarar en qué situaciones aplica)
+    </div>
+
+    <div class="ejemplo">
+      <strong>Ejemplo completo de carga:</strong><br><br>
+      Carlos Rodríguez:<br>
+      • Cargo societario: <em>Director</em><br>
+      • Rol interno: <em>Jefe de Administración</em> (se muestra porque no es presidente)<br>
+      • Alcance: <em>pagos, compras</em><br>
+      • Límite: <em>hasta_x → $500.000</em> (se muestra porque el alcance incluye pagos y compras)<br>
+      • Tipo de firma: <em>conjunta</em><br><br>
+      Ana López:<br>
+      • Cargo societario: <em>Apoderada</em><br>
+      • Rol interno: <em>Tesorería</em><br>
+      • Alcance: <em>general</em><br>
+      • Límite: no se muestra (alcance = general, no incluye pagos/crédito/compras)<br>
+      • Tipo de firma: <em>obligatoria_casos → "Montos superiores a $1.000.000 y operaciones con entidades financieras"</em>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Tabla: USUARIOS_SOCIEDAD_TAG (tabla intermedia)</div>
+    <p>Resuelve la relación <strong>muchos a muchos</strong> entre personas y sociedades. Una persona puede estar en muchas sociedades, y una sociedad puede tener muchas personas.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong>
+      <table>
+        <tr><th>id</th><th>id_usuario_sociedad</th><th>id_sociedad</th><th>rol</th></tr>
+        <tr><td>tag-1</td><td>Carlos Rodríguez</td><td>Textiles del Norte SA</td><td>Director</td></tr>
+        <tr><td>tag-2</td><td>Carlos Rodríguez</td><td>Comercio del Sur SRL</td><td>Socio</td></tr>
+        <tr><td>tag-3</td><td>Ana López</td><td>Textiles del Norte SA</td><td>Apoderada</td></tr>
+      </table>
+      Carlos aparece dos veces: una por cada sociedad en la que participa.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== GRUPO 3: ROLES DE PERSONAS ==================== -->
+<div class="card">
+  <h2>👥 Grupo 3 — Roles de las Personas dentro de cada Sociedad</h2>
+  <p>Una vez que una persona está vinculada a una sociedad (via USUARIOS_SOCIEDAD_TAG), puede tener uno o más roles específicos. Cada rol tiene su propia tabla con los atributos que corresponden.</p>
+  <p>Todas estas tablas apuntan a <strong>USUARIOS_SOCIEDAD_TAG</strong> como FK — así saben quién es la persona <em>y</em> en qué sociedad cumple ese rol.</p>
+
+  <div class="grupo">
+    <div class="grupo-titulo">AUTORIDADES — Presidente, Director, Gerente</div>
+    <p>Personas con cargo formal en el órgano de administración de la sociedad.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo SA:</strong> Carlos Rodríguez es Presidente de Textiles del Norte SA desde 01/03/2023 hasta 01/03/2026 (mandato de 3 años).
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">ACCIONISTAS_SOCIOS — SA y SRL</div>
+    <p>Personas que tienen participación accionaria o cuotas en la sociedad, con su porcentaje.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo SA:</strong><br>
+      • Carlos Rodríguez → 60% de las acciones<br>
+      • Ana López → 40% de las acciones<br>
+      Total: 100%
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">SOCIOS_SH — Sociedad de Hecho</div>
+    <p>Similar a accionistas pero para SH, con campos adicionales como cargo/rol y si tiene firma presente.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo SH:</strong> Pedro Martínez y Rosa Silva son socios al 50/50. Pedro es el administrador con firma presente.
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">BENEFICIARIOS_FINALES</div>
+    <p>Personas físicas que en última instancia poseen o controlan la sociedad (más del 20% de participación). Dato clave para cumplimiento antilavado.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong> En Textiles del Norte SA, Carlos Rodríguez con 60% es beneficiario final. Ana López con 40% también lo es.
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">APODERADOS</div>
+    <p>Personas que tienen poder notarial para actuar en nombre de la sociedad. Se registra la fecha del poder y su vencimiento.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong> Ana López tiene poder general de administración otorgado el 15/01/2024, sin fecha de vencimiento.
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">FIRMANTES</div>
+    <p>Personas habilitadas para operar la cuenta PSP. Se define cómo pueden firmar y en base a qué documento tienen esa facultad.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong> Carlos Rodríguez firma de forma <em>individual</em> en base al Estatuto. Ana López firma de forma <em>conjunta</em> en base al Poder Notarial — necesita otro firmante para operar.
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">HEREDEROS — Sucesión</div>
+    <p>Personas declaradas herederas en la sucesión, con su vínculo con el causante y porcentaje de la herencia.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo Sucesión García:</strong><br>
+      • Roberto García (hijo) → 50%<br>
+      • Marta García (hija) → 50%<br>
+      Vínculo con el causante: hijo/a
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">ADMINISTRADOR_JUSTICIA — Sucesión</div>
+    <p>Persona designada judicialmente para administrar los bienes de la sucesión. Puede ser o no el firmante de la cuenta PSP dependiendo de si aceptó el cargo.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong> El Dr. Marcos Suárez es designado administrador judicial de la Sucesión García. Aceptó el cargo el 10/02/2024 → se convierte en el firmante único de la cuenta PSP.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== GRUPO 4: DOCUMENTOS ==================== -->
+<div class="card">
+  <h2>📄 Grupo 4 — Documentos</h2>
+  <p>El proceso de compliance requiere que cada sociedad presente documentación específica según su tipo. Este grupo gestiona qué documentos se requieren, qué archivos se subieron y qué datos se extrajeron de ellos.</p>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Tabla: DOCUMENTOS_CLIENTE (el "slot")</div>
+    <p>Representa <strong>el espacio reservado</strong> para cada documento que una sociedad debe presentar. Es como una carpeta vacía que espera ser llenada. <strong>No cambia aunque el documento sea rechazado</strong> — siempre hay un solo slot por tipo de documento por sociedad.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo — Textiles del Norte SA necesita presentar:</strong>
+      <table>
+        <tr><th>id</th><th>id_sociedad</th><th>id_documento</th><th>es_obligatorio</th><th>version_activa</th></tr>
+        <tr><td>doc-A</td><td>Textiles SA</td><td>estatuto</td><td>Sí</td><td>→ ver-003</td></tr>
+        <tr><td>doc-B</td><td>Textiles SA</td><td>acta_autoridades</td><td>Sí</td><td>→ ver-001</td></tr>
+        <tr><td>doc-C</td><td>Textiles SA</td><td>registro_accionistas</td><td>Sí</td><td>→ ver-002</td></tr>
+        <tr><td>doc-D</td><td>Textiles SA</td><td>poder_administracion</td><td>No</td><td>→ ver-001</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Tabla: DOCUMENTOS_VERSIONES (cada subida)</div>
+    <p>Cada vez que se sube un archivo para un documento, se genera un <strong>nuevo registro con un nuevo UUID</strong>. Si el documento es rechazado y se vuelve a subir, hay una nueva fila — el historial queda intacto.</p>
+    <p><strong>version_activa</strong> en DOCUMENTOS_CLIENTE siempre apunta a la última versión vigente, para consultarla de forma directa sin buscar.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo — El Estatuto de Textiles del Norte SA fue rechazado y resubido:</strong>
+      <table>
+        <tr><th>id</th><th>id_documento</th><th>version</th><th>estado</th><th>motivo_rechazo</th></tr>
+        <tr><td>ver-001</td><td>doc-A (estatuto)</td><td>1</td><td>rechazado</td><td>Documento ilegible en página 3</td></tr>
+        <tr><td>ver-002</td><td>doc-A (estatuto)</td><td>2</td><td>rechazado</td><td>Falta firma del escribano</td></tr>
+        <tr><td>ver-003</td><td>doc-A (estatuto)</td><td>3</td><td>aprobado</td><td>—</td></tr>
+      </table>
+      El slot doc-A siempre fue "el estatuto de Textiles SA". Lo que cambió fueron los archivos subidos. Hoy <strong>version_activa apunta a ver-003</strong>.
+    </div>
+    <div class="nota">
+      Para saber cuál es el documento vigente basta consultar <strong>DOCUMENTOS_CLIENTE.version_activa</strong> → apunta directo al registro correcto en DOCUMENTOS_VERSIONES.
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Tablas FORM_* — Datos del formulario por tipo de documento</div>
+    <p>Cuando el analista revisa una versión de un documento, completa un formulario con los datos extraídos. Cada tipo de documento tiene su propio esquema de campos. Estos datos se guardan vinculados a la versión específica.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo — Al aprobar ver-003 (Estatuto SA), el analista completa:</strong><br>
+      • Tipo societario: S.A.<br>
+      • Denominación social: Textiles del Norte SA<br>
+      • CUIT: 30-12345678-9<br>
+      • Fecha de constitución: 15/06/2010<br>
+      • Capital suscripto: $5.000.000<br><br>
+      Estos datos quedan en <strong>FORM_ESTATUTO_SA</strong>, con id_version = ver-003.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== GRUPO 5: LOGS ==================== -->
+<div class="card">
+  <h2>📋 Grupo 5 — Logs de Acciones</h2>
+  <p>Registra <strong>todo lo que ocurre</strong> en el sistema: cada aprobación, rechazo, comentario, cambio de estado, habilitación de CVU. Es el historial de auditoría completo del expediente.</p>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Tabla: LOGS_ACCIONES</div>
+    <p>Cada acción genera una fila nueva. Nunca se modifica — solo se agregan registros. Guarda quién hizo qué, sobre qué documento, en qué momento, y desde qué IP.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo — Historial del expediente de Textiles del Norte SA:</strong>
+      <table>
+        <tr><th>tipo_accion</th><th>usuario_interno</th><th>documento</th><th>estado_nuevo</th><th>fecha</th></tr>
+        <tr><td>alta_iniciada</td><td>Juan Pérez</td><td>—</td><td>pendiente</td><td>01/03/2024 09:15</td></tr>
+        <tr><td>documento_rechazado</td><td>María García</td><td>Estatuto</td><td>rechazado</td><td>05/03/2024 14:30</td></tr>
+        <tr><td>documento_rechazado</td><td>María García</td><td>Estatuto</td><td>rechazado</td><td>10/03/2024 11:00</td></tr>
+        <tr><td>documento_aprobado</td><td>María García</td><td>Estatuto</td><td>aprobado</td><td>15/03/2024 16:45</td></tr>
+        <tr><td>alta_psp</td><td>María García</td><td>—</td><td>activo</td><td>20/03/2024 10:00</td></tr>
+        <tr><td>cvu_habilitado</td><td>María García</td><td>—</td><td>—</td><td>20/03/2024 10:05</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== FLUJO COMPLETO ==================== -->
+<div class="card">
+  <h2>🔄 Flujo completo de un Alta — Ejemplo paso a paso</h2>
+  <p>Para entender cómo se conectan todas las tablas, veamos el ciclo completo del alta de <strong>Textiles del Norte SA</strong>:</p>
+
+  <ol style="padding-left: 20px; line-height: 2.2;">
+    <li>La sociedad ya existe en <strong>SOCIEDADES_TAG</strong> (viene del sistema de producción).</li>
+    <li>Se cargan las personas vinculadas en <strong>USUARIOS_SOCIEDAD</strong>: Carlos Rodríguez y Ana López.</li>
+    <li>Se crean sus vínculos en <strong>USUARIOS_SOCIEDAD_TAG</strong>: Carlos como Director, Ana como Apoderada.</li>
+    <li>Se asignan los roles específicos: Carlos en <strong>AUTORIDADES</strong> y <strong>ACCIONISTAS_SOCIOS</strong>; Ana en <strong>APODERADOS</strong> y <strong>FIRMANTES</strong>.</li>
+    <li>Se crean los slots de documentos en <strong>DOCUMENTOS_CLIENTE</strong>: uno para el Estatuto, uno para el Acta, uno para el Registro de Accionistas, uno para el Poder.</li>
+    <li>Se sube el Estatuto → se crea <strong>DOCUMENTOS_VERSIONES</strong> ver-001 con estado <em>pendiente</em>.</li>
+    <li>El analista lo revisa y lo rechaza → ver-001 pasa a <em>rechazado</em> → se registra en <strong>LOGS_ACCIONES</strong>.</li>
+    <li>Se sube nuevamente el Estatuto → se crea ver-002 → el analista lo aprueba → completa <strong>FORM_ESTATUTO_SA</strong> con los datos extraídos → se actualiza <strong>version_activa</strong> en DOCUMENTOS_CLIENTE a ver-002.</li>
+    <li>Se aprueban todos los documentos → el Oficial de Cumplimiento da el alta PSP → se registra en <strong>LOGS_ACCIONES</strong> con tipo_accion = <em>alta_psp</em>.</li>
+    <li>Se habilita el CVU → nuevo log con <em>cvu_habilitado</em> y el número de CVU generado.</li>
+  </ol>
+</div>
+
+<!-- ==================== RESUMEN DE RELACIONES ==================== -->
+<div class="card">
+  <h2>🔗 Resumen de relaciones entre tablas</h2>
+  <table>
+    <tr><th>Tabla A</th><th>Relación</th><th>Tabla B</th><th>Explicación</th></tr>
+    <tr><td>SOCIEDADES_TAG</td><td>1 → N</td><td>USUARIOS_SOCIEDAD_TAG</td><td>Una sociedad tiene muchas personas vinculadas</td></tr>
+    <tr><td>USUARIOS_SOCIEDAD</td><td>1 → N</td><td>USUARIOS_SOCIEDAD_TAG</td><td>Una persona puede estar en muchas sociedades</td></tr>
+    <tr><td>USUARIOS_SOCIEDAD_TAG</td><td>1 → N</td><td>AUTORIDADES / ACCIONISTAS / FIRMANTES / etc.</td><td>Un vínculo persona-sociedad puede tener múltiples roles</td></tr>
+    <tr><td>SOCIEDADES_TAG</td><td>1 → N</td><td>DOCUMENTOS_CLIENTE</td><td>Una sociedad tiene muchos slots de documentos</td></tr>
+    <tr><td>DOCUMENTOS_CLIENTE</td><td>1 → N</td><td>DOCUMENTOS_VERSIONES</td><td>Un slot puede tener múltiples subidas (versiones)</td></tr>
+    <tr><td>DOCUMENTOS_VERSIONES</td><td>1 → 1</td><td>FORM_*</td><td>Cada versión tiene los datos del formulario correspondiente</td></tr>
+    <tr><td>USUARIOS</td><td>1 → N</td><td>LOGS_ACCIONES</td><td>Un analista realiza muchas acciones</td></tr>
+    <tr><td>SOCIEDADES_TAG</td><td>1 → N</td><td>LOGS_ACCIONES</td><td>Todas las acciones sobre una sociedad quedan registradas</td></tr>
+    <tr><td>DOCUMENTOS_CLIENTE</td><td>1 → N</td><td>LOGS_ACCIONES</td><td>Cada acción sobre un documento queda en el log</td></tr>
+  </table>
+</div>
+
+<!-- ==================== COMENTARIOS EN LOGS ==================== -->
+<div class="card">
+  <h2>💬 Comentarios en el Expediente</h2>
+  <p>Los comentarios no son una tabla separada — son un tipo de acción más dentro de <strong>LOGS_ACCIONES</strong>. Un analista puede dejar una nota en cualquier momento sin necesidad de cambiar ningún estado.</p>
+
+  <div class="grupo">
+    <div class="grupo-titulo">¿Cómo se diferencia un comentario de otras acciones?</div>
+    <table>
+      <tr><th>tipo_accion</th><th>estado_anterior</th><th>estado_nuevo</th><th>motivo</th></tr>
+      <tr><td>documento_rechazado</td><td>pendiente</td><td>rechazado</td><td>Falta firma del escribano</td></tr>
+      <tr><td>comentario</td><td>— (vacío)</td><td>— (vacío)</td><td>Pendiente confirmar datos del accionista</td></tr>
+      <tr><td>comentario</td><td>— (vacío)</td><td>— (vacío)</td><td>El cliente llamó para avisar que presenta nuevos documentos el viernes</td></tr>
+      <tr><td>alta_psp</td><td>pendiente</td><td>activo</td><td>—</td></tr>
+    </table>
+    <p style="margin-top:10px;">El campo <strong>motivo</strong> (TEXTOLARGO) es donde va el texto del comentario. Los campos <strong>estado_anterior</strong> y <strong>estado_nuevo</strong> quedan vacíos porque un comentario no cambia ningún estado.</p>
+  </div>
+
+  <div class="ejemplo">
+    <strong>Ejemplo completo de historial con comentarios:</strong>
+    <table>
+      <tr><th>fecha</th><th>tipo_accion</th><th>usuario</th><th>motivo / comentario</th></tr>
+      <tr><td>01/03 09:00</td><td>alta_iniciada</td><td>Juan Pérez</td><td>—</td></tr>
+      <tr><td>03/03 11:30</td><td>comentario</td><td>Juan Pérez</td><td>Cliente confirmó que envía el estatuto actualizado esta semana</td></tr>
+      <tr><td>07/03 14:00</td><td>documento_rechazado</td><td>María García</td><td>Documento ilegible en página 3</td></tr>
+      <tr><td>08/03 09:15</td><td>comentario</td><td>María García</td><td>Se notificó al cliente por email. Referencia: ticket #4821</td></tr>
+      <tr><td>12/03 16:00</td><td>documento_aprobado</td><td>María García</td><td>—</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== RELACIONES N:M ==================== -->
+<div class="card">
+  <h2>🔀 Relaciones Muchos a Muchos (N:M) — El problema y la solución</h2>
+  <p>Una relación <strong>N:M</strong> (muchos a muchos) ocurre cuando un registro de la tabla A puede relacionarse con muchos registros de la tabla B, <strong>y viceversa</strong>. En bases de datos relacionales esto no se puede representar directamente — se necesita una <strong>tabla intermedia</strong> que rompa ese vínculo en dos relaciones de 1 a muchos.</p>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Caso 1 — USUARIOS_SOCIEDAD ↔ SOCIEDADES_TAG</div>
+    <p><strong>El problema:</strong></p>
+    <ul>
+      <li>Una persona (Carlos Rodríguez) puede estar vinculada a <em>muchas</em> sociedades</li>
+      <li>Una sociedad (Textiles del Norte SA) puede tener <em>muchas</em> personas</li>
+    </ul>
+    <p style="margin-top:10px;"><strong>¿Por qué no poner id_sociedad directamente en USUARIOS_SOCIEDAD?</strong></p>
+    <p>Porque Carlos está en dos sociedades. Si ponés un solo campo <em>id_sociedad</em>, solo podés guardar una. Y si repetís la fila de Carlos para cada sociedad, duplicás todos sus datos personales.</p>
+
+    <div class="ejemplo">
+      <strong>❌ Mal diseño (sin tabla intermedia):</strong>
+      <table>
+        <tr><th>id</th><th>nombre</th><th>dni</th><th>id_sociedad</th></tr>
+        <tr><td>p-1</td><td>Carlos Rodríguez</td><td>25.111.222</td><td>Textiles SA ← solo puede tener una</td></tr>
+      </table>
+      <br>
+      <strong>✅ Buen diseño (con USUARIOS_SOCIEDAD_TAG como tabla intermedia):</strong>
+      <table>
+        <tr><th colspan="3">USUARIOS_SOCIEDAD</th></tr>
+        <tr><th>id</th><th>nombre</th><th>dni</th></tr>
+        <tr><td>p-1</td><td>Carlos Rodríguez</td><td>25.111.222</td></tr>
+      </table>
+      <table style="margin-top:8px;">
+        <tr><th colspan="4">USUARIOS_SOCIEDAD_TAG (tabla intermedia)</th></tr>
+        <tr><th>id</th><th>id_usuario_sociedad</th><th>id_sociedad</th><th>rol</th></tr>
+        <tr><td>tag-1</td><td>p-1 (Carlos)</td><td>Textiles SA</td><td>Director</td></tr>
+        <tr><td>tag-2</td><td>p-1 (Carlos)</td><td>Comercio SRL</td><td>Socio</td></tr>
+      </table>
+      Carlos está guardado <strong>una sola vez</strong>. Su vínculo con cada sociedad vive en la tabla intermedia.
+    </div>
+
+    <p style="margin-top:10px;"><strong>¿Por qué los roles (AUTORIDADES, FIRMANTES, etc.) apuntan a USUARIOS_SOCIEDAD_TAG y no a USUARIOS_SOCIEDAD?</strong></p>
+    <p>Porque un rol siempre es dentro de <strong>una sociedad específica</strong>. Carlos puede ser Director en Textiles SA pero solo Socio en Comercio SRL. Si AUTORIDADES apuntara solo a Carlos (USUARIOS_SOCIEDAD), no sabríamos en cuál de las dos sociedades es Director.</p>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong>
+      <table>
+        <tr><th>AUTORIDADES</th><th>id_usuario_sociedad_tag</th><th>cargo</th></tr>
+        <tr><td>aut-1</td><td>tag-1 (Carlos en Textiles SA)</td><td>Presidente</td></tr>
+        <tr><td>aut-2</td><td>tag-2 (Carlos en Comercio SRL)</td><td>Gerente</td></tr>
+      </table>
+      Con el FK a USUARIOS_SOCIEDAD_TAG sabemos exactamente: <em>Carlos es Presidente en Textiles SA</em> y <em>Gerente en Comercio SRL</em>.
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Caso 2 — DOCUMENTOS_CLIENTE ↔ DOCUMENTOS_VERSIONES</div>
+    <p>No es un N:M puro pero tiene una lógica similar de separación de responsabilidades:</p>
+    <ul>
+      <li><strong>DOCUMENTOS_CLIENTE</strong> = el <em>qué</em> (qué documento se requiere para qué sociedad)</li>
+      <li><strong>DOCUMENTOS_VERSIONES</strong> = el <em>cómo y cuándo</em> (qué archivo se subió, en qué estado está)</li>
+    </ul>
+    <div class="ejemplo">
+      <strong>¿Por qué separar?</strong><br><br>
+      Si todo estuviera en una sola tabla, al rechazar un documento y resubir uno nuevo tendrías que <strong>pisar los datos anteriores</strong> — perderías el historial. Con la separación, cada subida es una fila nueva en DOCUMENTOS_VERSIONES y el historial completo queda intacto para auditoría.
+      <br><br>
+      <strong>El campo version_activa en DOCUMENTOS_CLIENTE resuelve la consulta rápida:</strong><br>
+      En lugar de buscar "la versión más reciente con estado aprobado del estatuto de Textiles SA", simplemente consultás <em>DOCUMENTOS_CLIENTE.version_activa</em> y obtenés el puntero directo.
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Caso 3 — FIRMANTES ↔ DOCUMENTOS_CLIENTE</div>
+    <p>Un firmante necesita saber <strong>de dónde viene su facultad de firma</strong>. Esa facultad está documentada en uno de los documentos de la sociedad (el Estatuto, el Acta, el Poder Notarial).</p>
+    <div class="ejemplo">
+      <strong>Ejemplo:</strong>
+      <table>
+        <tr><th>FIRMANTES</th><th>id_usuario_sociedad_tag</th><th>id_documento_respaldo</th><th>modalidad_firma</th></tr>
+        <tr><td>f-1</td><td>Carlos en Textiles SA</td><td>doc-A (Estatuto)</td><td>individual</td></tr>
+        <tr><td>f-2</td><td>Ana en Textiles SA</td><td>doc-D (Poder Notarial)</td><td>conjunta</td></tr>
+      </table>
+      Carlos firma solo porque el Estatuto lo habilita. Ana necesita otro firmante porque su Poder Notarial establece firma conjunta.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== REGLAS DE INTEGRIDAD ==================== -->
+<div class="card">
+  <h2>🛡️ Reglas de integridad referencial</h2>
+  <p>La integridad referencial garantiza que no haya registros "huérfanos" — es decir, un FK nunca puede apuntar a un registro que no existe.</p>
+
+  <table>
+    <tr><th>Regla</th><th>Ejemplo de lo que NO puede pasar</th></tr>
+    <tr><td>No puede existir un DOCUMENTO sin una SOCIEDAD</td><td>Un slot de "estatuto" sin id_sociedad válido</td></tr>
+    <tr><td>No puede existir una VERSIÓN sin un DOCUMENTO</td><td>Una subida de archivo sin su slot correspondiente</td></tr>
+    <tr><td>No puede existir un ROL sin un VÍNCULO persona-sociedad</td><td>Un AUTORIDAD sin su USUARIOS_SOCIEDAD_TAG</td></tr>
+    <tr><td>No puede existir un LOG sin una SOCIEDAD</td><td>Una acción registrada sin saber a qué sociedad pertenece</td></tr>
+    <tr><td>No puede existir un FIRMANTE sin un DOCUMENTO DE RESPALDO</td><td>Un firmante habilitado sin documento que avale su facultad</td></tr>
+  </table>
+</div>
+
+<div class="nota" style="margin-top: 0;">
+  💡 <strong>Tip:</strong> Para exportar como PDF usá <strong>Ctrl + P → Guardar como PDF</strong>.
+</div>
+
+<script>document.querySelector('.subtitle').innerHTML += ' · ' + new Date().toLocaleDateString('es-AR');</script>
+</body>
+</html>

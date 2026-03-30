@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>DER — HC DCAC Compliance</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 30px; color: #222; }
+h1 { text-align: center; color: #1F3864; font-size: 22px; margin-bottom: 4px; }
+.subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 28px; }
+.card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 2px 14px rgba(0,0,0,0.1); margin-bottom: 28px; overflow-x: auto; }
+.card h2 { color: #1F3864; font-size: 15px; margin-bottom: 16px; border-bottom: 2px solid #1F3864; padding-bottom: 6px; }
+.nota { background: #FFF8E1; border-left: 4px solid #FFC107; padding: 12px 16px; border-radius: 4px; font-size: 12px; color: #6D4C00; }
+.mermaid { min-width: 1000px; }
+@media print { body { background: white; padding: 10px; } .card { box-shadow: none; border: 1px solid #ddd; } }
+</style>
+</head>
+<body>
+
+<h1>📊 Diagrama Entidad–Relación — Sistema de Compliance</h1>
+<p class="subtitle">HC DCAC · v4.0 — Campos basados en frontend actual · <script>document.write(new Date().toLocaleDateString('es-AR'))</script></p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  DIAGRAMA 0 — Vista general (todas las entidades)    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Diagrama 0 — Vista General del Sistema</h2>
+  <p style="font-size:12px;color:#888;margin-bottom:16px;">Muestra todas las entidades y sus relaciones. Los campos detallados se encuentran en los diagramas 1 al 4.</p>
+  <div class="mermaid">
+%%{init: {'er': {'layoutDirection': 'TB'}}}%%
+erDiagram
+
+    SOCIEDADES_TAG           { ID id_sociedad PK }
+    USUARIOS                 { ID id PK }
+    USUARIOS_SOCIEDAD        { ID id PK }
+    USUARIOS_SOCIEDAD_TAG    { ID id PK   UUID id_usuario_sociedad FK   ID id_sociedad FK }
+    DOCUMENTOS_CLIENTE       { ID id PK   ID id_sociedad FK   ID version_activa FK }
+    DOCUMENTOS_VERSIONES     { ID id PK   ID id_documento FK   ID aprobado_por FK }
+    LOGS_ACCIONES            { ID id PK   ID id_sociedad FK   ID id_usuario_interno FK   UUID id_usuario_sociedad FK   ID id_documento FK }
+    BENEFICIARIOS_FINALES    { ID id PK   ID id_usuario_sociedad_tag FK }
+    ACCIONISTAS_SOCIOS       { ID id PK   ID id_usuario_sociedad_tag FK }
+    SOCIOS_SH                { ID id PK   ID id_usuario_sociedad_tag FK }
+    AUTORIDADES              { ID id PK   ID id_usuario_sociedad_tag FK }
+    HEREDEROS                { ID id PK   ID id_usuario_sociedad_tag FK }
+    ADMINISTRADOR_JUSTICIA   { ID id PK   ID id_usuario_sociedad_tag FK }
+    APODERADOS               { ID id PK   ID id_usuario_sociedad_tag FK }
+
+    SOCIEDADES_TAG         ||--|{  USUARIOS_SOCIEDAD_TAG     : "tiene personas"
+    USUARIOS_SOCIEDAD      ||--|{  USUARIOS_SOCIEDAD_TAG     : "pertenece a sociedades"
+    SOCIEDADES_TAG         ||--|{  DOCUMENTOS_CLIENTE        : "tiene documentos"
+    SOCIEDADES_TAG         ||--o{  LOGS_ACCIONES             : "registra acciones"
+    USUARIOS               ||--o{  LOGS_ACCIONES             : "realiza acciones"
+    USUARIOS               ||--o{  DOCUMENTOS_VERSIONES      : "aprueba versiones"
+    USUARIOS_SOCIEDAD      ||--o{  LOGS_ACCIONES             : "genera CVU"
+    DOCUMENTOS_CLIENTE     ||--|{  DOCUMENTOS_VERSIONES      : "tiene versiones"
+    DOCUMENTOS_CLIENTE     ||--o{  LOGS_ACCIONES             : "registra acciones"
+    USUARIOS_SOCIEDAD_TAG  ||--o{  BENEFICIARIOS_FINALES     : "es beneficiario final"
+    USUARIOS_SOCIEDAD_TAG  ||--o{  ACCIONISTAS_SOCIOS        : "es accionista/socio"
+    USUARIOS_SOCIEDAD_TAG  ||--o{  SOCIOS_SH                 : "es socio SH"
+    USUARIOS_SOCIEDAD_TAG  ||--o{  AUTORIDADES               : "es autoridad"
+    USUARIOS_SOCIEDAD_TAG  ||--o{  HEREDEROS                 : "es heredero"
+    USUARIOS_SOCIEDAD_TAG  ||--o{  ADMINISTRADOR_JUSTICIA    : "es administrador"
+    USUARIOS_SOCIEDAD_TAG  ||--o{  APODERADOS                : "es apoderado"
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  DIAGRAMA 1 — Núcleo: Personas y Sociedades (N:M)    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Diagrama 1 — Personas y Sociedades</h2>
+  <p style="font-size:12px;background:#FFF8C5;border-left:4px solid #FFC107;padding:8px 12px;border-radius:4px;margin-bottom:14px;">⚠️ <strong style="color:#CC0000;">SOCIEDADES_TAG es una tabla externa de producción — todos sus datos llegan por GET.</strong> Los campos en <span style="color:#E67E22;font-weight:bold;">naranja</span> en el resto de las tablas también provienen de sistemas externos.</p>
+  <div class="mermaid">
+erDiagram
+
+    SOCIEDADES_TAG {
+        ID id_sociedad PK "GET"
+        TEXTO razon_social "GET"
+        TEXTO cuit_cuil "GET"
+        TEXTO tipo_sociedad "GET"
+        TEXTO estado "GET"
+    }
+
+    USUARIOS_SOCIEDAD {
+        UUID id PK "GET si existe / POST si nuevo"
+        TEXTO apellido "GET"
+        TEXTO nombre "GET"
+        TEXTO nro_documento
+        TEXTO cuit
+        TEXTO correo_electronico "GET"
+        TEXTO telefono "GET"
+        TEXTO domicilio
+        BOOLEANO es_pep
+        BOOLEANO figura_en_repet
+        TEXTO notas_repet
+        JSON resultado_screening
+        OPCIONES cargo_societario "gerente / director / presidente / vicepresidente / apoderado / ninguno"
+        TEXTO rol_interno
+        JSON alcance_actos "general / credito / pagos / compras / bancos / alta_cvu / ninguno"
+        OPCIONES limite_tipo "sin_limite / hasta_x / rango_x_a_y"
+        DECIMAL limite_monto_hasta
+        DECIMAL limite_monto_desde
+        OPCIONES tipo_firma "individual / conjunta / obligatoria_casos / ninguna"
+        TEXTOLARGO tipo_firma_casos
+        BOOLEANO activo
+        FECHAHORA fecha_creacion
+        FECHAHORA fecha_actualizacion
+    }
+
+    USUARIOS_SOCIEDAD_TAG {
+        ID id PK
+        UUID id_usuario_sociedad FK
+        ID id_sociedad FK
+        TEXTO rol
+        FECHA fecha_vinculacion
+        BOOLEANO activo
+    }
+
+    SOCIEDADES_TAG    ||--|{  USUARIOS_SOCIEDAD_TAG  : "tiene personas"
+    USUARIOS_SOCIEDAD ||--|{  USUARIOS_SOCIEDAD_TAG  : "pertenece a sociedades"
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  DIAGRAMA 2 — Roles de personas dentro de sociedad    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Diagrama 2 — Roles por Vínculo Persona–Sociedad</h2>
+  <div class="mermaid">
+erDiagram
+
+    USUARIOS_SOCIEDAD_TAG {
+        ID id PK
+        UUID id_usuario_sociedad FK
+        ID id_sociedad FK
+        TEXTO rol
+        BOOLEANO activo
+    }
+
+    BENEFICIARIOS_FINALES {
+        ID id PK
+        ID id_usuario_sociedad_tag FK
+        BOOLEANO activo
+    }
+
+    ACCIONISTAS_SOCIOS {
+        ID id PK
+        ID id_usuario_sociedad_tag FK
+        DECIMAL porcentaje
+        BOOLEANO activo
+    }
+
+    SOCIOS_SH {
+        ID id PK
+        ID id_usuario_sociedad_tag FK
+        DECIMAL porcentaje
+        TEXTO cargo_rol
+        TEXTO cargo_otro
+        BOOLEANO firma_presente
+        BOOLEANO activo
+    }
+
+    AUTORIDADES {
+        ID id PK
+        ID id_usuario_sociedad_tag FK
+        TEXTO cargo
+        FECHA fecha_inicio_mandato
+        FECHA fecha_fin_mandato
+        BOOLEANO activo
+    }
+
+    HEREDEROS {
+        ID id PK
+        ID id_usuario_sociedad_tag FK
+        TEXTO vinculo_causante
+        DECIMAL porcentaje
+        BOOLEANO activo
+    }
+
+    ADMINISTRADOR_JUSTICIA {
+        ID id PK
+        ID id_usuario_sociedad_tag FK
+        TEXTO tipo_administrador
+        OPCIONES acepto_cargo "si / no / pendiente"
+        BOOLEANO activo
+    }
+
+    APODERADOS {
+        ID id PK
+        ID id_usuario_sociedad_tag FK
+        FECHA fecha_otorgamiento
+        FECHA fecha_vencimiento_poder
+        BOOLEANO activo
+    }
+
+    USUARIOS_SOCIEDAD_TAG ||--o{  BENEFICIARIOS_FINALES   : "es beneficiario final"
+    USUARIOS_SOCIEDAD_TAG ||--o{  ACCIONISTAS_SOCIOS      : "es accionista/socio"
+    USUARIOS_SOCIEDAD_TAG ||--o{  SOCIOS_SH               : "es socio SH"
+    USUARIOS_SOCIEDAD_TAG ||--o{  AUTORIDADES             : "es autoridad"
+    USUARIOS_SOCIEDAD_TAG ||--o{  HEREDEROS               : "es heredero"
+    USUARIOS_SOCIEDAD_TAG ||--o{  ADMINISTRADOR_JUSTICIA  : "es administrador"
+    USUARIOS_SOCIEDAD_TAG ||--o{  APODERADOS              : "es apoderado"
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  DIAGRAMA 3 — Documentos y Versiones                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Diagrama 3 — Documentos y Versiones</h2>
+  <div class="mermaid">
+erDiagram
+
+    SOCIEDADES_TAG {
+        ID id_sociedad PK "GET"
+        TEXTO razon_social "GET"
+        TEXTO tipo_sociedad "GET"
+        TEXTO estado "GET"
+    }
+
+    DOCUMENTOS_CLIENTE {
+        ID id PK
+        ID id_sociedad FK
+        ID version_activa FK
+        OPCIONES tipo_entidad "SA / SRL / SH / sucesion / monotributista"
+        TEXTO id_documento "GET"
+        TEXTO nombre_documento
+
+        OPCIONES categoria "identificacion / societario / pep / beneficiario_final / apoderado / otro"
+        BOOLEANO es_obligatorio
+        BOOLEANO es_condicional
+        FECHAHORA fecha_creacion
+        FECHAHORA fecha_actualizacion
+    }
+
+    DOCUMENTOS_VERSIONES {
+        ID id PK
+        ID id_documento FK
+        ID aprobado_por FK
+        ENTERO numero_version
+        TEXTO url_archivo
+        OPCIONES estado "pendiente / aprobado / rechazado / observado"
+        TEXTOLARGO motivo_rechazo
+        TEXTOLARGO observaciones
+        JSON datos_formulario
+        FECHAHORA aprobado_en
+        FECHAHORA subido_en
+    }
+
+    USUARIOS {
+        ID id PK
+        TEXTO nombre
+        TEXTO apellido
+        OPCIONES nivel "nivel_1 / nivel_2 / nivel_3"
+        BOOLEANO activo
+    }
+
+    SOCIEDADES_TAG     ||--|{  DOCUMENTOS_CLIENTE    : "tiene documentos"
+    DOCUMENTOS_CLIENTE ||--|{  DOCUMENTOS_VERSIONES  : "tiene versiones"
+    USUARIOS           ||--o{  DOCUMENTOS_VERSIONES  : "aprueba versiones"
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  DIAGRAMA 4 — Logs de Acciones                        -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Diagrama 4 — Logs de Acciones</h2>
+  <div class="mermaid">
+erDiagram
+
+    SOCIEDADES_TAG {
+        ID id_sociedad PK "GET"
+        TEXTO razon_social "GET"
+    }
+
+    USUARIOS {
+        ID id PK
+        TEXTO nombre
+        TEXTO apellido
+        OPCIONES nivel "nivel_1 / nivel_2 / nivel_3"
+    }
+
+    USUARIOS_SOCIEDAD {
+        UUID id PK
+        TEXTO nombre "GET"
+        TEXTO apellido "GET"
+        TEXTO nro_documento
+    }
+
+    DOCUMENTOS_CLIENTE {
+        ID id PK
+        TEXTO id_documento "GET"
+        OPCIONES tipo_entidad
+    }
+
+    LOGS_ACCIONES {
+        ID id PK
+        ID id_sociedad FK
+        ID id_usuario_interno FK
+        UUID id_usuario_sociedad FK
+        ID id_documento FK
+        OPCIONES tipo_accion "alta_iniciada / documento_aprobado / documento_rechazado / documento_observado / datos_modificados / alta_psp / alta_psp_excepcion / cvu_habilitado / cvu_bloqueado / cvu_excepcion / screening_realizado / pep_detectado / comentario"
+        TEXTO estado_anterior
+        TEXTO estado_nuevo
+        TEXTOLARGO motivo
+        BOOLEANO genera_cvu
+        TEXTO nro_cvu
+        FECHAHORA cvu_generado_en
+        TEXTO direccion_ip
+        FECHAHORA fecha_creacion
+    }
+
+    SOCIEDADES_TAG     ||--o{  LOGS_ACCIONES  : "registra acciones"
+    USUARIOS           ||--o{  LOGS_ACCIONES  : "realiza acciones"
+    USUARIOS_SOCIEDAD  ||--o{  LOGS_ACCIONES  : "genera CVU"
+    DOCUMENTOS_CLIENTE ||--o{  LOGS_ACCIONES  : "registra acciones"
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DIAGRAMA 2: Campos de formulario por tipo de sociedad       -->
+<!-- Cada entidad FORM_* representa los campos del JSON          -->
+<!-- datos_formulario según el id_documento + tipo_entidad       -->
+<!-- ============================================================ -->
+
+<div class="card">
+  <h2>📄 Campos por Documento — Sociedad Anónima (SA)</h2>
+  <div class="mermaid">
+erDiagram
+
+    DOCUMENTOS_VERSIONES {
+        ID id PK
+        ID id_documento FK
+        ENTERO numero_version
+        OPCIONES estado
+    }
+
+    FORM_ESTATUTO_SA {
+        ID id PK
+        ID id_version FK
+        TEXTO tipo_societario
+        TEXTO denominacion_social
+        TEXTO sa_cuit
+        FECHA fecha_constitucion
+        TEXTO lugar_constitucion
+        TEXTO duracion_sociedad
+        TEXTO capital_suscripto
+    }
+
+    FORM_ACTA_AUTORIDADES_SA {
+        ID id PK
+        ID id_version FK
+        BOOLEANO mandato_vigente
+        FECHA periodo_mandato_inicio
+        FECHA periodo_mandato_fin
+    }
+
+    FORM_REGISTRO_ACCIONISTAS_SA {
+        ID id PK
+        ID id_version FK
+        TEXTO total_acciones
+        FECHA fecha_ultima_anotacion
+    }
+
+    FORM_PODER_ADMINISTRACION_SA {
+        ID id PK
+        ID id_version FK
+        BOOLEANO poder_verificado
+        TEXTOLARGO poder_observaciones
+    }
+
+    DOCUMENTOS_VERSIONES ||--o| FORM_ESTATUTO_SA : "id=estatuto"
+    DOCUMENTOS_VERSIONES ||--o| FORM_ACTA_AUTORIDADES_SA : "id=acta_autoridades"
+    DOCUMENTOS_VERSIONES ||--o| FORM_REGISTRO_ACCIONISTAS_SA : "id=registro_accionistas"
+    DOCUMENTOS_VERSIONES ||--o| FORM_PODER_ADMINISTRACION_SA : "id=poder_administracion"
+
+  </div>
+</div>
+
+<div class="card">
+  <h2>📄 Campos por Documento — SRL (Sociedad de Responsabilidad Limitada)</h2>
+  <div class="mermaid">
+erDiagram
+
+    DOCUMENTOS_VERSIONES {
+        ID id PK
+        ID id_documento FK
+        ENTERO numero_version
+        OPCIONES estado
+    }
+
+    FORM_CONTRATO_SOCIAL_SRL {
+        ID id PK
+        ID id_version FK
+        TEXTO srl_razon_social
+        TEXTO srl_cuit
+        FECHA srl_fecha_constitucion
+        TEXTO srl_dom_calle
+        TEXTO srl_dom_numero
+        TEXTO srl_dom_piso
+        TEXTO srl_dom_depto
+        TEXTO srl_dom_localidad
+        TEXTO srl_dom_provincia
+        TEXTO srl_dom_cp
+        TEXTO srl_plazo_duracion
+        TEXTO srl_capital_social
+    }
+
+    FORM_ACTA_ASAMBLEA_SRL {
+        ID id PK
+        ID id_version FK
+        FECHA srl_fecha_asamblea
+        BOOLEANO srl_mandato_vigente
+        FECHA srl_periodo_mandato_inicio
+        FECHA srl_periodo_mandato_fin
+    }
+
+    FORM_REGISTRO_SOCIOS_SRL {
+        ID id PK
+        ID id_version FK
+        TEXTO srl_total_cuotas
+        FECHA srl_fecha_ultima_anotacion
+    }
+
+    FORM_PODER_SRL {
+        ID id PK
+        ID id_version FK
+        BOOLEANO poder_verificado
+        TEXTOLARGO poder_observaciones
+    }
+
+    DOCUMENTOS_VERSIONES ||--o| FORM_CONTRATO_SOCIAL_SRL : "id=contrato_social"
+    DOCUMENTOS_VERSIONES ||--o| FORM_ACTA_ASAMBLEA_SRL : "id=acta_asamblea_srl"
+    DOCUMENTOS_VERSIONES ||--o| FORM_REGISTRO_SOCIOS_SRL : "id=registro_socios_srl"
+    DOCUMENTOS_VERSIONES ||--o| FORM_PODER_SRL : "id=poder_srl"
+
+  </div>
+</div>
+
+<div class="card">
+  <h2>📄 Campos por Documento — SH (Sociedad de Hecho)</h2>
+  <div class="mermaid">
+erDiagram
+
+    DOCUMENTOS_VERSIONES {
+        ID id PK
+        ID id_documento FK
+        ENTERO numero_version
+        OPCIONES estado
+    }
+
+    FORM_CONTRATO_PRIVADO_SH {
+        ID id PK
+        ID id_version FK
+        TEXTO sh_denominacion
+        FECHA sh_fecha_constitucion
+        TEXTO sh_dom_calle
+        TEXTO sh_dom_numero
+        TEXTO sh_dom_piso
+        TEXTO sh_dom_depto
+        TEXTO sh_dom_localidad
+        TEXTO sh_dom_provincia
+        TEXTO sh_dom_cp
+        TEXTOLARGO sh_objeto_social
+        TEXTO sh_cuit
+        TEXTO sh_duracion
+        TEXTO sh_capital_aportes
+        TEXTO sh_distribucion_utilidades
+        TEXTO sh_tipo_administracion
+        TEXTO sh_administradores
+        TEXTO sh_administrador_dni_cuit
+        TEXTOLARGO sh_facultades_representacion
+    }
+
+    FORM_DDJJ_REPRESENTANTE_SH {
+        ID id PK
+        ID id_version FK
+        TEXTO sh_ddjj_apellido_representante
+        TEXTO sh_ddjj_nombre_representante
+        TEXTO sh_ddjj_dni_cuit_representante
+        TEXTO sh_ddjj_domicilio_representante
+        TEXTO sh_ddjj_sociedad_representa
+        TEXTO sh_ddjj_sociedad_cuit
+        TEXTO sh_ddjj_caracter_invocado
+        FECHA sh_ddjj_fecha
+        TEXTOLARGO sh_ddjj_facultades
+        BOOLEANO sh_ddjj_firma_otorgantes
+        BOOLEANO sh_ddjj_certificacion_firma
+    }
+
+    DOCUMENTOS_VERSIONES ||--o| FORM_CONTRATO_PRIVADO_SH : "id=contrato_privado"
+    DOCUMENTOS_VERSIONES ||--o| FORM_DDJJ_REPRESENTANTE_SH : "id=ddjj_representante"
+
+  </div>
+</div>
+
+<div class="card">
+  <h2>📄 Campos por Documento — Monotributista</h2>
+  <div class="mermaid">
+erDiagram
+
+    DOCUMENTOS_VERSIONES {
+        ID id PK
+        ID id_documento FK
+        ENTERO numero_version
+        OPCIONES estado
+    }
+
+    FORM_DNI_FRENTE {
+        ID id PK
+        ID id_version FK
+        TEXTO dni_numero
+        TEXTO dni_apellido
+        TEXTO dni_nombre
+        TEXTO dni_sexo
+        TEXTO dni_nacionalidad
+        FECHA dni_fecha_nacimiento
+        TEXTO dni_ejemplar
+    }
+
+    FORM_DNI_DORSO {
+        ID id PK
+        ID id_version FK
+        TEXTO dni_domicilio
+        FECHA dni_fecha_emision
+        FECHA dni_fecha_vencimiento
+        TEXTO dni_tramite
+        BOOLEANO dni_vigente
+    }
+
+    FORM_DDJJ_PEP_MONOTRIBUTO {
+        ID id PK
+        ID id_version FK
+        FECHA ddjj_pep_fecha
+        TEXTOLARGO ddjj_pep_observaciones
+    }
+
+    DOCUMENTOS_VERSIONES ||--o| FORM_DNI_FRENTE : "id=dni_frente"
+    DOCUMENTOS_VERSIONES ||--o| FORM_DNI_DORSO : "id=dni_dorso"
+    DOCUMENTOS_VERSIONES ||--o| FORM_DDJJ_PEP_MONOTRIBUTO : "id=ddjj_pep_monotributo"
+
+  </div>
+</div>
+
+<div class="card">
+  <h2>📄 Campos por Documento — Sucesión / Sucesión Indivisa</h2>
+  <div class="mermaid">
+erDiagram
+
+    DOCUMENTOS_VERSIONES {
+        ID id PK
+        ID id_documento FK
+        ENTERO numero_version
+        OPCIONES estado
+    }
+
+    FORM_DECLARATORIA_HEREDEROS {
+        ID id PK
+        ID id_version FK
+        TEXTO suc_juzgado
+        TEXTO suc_expediente_numero
+        TEXTO suc_caratula
+        TEXTO suc_tipo_sucesion
+        TEXTO suc_estado_tramite
+        TEXTO suc_causante_apellido
+        TEXTO suc_causante_nombre
+        TEXTO suc_causante_dni
+        TEXTO suc_causante_cuit
+        FECHA suc_causante_fecha_fallecimiento
+    }
+
+    FORM_DESIGNACION_ADMIN_JUDICIAL {
+        ID id PK
+        ID id_version FK
+        BOOLEANO admin_existe
+        TEXTO admin_tipo
+        TEXTO admin_apellido
+        TEXTO admin_nombre
+        TEXTO admin_dni
+        TEXTO admin_cuit
+        TEXTO admin_relacion_sucesion
+        FECHA admin_fecha_designacion
+        TEXTO admin_juzgado
+        TEXTO admin_expediente
+        TEXTO admin_estado
+        TEXTO admin_acepto_cargo
+        FECHA admin_fecha_aceptacion
+        BOOLEANO admin_fac_firma
+        BOOLEANO admin_fac_cobros_pagos
+        BOOLEANO admin_fac_administracion
+        BOOLEANO admin_fac_cuentas
+        TEXTOLARGO admin_limitaciones
+    }
+
+    FORM_SOLICITUD_AGJ {
+        ID id PK
+        ID id_version FK
+        TEXTO agj_numero_expediente
+        FECHA agj_fecha_presentacion
+        TEXTO agj_estado
+        TEXTOLARGO agj_observaciones
+    }
+
+    FORM_FICHA_SUCESION {
+        ID id PK
+        ID id_version FK
+        TEXTO ficha_tipo_sucesion
+        TEXTO ficha_expediente
+        TEXTO ficha_juzgado
+        TEXTO ficha_estado_tramite
+        TEXTO ficha_tipo_firma
+        TEXTO ficha_documento_respaldo
+    }
+
+    FORM_DNI_HEREDEROS {
+        ID id PK
+        ID id_version FK
+        TEXTO dni_tipo_persona
+        TEXTO dni_numero
+        TEXTO dni_apellido
+        TEXTO dni_nombre
+        TEXTO dni_sexo
+        TEXTO dni_nacionalidad
+        FECHA dni_fecha_nacimiento
+        FECHA dni_fecha_emision
+        FECHA dni_fecha_vencimiento
+        TEXTO dni_domicilio
+        TEXTO dni_ejemplar
+        TEXTO dni_tramite
+        BOOLEANO dni_coincide_declaratoria
+        BOOLEANO dni_vigente
+        TEXTOLARGO dni_observaciones
+        TEXTO dni_vinculo_causante
+        BOOLEANO dni_es_firmante
+    }
+
+    DOCUMENTOS_VERSIONES ||--o| FORM_DECLARATORIA_HEREDEROS : "id=declaratoria_herederos"
+    DOCUMENTOS_VERSIONES ||--o| FORM_DESIGNACION_ADMIN_JUDICIAL : "id=designacion_administrador"
+    DOCUMENTOS_VERSIONES ||--o| FORM_SOLICITUD_AGJ : "id=solicitud_agj"
+    DOCUMENTOS_VERSIONES ||--o| FORM_FICHA_SUCESION : "id=ficha_sucesion"
+    DOCUMENTOS_VERSIONES ||--o| FORM_DNI_HEREDEROS : "id=dni_herederos"
+
+  </div>
+</div>
+
+<div class="card">
+  <h2>📄 Documentos Complementarios — Todos los tipos de sociedad</h2>
+  <div class="mermaid">
+erDiagram
+
+    DOCUMENTOS_VERSIONES {
+        ID id PK
+        ID id_documento FK
+        ENTERO numero_version
+        OPCIONES estado
+    }
+
+    FORM_DDJJ_BENEFICIARIOS_FINALES {
+        ID id PK
+        ID id_version FK
+        FECHA ddjj_bf_fecha
+        TEXTOLARGO ddjj_bf_observaciones
+    }
+
+    FORM_DDJJ_PEP {
+        ID id PK
+        ID id_version FK
+        FECHA ddjj_pep_fecha
+        TEXTOLARGO ddjj_pep_observaciones
+    }
+
+    DOCUMENTOS_VERSIONES ||--o| FORM_DDJJ_BENEFICIARIOS_FINALES : "id=ddjj_beneficiarios_finales"
+    DOCUMENTOS_VERSIONES ||--o| FORM_DDJJ_PEP : "id=ddjj_pep"
+
+  </div>
+</div>
+
+<div class="card">
+  <h2>📘 Referencia de tipos y claves</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <tr style="background:#1F3864;color:white;">
+      <th style="padding:8px 12px;text-align:left;">Abreviatura</th>
+      <th style="padding:8px 12px;text-align:left;">Significado</th>
+    </tr>
+    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>PK</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Clave Primaria — identifica únicamente cada registro</td></tr>
+    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>FK</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Clave Externa — referencia a otra tabla</td></tr>
+    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>UUID</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Identificador único universal (número generado automáticamente)</td></tr>
+    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>TEXTO</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Campo de texto corto</td></tr>
+    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>TEXTOLARGO</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Campo de texto largo (comentarios, motivos, observaciones)</td></tr>
+    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>BOOLEANO</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Verdadero / Falso (Sí / No)</td></tr>
+    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>FECHA</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Solo fecha (día/mes/año)</td></tr>
+    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>FECHAHORA</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Fecha y hora exacta</td></tr>
+    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>DECIMAL</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Número con decimales (porcentajes, montos)</td></tr>
+    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>OPCIONES</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Lista de valores fijos permitidos</td></tr>
+    <tr><td style="padding:7px 12px;"><strong>JSON</strong></td><td style="padding:7px 12px;">Objeto con múltiples campos (datos del formulario, resultado screening)</td></tr>
+  </table>
+</div>
+
+<div class="nota">
+  💡 <strong>Tip:</strong> Para exportar como PDF usá <strong>Ctrl + P → Guardar como PDF</strong>. Para editar online copiá el bloque <em>erDiagram</em> en <a href="https://mermaid.live" target="_blank">mermaid.live</a>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    er: { diagramPadding: 40, layoutDirection: 'TB', minEntityWidth: 120, minEntityHeight: 75, entityPadding: 15 }
+  });
+
+  function colorearCamposGET() {
+    document.querySelectorAll('.mermaid svg').forEach(function(svgEl) {
+      const allTexts = Array.from(svgEl.querySelectorAll('text'));
+
+      allTexts.forEach(function(textEl) {
+        if (textEl.textContent.trim() !== 'GET') return;
+
+        // getBoundingClientRect da posición real en pantalla, independiente de tspan/transform
+        const getY = textEl.getBoundingClientRect().top;
+
+        allTexts.forEach(function(t) {
+          const tY = t.getBoundingClientRect().top;
+          if (Math.abs(tY - getY) < 8) {
+            t.setAttribute('fill', '#E67E22');
+            t.setAttribute('font-weight', 'bold');
+          }
+        });
+      });
+    });
+  }
+
+  // Esperar a que Mermaid renderice y luego colorear
+  window.addEventListener('load', function() {
+    setTimeout(colorearCamposGET, 600);
+    setTimeout(colorearCamposGET, 1500);
+  });
+</script>
+</body>
+</html>
