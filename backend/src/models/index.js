@@ -43,8 +43,9 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('admin', 'analyst', 'supervisor', 'auditor'),
-    defaultValue: 'analyst',
+    type: DataTypes.ENUM('nivel_1', 'nivel_2', 'nivel_3'),
+    defaultValue: 'nivel_3',
+    comment: 'nivel_1=Oficial de Cumplimiento (ver+editar+aprobar+alta PSP), nivel_2=Analista Admin (ver+editar), nivel_3=Solo lectura',
   },
   isActive: {
     type: DataTypes.BOOLEAN,
@@ -208,6 +209,24 @@ const Client = sequelize.define('Client', {
   // Form data from frontend (stores all entity-specific fields like gestor_es_representante)
   formData: {
     type: DataTypes.JSON,
+  },
+  // Estado PSP — solo modificable por nivel_1
+  pspStatus: {
+    type: DataTypes.ENUM('pendiente', 'dado_de_alta', 'dado_de_alta_excepcion'),
+    defaultValue: 'pendiente',
+    comment: 'Estado del alta en PSP. Solo el Oficial de Cumplimiento (nivel_1) puede cambiarlo',
+  },
+  pspAltaBy: {
+    type: DataTypes.UUID,
+    comment: 'FK → usuarios. Quién dio el alta en PSP',
+  },
+  pspAltaAt: {
+    type: DataTypes.DATE,
+    comment: 'Fecha en que se dio el alta en PSP',
+  },
+  pspExcepcionMotivo: {
+    type: DataTypes.TEXT,
+    comment: 'Obligatorio cuando pspStatus = dado_de_alta_excepcion',
   },
 });
 
@@ -1039,6 +1058,166 @@ const ContractSignature = sequelize.define('ContractSignature', {
   },
 });
 
+// ─── DocumentoCliente — un registro por cada documento presentado por el cliente ───
+const DocumentoCliente = sequelize.define('DocumentoCliente', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  // Relaciones
+  clientId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    comment: 'FK → clientes',
+  },
+  // Tipo de entidad y documento
+  tipoEntidad: {
+    type: DataTypes.ENUM('monotributista', 'sa', 'srl', 'sh', 'sucesion'),
+    allowNull: false,
+  },
+  documentoId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    comment: 'ID del documento: estatuto / acta_autoridades / poder / etc.',
+  },
+  documentoNombre: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    comment: 'Nombre legible: "Estatuto Social", "Última Acta de Autoridades", etc.',
+  },
+  categoria: {
+    type: DataTypes.ENUM('identificacion', 'societario', 'pep', 'beneficiario_final', 'apoderado', 'otro'),
+    allowNull: false,
+  },
+  esObligatorio: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  esCondicional: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'True si el documento depende de una condición previa',
+  },
+  // Archivo subido
+  archivoNombre: {
+    type: DataTypes.STRING,
+  },
+  archivoPatch: {
+    type: DataTypes.STRING,
+  },
+  archivoMimeType: {
+    type: DataTypes.STRING,
+  },
+  archivoTamaño: {
+    type: DataTypes.INTEGER,
+    comment: 'Tamaño en bytes',
+  },
+  // Campos del formulario completados (todos los campos del doc en JSON)
+  datosFormulario: {
+    type: DataTypes.JSON,
+    comment: 'Campos completados por el usuario para este documento',
+  },
+  // Estado del documento
+  estado: {
+    type: DataTypes.ENUM('pendiente', 'aprobado', 'rechazado', 'observado'),
+    defaultValue: 'pendiente',
+  },
+  fechaVencimiento: {
+    type: DataTypes.DATEONLY,
+  },
+  estaVencido: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  // Auditoría de aprobación
+  aprobadoPor: {
+    type: DataTypes.UUID,
+    comment: 'FK → usuarios (nivel_1)',
+  },
+  aprobadoEn: {
+    type: DataTypes.DATE,
+  },
+  motivoRechazo: {
+    type: DataTypes.TEXT,
+    comment: 'Obligatorio cuando estado = rechazado',
+  },
+  observaciones: {
+    type: DataTypes.TEXT,
+  },
+});
+
+// ─── LogsAcciones — historial completo de cada acción sobre cliente o documento ───
+const LogsAcciones = sequelize.define('LogsAcciones', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  // Relaciones
+  clientId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    comment: 'FK → clientes',
+  },
+  documentoId: {
+    type: DataTypes.UUID,
+    comment: 'FK → documentos_cliente (nullable si la acción es sobre el cliente)',
+  },
+  usuarioId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    comment: 'FK → usuarios — quién realizó la acción',
+  },
+  // Qué pasó
+  tipoAccion: {
+    type: DataTypes.ENUM(
+      'alta_iniciada',
+      'documento_cargado',
+      'documento_aprobado',
+      'documento_rechazado',
+      'documento_observado',
+      'datos_modificados',
+      'cliente_aprobado',
+      'cliente_rechazado',
+      'cliente_dado_baja',
+      'cliente_bloqueado',
+      'alta_psp',                   // Solo nivel_1
+      'alta_psp_excepcion',         // Solo nivel_1, requiere motivo
+      'screening_realizado',
+      'riesgo_evaluado',
+      'solicitud_documentacion',
+      'pep_detectado',
+      'alerta_generada'
+    ),
+    allowNull: false,
+  },
+  // Cambio de estado
+  estadoAnterior: {
+    type: DataTypes.STRING,
+  },
+  estadoNuevo: {
+    type: DataTypes.STRING,
+  },
+  // Detalle
+  motivo: {
+    type: DataTypes.TEXT,
+    comment: 'Obligatorio en rechazos y alta_psp_excepcion',
+  },
+  observaciones: {
+    type: DataTypes.TEXT,
+  },
+  datosAdicionales: {
+    type: DataTypes.JSON,
+    comment: 'Info extra según el tipo de acción',
+  },
+  ipAddress: {
+    type: DataTypes.STRING,
+  },
+}, {
+  updatedAt: false, // Los logs no se modifican, solo se crean
+});
+
 // Associations
 User.hasMany(Client, { foreignKey: 'createdBy', as: 'createdClients' });
 Client.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
@@ -1095,6 +1274,20 @@ ContractSignature.belongsTo(Contract, { foreignKey: 'contractId' });
 // PepDeclaration associations
 Client.hasMany(PepDeclaration, { foreignKey: 'clientId', as: 'pepDeclarations' });
 PepDeclaration.belongsTo(Client, { foreignKey: 'clientId' });
+
+// DocumentoCliente associations
+Client.hasMany(DocumentoCliente, { foreignKey: 'clientId', as: 'documentosCliente' });
+DocumentoCliente.belongsTo(Client, { foreignKey: 'clientId' });
+User.hasMany(DocumentoCliente, { foreignKey: 'aprobadoPor', as: 'documentosAprobados' });
+DocumentoCliente.belongsTo(User, { foreignKey: 'aprobadoPor', as: 'aprobador' });
+
+// LogsAcciones associations
+Client.hasMany(LogsAcciones, { foreignKey: 'clientId', as: 'logsAcciones' });
+LogsAcciones.belongsTo(Client, { foreignKey: 'clientId' });
+DocumentoCliente.hasMany(LogsAcciones, { foreignKey: 'documentoId', as: 'logs' });
+LogsAcciones.belongsTo(DocumentoCliente, { foreignKey: 'documentoId', as: 'documento' });
+User.hasMany(LogsAcciones, { foreignKey: 'usuarioId', as: 'accionesRealizadas' });
+LogsAcciones.belongsTo(User, { foreignKey: 'usuarioId', as: 'usuario' });
 
 // InvestigationCase - Caso de investigación para operaciones inusuales
 const InvestigationCase = sequelize.define('InvestigationCase', {
@@ -1465,4 +1658,6 @@ module.exports = {
   SHData,
   SucesionData,
   MonotributistaData,
+  DocumentoCliente,
+  LogsAcciones,
 };

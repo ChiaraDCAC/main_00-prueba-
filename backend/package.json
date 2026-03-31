@@ -29,6 +29,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "docx": "^9.6.1",
     "nodemon": "^3.0.2",
     "sequelize-cli": "^6.6.2"
   }

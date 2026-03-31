@@ -21,8 +21,6 @@ import {
     Info,
     ExternalLink,
 } from 'lucide-react';
-import { clientService } from '../../services/clientService';
-import api from '../../services/api';
 
 const DOCUMENT_STATUS = {
     PENDING: 'pendiente',
@@ -66,57 +64,74 @@ const ClientReview = () => {
 
     const loadClientData = async () => {
         try {
-            const res = await clientService.getById(clientId);
-            const data = res.data?.data;
-            if (!data) throw new Error('Cliente no encontrado');
+            // Simulamos la carga de datos con identidad deCampo
+            const mockClient = {
+                id: clientId,
+                legalName: 'Estancias de Campo S.A.',
+                cuit: '30-71458962-4',
+                entityType: 'SA',
+                status: 'pendiente_revision',
+                submittedDate: '24/01/2026',
+                riskLevel: 'medio',
+            };
 
-            // Mapear cliente al formato que usa el componente
-            setClient({
-                id: data.id,
-                legalName: data.legalName || `${data.firstName || ''} ${data.lastName || ''}`.trim(),
-                cuit: data.cuit,
-                entityType: (data.legalForm || data.clientType || '').toUpperCase(),
-                status: data.status,
-                submittedDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('es-AR') : '-',
-                riskLevel: data.riskLevel || 'medio',
-            });
+            const mockDocuments = [
+                {
+                    id: 'doc1',
+                    type: 'contrato_social',
+                    name: 'Contrato Social y Estatutos',
+                    required: true,
+                    status: DOCUMENT_STATUS.PENDING,
+                    uploadDate: '24/01/2026',
+                    fileUrl: '#',
+                },
+                {
+                    id: 'doc2',
+                    type: 'acta_designacion',
+                    name: 'Acta de Designación de Autoridades',
+                    required: true,
+                    status: DOCUMENT_STATUS.PENDING,
+                    uploadDate: '24/01/2026',
+                    fileUrl: '#',
+                },
+                {
+                    id: 'doc3',
+                    type: 'libro_socios',
+                    name: 'Libro de Accionistas / Registro de Socios',
+                    required: true,
+                    status: DOCUMENT_STATUS.PENDING,
+                    uploadDate: '24/01/2026',
+                    fileUrl: '#',
+                },
+                {
+                    id: 'doc4',
+                    type: 'poder',
+                    name: 'Poder de Representación',
+                    required: false,
+                    status: DOCUMENT_STATUS.PENDING,
+                    uploadDate: '25/01/2026',
+                    fileUrl: '#',
+                },
+            ];
 
-            // Mapear documentos reales
-            const docs = (data.documents || []).map(doc => ({
-                id: doc.id,
-                type: doc.documentType,
-                name: doc.originalName || doc.documentType,
-                required: true,
-                status: DOCUMENT_STATUS.PENDING,
-                uploadDate: doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('es-AR') : '-',
-                fileUrl: doc.path ? `/uploads/${doc.path}` : null,
-            }));
-            setDocuments(docs);
+            const mockUsers = [
+                { id: 'u1', name: 'Ricardo Thompson', cuit: '20-15487963-2', email: 'r.thompson@estancias.com', role: 'Presidente' },
+                { id: 'u2', name: 'Sofía Martínez', cuit: '27-32158964-1', email: 's.martinez@estancias.com', role: 'Director Titular' },
+                { id: 'u3', name: 'Hernán Caselli', cuit: '20-22458963-5', email: 'h.caselli@estancias.com', role: 'Apoderado' },
+            ];
+
+            setClient(mockClient);
+            setDocuments(mockDocuments);
+            setRegisteredUsers(mockUsers);
+            setHasPEP(true);
 
             const initialStatuses = {};
-            docs.forEach(doc => { initialStatuses[doc.id] = doc.status; });
+            mockDocuments.forEach(doc => {
+                initialStatuses[doc.id] = doc.status;
+            });
             setDocumentStatuses(initialStatuses);
-
-            // Personas como firmantes: signatarios + autoridades + apoderados
-            const personas = [
-                ...(data.signatories || []).map(p => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, cuit: p.cuit || '', email: '', role: p.position || 'Firmante' })),
-                ...(data.authorities || []).map(p => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, cuit: p.cuit || '', email: '', role: p.position || 'Autoridad' })),
-                ...(data.attorneys || []).map(p => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, cuit: p.cuit || '', email: '', role: p.powerType || 'Apoderado' })),
-            ];
-            setRegisteredUsers(personas);
-
-            // Detectar PEP en cualquier persona vinculada
-            const allPersonas = [
-                ...(data.beneficialOwners || []),
-                ...(data.signatories || []),
-                ...(data.attorneys || []),
-                ...(data.authorities || []),
-            ];
-            setHasPEP(allPersonas.some(p => p.isPep));
-
         } catch (error) {
             toast.error('Error al cargar datos del cliente');
-            console.error(error);
         }
     };
 
@@ -178,18 +193,17 @@ const ClientReview = () => {
 
         setIsSubmitting(true);
         try {
-            await clientService.approve(clientId);
-            toast.success('Cliente aprobado correctamente.');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            toast.success('Documentación aceptada correctamente.');
             navigate('/clients');
         } catch (error) {
-            const msg = error?.response?.data?.message || 'Error al aprobar el cliente';
-            toast.error(msg);
+            toast.error('Error al procesar la aceptación');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleReject = async () => {
+    const handleReject = () => {
         if (!rejectComment.trim()) {
             toast.error('Debe ingresar un comentario para el rechazo');
             return;
@@ -200,13 +214,8 @@ const ClientReview = () => {
             setRejectionComments(prev => ({ ...prev, [selectedDoc.id]: rejectComment }));
             toast.warning('Documento rechazado');
         } else {
-            try {
-                await clientService.reject(clientId, rejectComment);
-                toast.error('Solicitud rechazada');
-                navigate('/clients');
-            } catch (error) {
-                toast.error('Error al rechazar el cliente');
-            }
+            toast.error('Solicitud rechazada globalmente');
+            navigate('/clients');
         }
 
         setShowRejectModal(false);

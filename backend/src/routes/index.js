@@ -12,7 +12,6 @@ const riskRoutes = require('./riskRoutes');
 const screeningRoutes = require('./screeningRoutes');
 const contractRoutes = require('./contractRoutes');
 const investigationCaseRoutes = require('./investigationCaseRoutes');
-const entityDataRoutes = require('./entityDataRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/clients', clientRoutes);
@@ -25,6 +24,5 @@ router.use('/risk', riskRoutes);
 router.use('/screening', screeningRoutes);
 router.use('/contracts', contractRoutes);
 router.use('/investigation-cases', investigationCaseRoutes);
-router.use('/entity-data', entityDataRoutes);
 
 module.exports = router;

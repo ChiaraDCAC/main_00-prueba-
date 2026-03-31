@@ -241,7 +241,7 @@ export const clientService = {
       console.info('[DEMO] Cliente creado:', newClient.id, newClient.legalName);
       return Promise.resolve({ data: { success: true, data: newClient } });
     }
-    return api.post('/clients/onboarding', data);
+    return api.post('/clients', data);
   },
   update: (id, data) => {
     if (DEMO_MODE) {

@@ -79,13 +79,6 @@ export const DOCUMENT_REQUIREMENTS = {
       // Nota: Los beneficiarios finales se gestionan en la sección "Personas de la Sociedad"
     },
     {
-      id: 'constancia_cuit',
-      name: 'Constancia de Inscripción ARCA',
-      description: 'Verificar que CUIT y Razón Social coincidan con el documento',
-      required: false,
-      fields: ['arca_razon_verificar', 'arca_cuit_verificar', 'arca_coincide', 'arca_observaciones'],
-    },
-    {
       id: 'poder_administracion',
       name: 'Poder General de Administración',
       description: 'Documento que acredita facultades del apoderado - Los datos del apoderado se cargan en Personas',
@@ -123,13 +116,6 @@ export const DOCUMENT_REQUIREMENTS = {
       required: true,
       fields: ['srl_total_cuotas', 'srl_fecha_ultima_anotacion'],
       // Nota: Los socios se gestionan en la sección "Personas de la Sociedad"
-    },
-    {
-      id: 'constancia_cuit_srl',
-      name: 'Constancia de Inscripción ARCA',
-      description: 'Verificar que CUIT y Razón Social coincidan con el documento',
-      required: false,
-      fields: ['arca_razon_verificar', 'arca_cuit_verificar', 'arca_coincide', 'arca_observaciones'],
     },
     {
       id: 'poder_srl',
