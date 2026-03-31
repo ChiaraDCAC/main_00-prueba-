@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flujos de Alta — Herramienta Compliance HC DCAC</title>
+  <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #0077B6;
+      --primary-dark: #005f92;
+      --secondary-color: #00B4D8;
+      --background-color: #EAF4FB;
+      --card-background: #ffffff;
+      --text-color: #1e293b;
+      --border-color: #cde8f5;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: var(--background-color);
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 2rem 2.5rem;
+      border-radius: 14px;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 25px rgba(0, 119, 182, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .header .subtitle { font-size: 1rem; opacity: 0.9; }
+    .header .badge {
+      background: rgba(255,255,255,0.2);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 6px 18px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: sticky;
+      top: 2rem;
+      box-shadow: 0 2px 10px rgba(0,119,182,0.07);
+    }
+    .toc h3 { color: var(--primary-color); margin-bottom: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .toc ul { list-style: none; }
+    .toc li { margin-bottom: 0.4rem; }
+    .toc a {
+      color: var(--text-color);
+      text-decoration: none;
+      font-size: 0.88rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: block;
+      transition: all 0.2s;
+    }
+    .toc a:hover { background: #E0F0FA; color: var(--primary-color); }
+    .toc .toc-sub { padding-left: 1rem; }
+    .toc .toc-sub a { font-size: 0.82rem; color: #64748b; }
+    .toc .toc-sub a:hover { color: var(--primary-color); }
+
+    /* CARDS */
+    .flow-section {
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,119,182,0.07);
+      border-top: 3px solid var(--primary-color);
+    }
+    .flow-header {
+      background: linear-gradient(90deg, #E0F0FA, #f0f8ff);
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .paso-badge {
+      background: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .flow-header h2 { color: var(--primary-color); font-size: 1.3rem; font-weight: 600; }
+    .flow-header p { color: #64748b; font-size: 0.9rem; margin-top: 2px; }
+    .flow-content { padding: 2rem; }
+
+    /* SUBSECTIONS */
+    .flow-subsection { margin-bottom: 2rem; }
+    .flow-subsection h3 {
+      color: var(--text-color);
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--secondary-color);
+    }
+    .flow-subsection h4 {
+      color: var(--primary-color);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+      margin-top: 1.2rem;
+    }
+
+    /* LISTAS */
+    .flow-list { list-style: none; padding-left: 0; }
+    .flow-list li {
+      background: #F0F8FF;
+      margin-bottom: 0.4rem;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      border-left: 4px solid var(--primary-color);
+      font-size: 0.9rem;
+    }
+    .flow-list li strong { color: var(--primary-color); }
+
+    .field-list { list-style: none; padding-left: 0; }
+    .field-list li {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.88rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+    }
+    .field-list li:last-child { border-bottom: none; }
+    .field-name { font-weight: 600; color: var(--text-color); min-width: 200px; }
+    .field-req { color: var(--danger-color); font-size: 0.75rem; font-weight: 700; }
+    .field-opt { color: #94a3b8; font-size: 0.75rem; }
+    .field-cond { color: var(--warning-color); font-size: 0.75rem; font-weight: 600; }
+
+    /* MERMAID */
+    .mermaid-container {
+      background: #fafeff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    /* ESTADOS */
+    .status-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
+    .status-pill {
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .s-pending  { background: #fef3c7; color: #92400e; }
+    .s-uploaded { background: #dbeafe; color: #1e40af; }
+    .s-approved { background: #dcfce7; color: #166534; }
+    .s-rejected { background: #fee2e2; color: #991b1b; }
+    .s-partial  { background: #f3e8ff; color: #6b21a8; }
+
+    /* NOTAS */
+    .note-box {
+      background: #fef3c7;
+      border-left: 4px solid var(--warning-color);
+      padding: 0.9rem 1.1rem;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      margin: 1rem 0;
+    }
+    .note-box strong { color: #92400e; }
+
+    .info-box {
+      background: #E0F0FA;
+      border-left: 4px solid var(--primary-color);
+      padding: 0.9rem 1.1rem;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      margin: 1rem 0;
+    }
+    .info-box strong { color: var(--primary-color); }
+
+    /* TABLA */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 1rem 0; }
+    .data-table th { background: var(--primary-color); color: white; padding: 8px 12px; text-align: left; }
+    .data-table td { padding: 7px 12px; border-bottom: 1px solid #e2e8f0; }
+    .data-table tr:nth-child(even) td { background: #f8fafc; }
+
+    /* TIPO ENTIDAD TABS */
+    .entity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .entity-card {
+      background: #F0F8FF;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .entity-card h4 { color: var(--primary-color); font-size: 0.9rem; margin-bottom: 0.6rem; }
+    .entity-card ul { list-style: none; }
+    .entity-card ul li { font-size: 0.82rem; padding: 2px 0; }
+    .entity-card ul li::before { content: "• "; color: var(--secondary-color); }
+    .entity-card ul li.req::before { color: var(--danger-color); content: "* "; }
+    .entity-card ul li.cond::before { color: var(--warning-color); content: "◦ "; }
+
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .header { flex-direction: column; gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <h1>Flujos de Alta — Herramienta Compliance</h1>
+      <p class="subtitle">HC DCAC · Proceso completo de alta de sociedad/cliente PSP</p>
+    </div>
+    <div class="badge">INTERNO · USO TÉCNICO</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- TOC -->
+    <aside>
+      <div class="toc">
+        <h3>Contenido</h3>
+        <ul>
+          <li><a href="#overview">Visión General</a></li>
+          <li><a href="#paso1">Paso 1 — Documentación</a></li>
+          <ul class="toc-sub">
+            <li><a href="#docs-estados">Estados de documento</a></li>
+            <li><a href="#docs-rechazo">Flujo de rechazo</a></li>
+            <li><a href="#docs-por-entidad">Docs por tipo entidad</a></li>
+          </ul>
+          <li><a href="#paso2">Paso 2 — Datos Entidad</a></li>
+          <ul class="toc-sub">
+            <li><a href="#datos-sa">SA</a></li>
+            <li><a href="#datos-srl">SRL</a></li>
+            <li><a href="#datos-sh">SH</a></li>
+            <li><a href="#datos-sucesion">Sucesión</a></li>
+            <li><a href="#datos-mono">Monotributista</a></li>
+            <li><a href="#personas">Personas y roles</a></li>
+          </ul>
+          <li><a href="#paso3">Paso 3 — Riesgo</a></li>
+          <li><a href="#paso4">Paso 4 — Alta Final</a></li>
+          <li><a href="#excepciones">Excepciones y borradores</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main>
+
+      <!-- VISIÓN GENERAL -->
+      <div class="flow-section" id="overview">
+        <div class="flow-header">
+          <div>
+            <h2>Visión General del Flujo de Alta</h2>
+            <p>El alta de una sociedad sigue 4 pasos secuenciales. Se puede guardar como borrador en cualquier momento.</p>
+          </div>
+        </div>
+        <div class="flow-content">
+          <div class="mermaid-container">
+            <div class="mermaid">
+flowchart LR
+    A([Inicio Alta]) --> B[Paso 1\nDocumentación]
+    B --> C{Docs\nrequeridos\naprobados?}
+    C -- No --> B
+    C -- Sí --> D[Paso 2\nDatos Entidad]
+    D --> E[Paso 3\nRiesgo]
+    E --> F[Paso 4\nAlta Final]
+    F --> G{Todo\ncompleto?}
+    G -- Sí --> H([Alta Aprobada\n✅])
+    G -- No / Excepción --> I([Borrador\nPendiente\n⏳])
+
+    style A fill:#0077B6,color:#fff
+    style H fill:#10b981,color:#fff
+    style I fill:#f59e0b,color:#fff
+            </div>
+          </div>
+
+          <div class="info-box">
+            <strong>Tipos de entidad soportados:</strong> Sociedad Anónima (SA) · Sociedad de Responsabilidad Limitada (SRL) · Sociedad de Hecho (SH) · Sucesión Indivisa · Monotributista
+          </div>
+
+          <table class="data-table">
+            <thead><tr><th>Paso</th><th>Nombre</th><th>Acción principal</th><th>Puede avanzar si...</th></tr></thead>
+            <tbody>
+              <tr><td><strong>1</strong></td><td>Documentación</td><td>Cargar, revisar, aprobar o rechazar documentos</td><td>Todos los docs requeridos están aprobados</td></tr>
+              <tr><td><strong>2</strong></td><td>Datos de la Entidad</td><td>Completar formulario según tipo de sociedad + personas</td><td>Campos obligatorios completos</td></tr>
+              <tr><td><strong>3</strong></td><td>Riesgo</td><td>Asignar nivel de riesgo, ventas estimadas, NOSIS</td><td>Nivel de riesgo asignado</td></tr>
+              <tr><td><strong>4</strong></td><td>Alta Final</td><td>Chequear todo y confirmar el alta</td><td>Decisión del analista (alta o borrador)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PASO 1 -->
+      <div class="flow-section" id="paso1">
+        <div class="flow-header">
+          <div class="paso-badge">1</div>
+          <div>
+            <h2>Paso 1 — Revisión de Documentación</h2>
+            <p>El analista revisa los documentos cargados por el cliente y los aprueba o rechaza uno a uno.</p>
+          </div>
+        </div>
+        <div class="flow-content">
+
+          <div class="flow-subsection" id="docs-estados">
+            <h3>Estados de un documento</h3>
+            <div class="status-row">
+              <span class="status-pill s-pending">pendiente</span>
+              <span class="status-pill s-uploaded">cargado</span>
+              <span class="status-pill s-partial">parcial</span>
+              <span class="status-pill s-approved">aprobado</span>
+              <span class="status-pill s-rejected">rechazado</span>
+            </div>
+            <div class="mermaid-container">
+              <div class="mermaid">
+flowchart LR
+    P([pendiente]) --> U([cargado])
+    U --> R([aprobado ✅])
+    U --> X([rechazado ❌])
+    X --> U2([re-cargado])
+    U2 --> R
+    U2 --> X2([rechazado ❌])
+
+    style R fill:#10b981,color:#fff
+    style X fill:#ef4444,color:#fff
+    style X2 fill:#ef4444,color:#fff
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-subsection" id="docs-rechazo">
+            <h3>Flujo de rechazo de documento</h3>
+            <ul class="flow-list">
+              <li><strong>1.</strong> El analista visualiza el documento en el visor PDF.</li>
+              <li><strong>2.</strong> Click en "Rechazar" → abre modal de rechazo.</li>
+              <li><strong>3.</strong> El analista ingresa el motivo (campo obligatorio).</li>
+              <li><strong>4.</strong> El documento queda en estado <span class="status-pill s-rejected" style="display:inline;padding:2px 8px;font-size:0.8rem;">rechazado</span> con el motivo guardado.</li>
+              <li><strong>5.</strong> Se registra en LOGS_ACCIONES con tipo_accion = <em>documento_rechazado</em>.</li>
+              <li><strong>6.</strong> Se registra tipo_accion = <em>documento_re_solicitado</em> para pedir la re-carga.</li>
+              <li><strong>7.</strong> El cliente vuelve a cargar el documento → nueva versión en DOCUMENTOS_VERSIONES.</li>
+            </ul>
+            <div class="note-box">
+              <strong>Importante:</strong> No se puede avanzar al Paso 2 si hay documentos obligatorios sin aprobar. Los documentos opcionales o condicionales no bloquean el avance.
+            </div>
+          </div>
+
+          <div class="flow-subsection" id="docs-por-entidad">
+            <h3>Documentos requeridos por tipo de entidad</h3>
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">* Obligatorio &nbsp;·&nbsp; ◦ Condicional &nbsp;·&nbsp; sin marca = Opcional</p>
+
+            <div class="entity-grid">
+              <div class="entity-card">
+                <h4>SA — Sociedad Anónima</h4>
+                <ul>
+                  <li class="req">Estatuto Social</li>
+                  <li class="req">Acta Designación Autoridades</li>
+                  <li class="req">Libro Registro Accionistas</li>
+                  <li class="req">Poder General de Administración</li>
+                </ul>
+              </div>
+              <div class="entity-card">
+                <h4>SRL — Soc. Resp. Limitada</h4>
+                <ul>
+                  <li class="req">Contrato Social</li>
+                  <li class="req">Acta Asamblea / Reunión de Socios</li>
+                  <li class="req">Libro Registro de Socios</li>
+                  <li class="cond">Poder General de Administración</li>
+                </ul>
+              </div>
+              <div class="entity-card">
+                <h4>SH — Sociedad de Hecho</h4>
+                <ul>
+                  <li class="req">Contrato Social Privado</li>
+                  <li class="req">DNI de todos los socios</li>
+                  <li class="cond">DDJJ Designación Representante</li>
+                </ul>
+              </div>
+              <div class="entity-card">
+                <h4>Sucesión Indivisa</h4>
+                <ul>
+                  <li class="req">Declaratoria de Herederos</li>
+                  <li class="req">Ficha de Sucesión (Compliance)</li>
+                  <li class="req">DNI herederos / administrador</li>
+                  <li class="cond">Designación Administrador Judicial</li>
+                  <li>Solicitud AGJ</li>
+                </ul>
+              </div>
+              <div class="entity-card">
+                <h4>Monotributista</h4>
+                <ul>
+                  <li class="req">DNI Frente</li>
+                  <li class="req">DNI Dorso</li>
+                  <li class="req">DDJJ PEP</li>
+                </ul>
+              </div>
+              <div class="entity-card">
+                <h4>Complementarios (todos)</h4>
+                <ul>
+                  <li class="req">DDJJ Beneficiarios Finales</li>
+                  <li class="req">DDJJ PEP (por cada persona)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PASO 2 -->
+      <div class="flow-section" id="paso2">
+        <div class="flow-header">
+          <div class="paso-badge">2</div>
+          <div>
+            <h2>Paso 2 — Datos de la Entidad</h2>
+            <p>Se completan los datos específicos de la sociedad según su tipo, más la gestión de personas vinculadas.</p>
+          </div>
+        </div>
+        <div class="flow-content">
+
+          <div class="info-box">
+            <strong>Dos tabs:</strong> "Documentos" (formularios con datos extraídos de cada documento) y "Personas" (personas vinculadas con sus roles).
+          </div>
+
+          <!-- SA -->
+          <div class="flow-subsection" id="datos-sa">
+            <h3>SA — Sociedad Anónima</h3>
+
+            <h4>Datos de la Sociedad</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Razón Social</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">CUIT</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Fecha de Constitución</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Número de Inscripción IGJ</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Domicilio Legal</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Domicilio Real</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Objeto Social</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Capital Social ($)</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Duración de la Sociedad</span><span class="field-opt">opcional</span></li>
+              <li><span class="field-name">Fecha Cierre de Ejercicio</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+
+            <h4>Autoridades</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Presidente</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">CUIT Presidente</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Vicepresidente</span><span class="field-opt">opcional</span></li>
+              <li><span class="field-name">Directores</span><span class="field-opt">opcional</span></li>
+              <li><span class="field-name">Síndico</span><span class="field-opt">opcional</span></li>
+              <li><span class="field-name">Vigencia del Mandato</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+
+            <h4>Composición Accionaria</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Cantidad Total de Acciones</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Valor Nominal por Acción ($)</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Tipo de Acciones</span><span class="field-req">OBLIGATORIO</span> <span style="font-size:0.8rem;color:#64748b;">Nominativas no endosables / Nominativas endosables / Escriturales</span></li>
+              <li><span class="field-name">Accionistas (nombre, CUIT, cantidad, %)</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+          </div>
+
+          <!-- SRL -->
+          <div class="flow-subsection" id="datos-srl">
+            <h3>SRL — Sociedad de Responsabilidad Limitada</h3>
+
+            <h4>Datos de la Sociedad</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Razón Social</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">CUIT</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Fecha de Constitución</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Número de Inscripción IGJ</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Domicilio Legal</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Domicilio Real</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Objeto Social</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Capital Social ($)</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+
+            <h4>Gerencia</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Gerentes (nombre, CUIT)</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Tipo de Gerencia</span><span class="field-req">OBLIGATORIO</span> <span style="font-size:0.8rem;color:#64748b;">Individual / Colegiada</span></li>
+              <li><span class="field-name">Tipo de Firma</span><span class="field-req">OBLIGATORIO</span> <span style="font-size:0.8rem;color:#64748b;">Indistinta / Conjunta</span></li>
+            </ul>
+
+            <h4>Composición Societaria</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Cantidad Total de Cuotas</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Valor por Cuota ($)</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Socios (nombre, CUIT, cuotas, %)</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+          </div>
+
+          <!-- SH -->
+          <div class="flow-subsection" id="datos-sh">
+            <h3>SH — Sociedad de Hecho</h3>
+
+            <h4>Datos de la Sociedad de Hecho</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Denominación</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Fecha de Inicio de Actividades</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Domicilio</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Actividad Principal</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Objeto Social</span><span class="field-opt">opcional</span></li>
+            </ul>
+
+            <h4>Socios (Beneficiarios Finales)</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Socios (nombre, DNI, CUIT, %)</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Cantidad de Socios</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+            <div class="note-box"><strong>Nota UIF:</strong> Todos los socios de una SH son responsables solidarios y se consideran Beneficiarios Finales.</div>
+
+            <h4>Representación</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Representante Designado</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">DNI / CUIT Representante</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">¿El firmante es el representante?</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">¿Tiene apoderado con facultades?</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+          </div>
+
+          <!-- SUCESIÓN -->
+          <div class="flow-subsection" id="datos-sucesion">
+            <h3>Sucesión Indivisa</h3>
+
+            <h4>Datos de la Sucesión</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Nombre del Causante</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">CUIT del Causante</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Fecha de Fallecimiento</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Juzgado Interviniente</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Número de Expediente</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Fecha de Declaratoria de Herederos</span><span class="field-opt">opcional</span></li>
+            </ul>
+
+            <h4>Herederos y Administrador</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Herederos (nombre, DNI, vínculo, %)</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Administrador de la Sucesión</span><span class="field-opt">opcional</span></li>
+              <li><span class="field-name">CUIT Administrador</span><span class="field-cond">CONDICIONAL</span></li>
+            </ul>
+          </div>
+
+          <!-- MONOTRIBUTISTA -->
+          <div class="flow-subsection" id="datos-mono">
+            <h3>Monotributista</h3>
+
+            <h4>Datos Personales</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Apellido / Nombre</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">DNI / CUIT</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Fecha de Nacimiento</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Nacionalidad</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Estado Civil</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+
+            <h4>Contacto</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Domicilio Real / Fiscal</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Teléfono / Email</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+
+            <h4>Datos Monotributo</h4>
+            <ul class="field-list">
+              <li><span class="field-name">Categoría (A-K)</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Actividad Principal</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Fecha de Inscripción</span><span class="field-req">OBLIGATORIO</span></li>
+              <li><span class="field-name">Ingresos Brutos Anuales ($)</span><span class="field-req">OBLIGATORIO</span></li>
+            </ul>
+          </div>
+
+          <!-- PERSONAS -->
+          <div class="flow-subsection" id="personas">
+            <h3>Tab "Personas" — Personas vinculadas a la sociedad</h3>
+            <p style="font-size:0.88rem;margin-bottom:1rem;">Se vinculan las personas que integran la sociedad. Cada persona puede tener uno o más roles.</p>
+
+            <h4>Origen de la persona — dos caminos</h4>
+            <div class="mermaid-container">
+              <div class="mermaid">
+flowchart TD
+    A[Agregar persona] --> B{¿Ya existe\nen HC DCAC?}
+    B -- Sí --> C[Buscar en directorio\nHC DCAC]
+    B -- No --> D[Crear persona nueva]
+    C --> E([UUID existente\nse reutiliza — GET\nnombre, apellido, email,\nteléfono vienen del sistema])
+    D --> F([Se genera nuevo UUID — POST\nse cargan todos los datos\nen la herramienta])
+    E --> G[Asignar roles y\ndatos adicionales]
+    F --> G
+
+    style E fill:#E67E22,color:#fff
+    style F fill:#0077B6,color:#fff
+              </div>
+            </div>
+
+            <div class="info-box">
+              <strong>Persona existente (GET):</strong> Su UUID ya existe en el sistema de producción HC DCAC. Los campos nombre, apellido, email y teléfono vienen del directorio y no se modifican acá.<br><br>
+              <strong>Persona nueva (POST):</strong> Se genera un nuevo UUID. Todos sus datos se cargan directamente en la herramienta de compliance.
+            </div>
+
+            <div class="note-box">
+              <strong>En el DER:</strong> Esto corresponde al campo <code>UUID id PK "GET si existe / POST si nuevo"</code> en la tabla USUARIOS_SOCIEDAD.
+            </div>
+
+            <h4>Roles asignables</h4>
+            <table class="data-table">
+              <thead><tr><th>Rol</th><th>Aplica a</th><th>Campos adicionales</th></tr></thead>
+              <tbody>
+                <tr><td>Firmante</td><td>Todos los tipos</td><td>Tipo firma, alcance actos, límite económico</td></tr>
+                <tr><td>Beneficiario Final</td><td>Todos (obligatorio si &gt;20%)</td><td>% participación</td></tr>
+                <tr><td>PEP</td><td>Todos los tipos</td><td>Cargo público, jurisdicción</td></tr>
+                <tr><td>Autoridad</td><td>SA / SRL</td><td>Cargo, vigencia mandato</td></tr>
+                <tr><td>Apoderado</td><td>SA / SRL / SH</td><td>Fecha poder, vencimiento</td></tr>
+                <tr><td>Accionista / Socio</td><td>SA / SRL / SH</td><td>% participación, cuotas</td></tr>
+                <tr><td>Heredero</td><td>Sucesión</td><td>Vínculo, % participación</td></tr>
+                <tr><td>Administrador Judicial</td><td>Sucesión</td><td>Fecha designación, juzgado</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PASO 3 -->
+      <div class="flow-section" id="paso3">
+        <div class="flow-header">
+          <div class="paso-badge">3</div>
+          <div>
+            <h2>Paso 3 — Riesgo y Perfil Transaccional</h2>
+            <p>El analista evalúa el riesgo del cliente y completa el perfil transaccional.</p>
+          </div>
+        </div>
+        <div class="flow-content">
+
+          <div class="flow-subsection">
+            <h3>Campos del formulario de riesgo</h3>
+            <ul class="field-list">
+              <li><span class="field-name">Resultado NOSIS</span><span class="field-req">OBLIGATORIO</span> <span style="font-size:0.8rem;color:#64748b;">Texto libre con resultado de la búsqueda</span></li>
+              <li><span class="field-name">¿Tiene antecedentes?</span><span class="field-req">OBLIGATORIO</span> <span style="font-size:0.8rem;color:#64748b;">Sí / No</span></li>
+              <li><span class="field-name">Archivo NOSIS</span><span class="field-opt">opcional</span> <span style="font-size:0.8rem;color:#64748b;">Upload de PDF con resultado completo</span></li>
+              <li><span class="field-name">Nivel NSE</span><span class="field-req">OBLIGATORIO</span> <span style="font-size:0.8rem;color:#64748b;">Clasificación socioeconómica</span></li>
+              <li><span class="field-name">Ventas Netas Estimadas Anuales ($)</span><span class="field-req">OBLIGATORIO</span> <span style="font-size:0.8rem;color:#64748b;">Estimación del volumen operativo del cliente</span></li>
+              <li><span class="field-name">Nivel de Riesgo</span><span class="field-req">OBLIGATORIO — asignación manual</span></li>
+            </ul>
+
+            <h4>Niveles de riesgo</h4>
+            <div class="status-row">
+              <span class="status-pill s-approved">Bajo</span>
+              <span class="status-pill s-pending">Medio</span>
+              <span class="status-pill s-rejected">Alto</span>
+            </div>
+
+            <div class="note-box">
+              <strong>Asignación manual:</strong> El nivel de riesgo lo asigna el analista basándose en la información recopilada (NOSIS, antecedentes, tipo de actividad, volumen de ventas estimado). No es automático.
+            </div>
+
+            <div class="mermaid-container">
+              <div class="mermaid">
+flowchart TD
+    A[Analista evalúa] --> B{¿Antecedentes\no alertas?}
+    B -- Sí --> C[Considerar\nRiesgo Alto]
+    B -- No --> D{Volumen\nestimado}
+    D -- Alto --> E[Considerar\nRiesgo Medio/Alto]
+    D -- Normal --> F[Considerar\nRiesgo Bajo/Medio]
+    C --> G[Asignación\nManual del Analista]
+    E --> G
+    F --> G
+    G --> H([Nivel de Riesgo\nAsignado])
+
+    style H fill:#0077B6,color:#fff
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PASO 4 -->
+      <div class="flow-section" id="paso4">
+        <div class="flow-header">
+          <div class="paso-badge">4</div>
+          <div>
+            <h2>Paso 4 — Alta Final (Chequeo y Confirmación)</h2>
+            <p>El analista revisa toda la información cargada y decide si da de alta o guarda como borrador.</p>
+          </div>
+        </div>
+        <div class="flow-content">
+
+          <div class="flow-subsection">
+            <h3>Chequeo previo al alta</h3>
+            <ul class="flow-list">
+              <li><strong>Documentación:</strong> Todos los docs obligatorios aprobados</li>
+              <li><strong>Datos de entidad:</strong> Formulario completo según tipo de sociedad</li>
+              <li><strong>Personas:</strong> Al menos una persona vinculada con roles asignados</li>
+              <li><strong>Riesgo:</strong> Nivel de riesgo asignado y ventas estimadas cargadas</li>
+            </ul>
+          </div>
+
+          <div class="flow-subsection">
+            <h3>Decisión final</h3>
+            <div class="mermaid-container">
+              <div class="mermaid">
+flowchart TD
+    A[Analista revisa\ntoda la información] --> B{¿Todo\ncompleto?}
+    B -- Sí --> C[Dar de Alta Final]
+    B -- No / Excepción --> D[Guardar Borrador]
+    C --> E([Status: aprobado ✅\nSe registra alta_completada])
+    D --> F([Status: pendiente_documentacion ⏳\nSe registra alta_guardada_borrador])
+    E --> G{¿Habilitar CVU?}
+    G -- Sí --> H([CVU Habilitado\ncvu_habilitado en LOGS])
+    G -- Excepción --> I([CVU por Excepción\ncvu_excepcion en LOGS])
+    G -- No todavía --> J([Alta PSP sin CVU\nalta_psp en LOGS])
+
+    style E fill:#10b981,color:#fff
+    style F fill:#f59e0b,color:#fff
+    style H fill:#0077B6,color:#fff
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-subsection" id="excepciones">
+            <h3>Excepciones y casos especiales</h3>
+            <table class="data-table">
+              <thead><tr><th>Caso</th><th>Acción</th><th>Log registrado</th></tr></thead>
+              <tbody>
+                <tr><td>Alta sin documentación completa</td><td>Guardar borrador como pendiente</td><td>alta_guardada_borrador</td></tr>
+                <tr><td>Avanzar con docs pendientes</td><td>El analista habilita el avance como excepción</td><td>alta_avanzada_pendiente</td></tr>
+                <tr><td>Alta por excepción sin docs completos</td><td>Oficial de Cumplimiento aprueba excepción</td><td>alta_excepcion_docs</td></tr>
+                <tr><td>Alta PSP por excepción</td><td>Aprobación especial del alta PSP</td><td>alta_psp_excepcion</td></tr>
+                <tr><td>CVU por excepción</td><td>Habilitación de CVU en casos especiales</td><td>cvu_excepcion</td></tr>
+                <tr><td>Bloqueo de CVU</td><td>Se bloquea la cuenta operativa del cliente</td><td>cvu_bloqueado</td></tr>
+              </tbody>
+            </table>
+
+            <div class="info-box">
+              <strong>Comentarios:</strong> En cualquier punto del proceso se puede dejar un comentario libre en el historial (tipo_accion = <em>comentario</em>). No cambia ningún estado pero queda registrado en el log de la sociedad.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    flowchart: { curve: 'basis', padding: 20 },
+    themeVariables: {
+      primaryColor: '#0077B6',
+      primaryTextColor: '#ffffff',
+      primaryBorderColor: '#005f92',
+      lineColor: '#00B4D8',
+      secondaryColor: '#E0F0FA',
+      tertiaryColor: '#f0f8ff'
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flujos de Usuario - Funcionalidad Clima dCaC</title>
+    <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .metadata {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .metadata table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .metadata th, .metadata td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .metadata th {
+            font-weight: 600;
+            color: var(--secondary-color);
+            width: 25%;
+        }
+
+        .flow-section {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .flow-header {
+            background: linear-gradient(90deg, #f8fafc, #e2e8f0);
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .flow-header h2 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-content {
+            padding: 2rem;
+        }
+
+        .flow-subsection {
+            margin-bottom: 2rem;
+        }
+
+        .flow-subsection h3 {
+            color: var(--text-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .flow-subsection h4 {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .flow-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .flow-list li {
+            background: #f1f5f9;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .flow-list li strong {
+            color: var(--primary-color);
+        }
+
+        .mermaid-container {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .notifications-table, .tracking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .notifications-table th, .notifications-table td,
+        .tracking-table th, .tracking-table td {
+            text-align: left;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .notifications-table th, .tracking-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .notifications-table tr:nth-child(even),
+        .tracking-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .toc {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .toc h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+
+        .toc a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--primary-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .toc {
+                position: static;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            body {
+                padding: 1rem 0.5rem;
+            }
+        }
+
+        .emoji {
+            font-size: 1.2em;
+        }
+
+        .highlight-box {
+            background: linear-gradient(90deg, #dbeafe, #bfdbfe);
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .highlight-box h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .important-note {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .important-note strong {
+            color: var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌦️ Flujos de Usuario</h1>
+            <div class="subtitle">Funcionalidad Clima para Aplicación Ganadera dCaC</div>
+        </div>
+
+        <div class="important-note">
+            <strong>⚠️ CAMBIO IMPORTANTE:</strong> No hay fuente de datos principal. Todas las fuentes (AccuWeather, YR, Weather Channel, Google Weather, Tomorrow.io) se consultan en paralelo. En la home se muestra el promedio, en el detalle se muestran todas las fuentes simultáneamente.
+        </div>
+
+        <div class="metadata">
+            <table>
+                <tr><th>Proyecto</th><td>Funcionalidad Clima dCaC</td></tr>
+                <tr><th>Autor</th><td>Claude Code</td></tr>
+                <tr><th>Fecha</th><td>24 de Febrero, 2026</td></tr>
+                <tr><th>Basado en</th><td>PRD_Funcionalidad_Clima_dCaC.md</td></tr>
+                <tr><th>Status</th><td><span class="status-indicator status-success">✅ Actualizado - Sin fuente principal</span></td></tr>
+            </table>
+        </div>
+
+        <div class="grid">
+            <div class="toc">
+                <h3>📋 Índice</h3>
+                <ul>
+                    <li><a href="#flujo1">1. Acceso y Navegación</a></li>
+                    <li><a href="#flujo2">2. Vista Detalle Multi-fuente</a></li>
+                    <li><a href="#flujo3">3. Vista en Mapa</a></li>
+                    <li><a href="#flujo4">4. Configuración Notificaciones</a></li>
+                    <li><a href="#flujo5">5. Selección Manual</a></li>
+                    <li><a href="#flujo6">6. Gestión Coordenadas</a></li>
+                    <li><a href="#flujo7">7. Agregar Establecimiento</a></li>
+                    <li><a href="#flujo8">8. Error y Contingencia</a></li>
+                    <li><a href="#notificaciones">📱 Notificaciones</a></li>
+                    <li><a href="#tracking">📊 Tracking</a></li>
+                </ul>
+            </div>
+
+            <div class="main-content">
+                <div class="flow-section" id="flujo1">
+                    <div class="flow-header">
+                        <h2>1. 🏠 FLUJO PRINCIPAL: Acceso y Navegación</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="highlight-box">
+                            <h4>🔑 Arquitectura de Datos</h4>
+                            <p><strong>Todas las APIs se consultan en paralelo</strong> en cada solicitud. En la home se muestra el <strong>promedio calculado</strong> de todas las fuentes disponibles. Las fuentes que fallen se excluyen del cálculo sin afectar el funcionamiento.</p>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>📍 Puntos de Entrada</h3>
+                            <ul class="flow-list">
+                                <li>Home principal de la aplicación → <strong>Footer "Clima"</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>👤 Actores</h3>
+                            <ul class="flow-list">
+                                <li><strong>Usuario ganadero</strong> con establecimientos cargados</li>
+                                <li><strong>Usuario ganadero</strong> sin establecimientos</li>
+                                <li><strong>Usuario nuevo</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🛤️ Flujo Principal (Happy Path)</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Usuario en Home Principal]) --> B[Click en Footer: Clima]
+                                        B --> C{¿Tiene establecimientos?}
+                                        C -->|Sí| D[Mostrar Home Clima]
+                                        D --> E[[Consultar 5 APIs en paralelo]]
+                                        E --> F[Mostrar Establecimiento Principal]
+                                        F --> G[Datos PROMEDIO: temp, condición, viento, lluvia]
+                                        G --> H[Mostrar timestamp actualización]
+                                        H --> I[Swipe horizontal entre establecimientos]
+                                        I --> J[Tap en establecimiento específico]
+                                        J --> K[Ver Detalle: TODAS las fuentes + promedio]
+                                        K --> L([Fin: Usuario ve tabla comparación])
+                                        
+                                        C -->|No| M[Mostrar mensaje sin establecimientos]
+                                        M --> N[CTA: Agregar Establecimiento]
+                                        N --> O[Formulario establecimiento]
+                                        O --> P{¿Datos válidos?}
+                                        P -->|Sí| Q[[Crear establecimiento]]
+                                        Q --> R[[📱 MSG-01: Establecimiento creado]]
+                                        R --> D
+                                        P -->|No| S[Mostrar errores validación]
+                                        S --> O
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>❌ Estados de Error</h3>
+                            <ul class="flow-list">
+                                <li><strong>Algunas APIs fallan:</strong> Se calculan promedios con las APIs disponibles</li>
+                                <li><strong>Todas las APIs fallan:</strong> Mostrar mensaje de error + datos cache si disponible</li>
+                                <li><strong>Establecimiento sin coordenadas:</strong> Redirigir a configuración ubicación</li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>💫 Interacciones Clave</h3>
+                            <ul class="flow-list">
+                                <li><strong>Swipe horizontal:</strong> Navegar entre 2+ establecimientos (cada uno con promedio calculado)</li>
+                                <li><strong>Tap establecimiento:</strong> Acceso a detalle con tabla de todas las fuentes</li>
+                                <li><strong>Pull to refresh:</strong> Reconsultar las 5 APIs y recalcular promedios</li>
+                                <li><strong>Timestamp:</strong> Indicador visual última actualización de todas las fuentes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="flujo2">
+                    <div class="flow-header">
+                        <h2>2. 📊 FLUJO: Vista Detalle con Todas las Fuentes</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="highlight-box">
+                            <h4>📋 Tabla de Comparación (como en la imagen)</h4>
+                            <p>La vista de detalle muestra por defecto una <strong>tabla con todas las fuentes</strong> simultáneamente, organizada por franjas horarias. No es un botón separado, es la vista principal del establecimiento.</p>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>📍 Punto de Entrada</h3>
+                            <ul class="flow-list">
+                                <li>Detalle de establecimiento → <strong>Vista por defecto (tabla de comparación siempre visible)</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🛤️ Flujo Principal</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Usuario en Detalle Establecimiento]) --> B[Vista por defecto: Tabla comparación]
+                                        B --> C[[Consultar 5 APIs paralelas SIEMPRE]]
+                                        C --> D[Tabla con filas por fuente]
+                                        D --> E[YR | Tomorrow | Google Weather | AccuWeather | Weather Channel]
+                                        E --> F[Columnas: mm lluvia | temp | humedad | viento | aplicación]
+                                        F --> G[Fila "Promedio" calculada automáticamente]
+                                        G --> H[Fuentes caídas: en gris o ausentes]
+                                        H --> I[Navegación DUAL disponible]
+                                        I --> J[Usuario cambia DÍA: ←→ Hoy, Mañana, Pasado...📏]
+                                        J --> K[Usuario cambia FRANJA: Mañana | Tarde | Noche 🔍]
+                                        K --> L[Indicador: "Jueves - Tarde" visible]
+                                        L --> M[Solo se muestra UNA tabla por día+franja]
+                                        M --> N([Fin: Vista compacta y navegable])
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>📊 Datos Mostrados por Fuente (como en la imagen)</h3>
+                            <ul class="flow-list">
+                                <li><strong>Precipitaciones:</strong> cantidad en mm</li>
+                                <li><strong>Temperatura:</strong> Mín/Máx (ej: 22°/22°)</li>
+                                <li><strong>Humedad:</strong> Porcentaje (ej: 47%)</li>
+                                <li><strong>Viento:</strong> Velocidad km/h + dirección (ej: 27 km/h ↕️)</li>
+                                <li><strong>Condición de aplicación:</strong> 🔴 No aplicar / 🟡 Cautela / 🟢 Aplicar</li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🗂️ Estructura de la Tabla</h3>
+                            <ul class="flow-list">
+                                <li><strong>Filas:</strong> Una por cada fuente (YR, Tomorrow, Google Weather, AccuWeather, etc.) + fila "Promedio"</li>
+                                <li><strong>Columnas:</strong> mm lluvia | temp | humedad % | viento | aplicación</li>
+                                <li><strong>Vista por día:</strong> Solo un día a la vez (hoy + 7 días disponibles)</li>
+                                <li><strong>Vista por franja:</strong> Solo una franja a la vez (Mañana 6-12, Tarde 12-18, Noche 18-6)</li>
+                                <li><strong>Navegación dual:</strong> Controles separados para día y franja</li>
+                                <li><strong>Indicador activo:</strong> "Hoy - Mañana", "Viernes - Noche", etc.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="flujo3">
+                    <div class="flow-header">
+                        <h2>3. 🗺️ FLUJO: Vista en Mapa con Overlay Climático</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="flow-subsection">
+                            <h3>📍 Punto de Entrada</h3>
+                            <ul class="flow-list">
+                                <li>Detalle establecimiento → Botón <strong>"Ver en Mapa"</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🛤️ Flujo Principal</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Usuario en Detalle Establecimiento]) --> B[Tap "Ver en Mapa"]
+                                        B --> C{¿Establecimiento tiene coordenadas?}
+                                        C -->|Sí| D[Cargar mapa centrado en establecimiento]
+                                        D --> E[Mostrar pin ubicación establecimiento]
+                                        E --> F[Selector: Promedio | AccuWeather | YR | Google | Tomorrow]
+                                        F --> G[Por defecto: Datos PROMEDIO para overlay]
+                                        G --> H[Selector overlay: Viento | Precipitaciones]
+                                        H --> I{¿Overlay Viento?}
+                                        I -->|Sí| J[Mostrar flechas dirección/velocidad]
+                                        I -->|No| K[Mostrar radar precipitaciones]
+                                        J --> L[Timeline próximas horas/días]
+                                        K --> L
+                                        L --> M[Slider temporal para evolución]
+                                        M --> N[Zoom funcional región amplia]
+                                        N --> O([Fin: Usuario visualiza patrones geográficos])
+                                        
+                                        C -->|No| P[Mensaje: Ubicación no configurada]
+                                        P --> Q[CTA: Configurar Coordenadas]
+                                        Q --> R[Flujo configuración ubicación]
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🎮 Controles de Mapa</h3>
+                            <ul class="flow-list">
+                                <li><strong>Selector de fuente:</strong> Promedio (defecto) | AccuWeather | YR | Google Weather | Tomorrow</li>
+                                <li><strong>Zoom:</strong> Pinch to zoom / botones +/-</li>
+                                <li><strong>Pan:</strong> Drag para mover vista</li>
+                                <li><strong>Timeline:</strong> Slider horizontal 24-72 horas</li>
+                                <li><strong>Toggle overlay:</strong> Switch Viento ↔ Precipitaciones</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="flujo4">
+                    <div class="flow-header">
+                        <h2>4. 🔔 FLUJO: Configuración de Notificaciones</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="flow-subsection">
+                            <h3>📍 Puntos de Entrada</h3>
+                            <ul class="flow-list">
+                                <li>Home clima → Botón <strong>"Configurar Notificaciones"</strong></li>
+                                <li>Detalle establecimiento → Settings → <strong>Notificaciones</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🛤️ Flujo Principal</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Usuario accede a configuración]) --> B[Pantalla Configuración Notificaciones]
+                                        B --> C[Toggle general: Notificaciones ON/OFF]
+                                        C --> D{¿Notificaciones activadas?}
+                                        D -->|Sí| E[Configurar tipos específicos]
+                                        E --> F[Toggle Lluvia + Umbral mm]
+                                        F --> G[Slider umbral: 0-50mm]
+                                        G --> H[Toggle Viento + Umbral km/h]
+                                        H --> I[Slider umbral: 0-100 km/h]
+                                        I --> J[Toggle Condición Aplicación]
+                                        J --> K[Selector establecimientos: Todos/Específicos]
+                                        K --> L[Nota: Umbrales evalúan PROMEDIO de fuentes]
+                                        L --> M[Botón Guardar Configuración]
+                                        M --> N[[Validar configuración backend]]
+                                        N --> O[[📱 MSG-02: Configuración guardada]]
+                                        O --> P([Fin: Notificaciones configuradas])
+                                        
+                                        D -->|No| Q[Deshabilitar todas las notificaciones]
+                                        Q --> M
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🔧 Tipos de Notificaciones Configurables</h3>
+                            <ul class="flow-list">
+                                <li><strong>Lluvia:</strong> Umbral en mm esperados (0-50mm) - evaluado sobre promedio</li>
+                                <li><strong>Viento:</strong> Umbral en km/h (0-100 km/h) - evaluado sobre promedio</li>
+                                <li><strong>Condición de Aplicación:</strong> Cambio a 🔴 No Aplicar - basado en promedio</li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>⚙️ Configuraciones Avanzadas</h3>
+                            <ul class="flow-list">
+                                <li><strong>Horarios:</strong> 6:00-22:00 (evitar notificaciones nocturnas)</li>
+                                <li><strong>Frecuencia:</strong> Máximo 1 notificación por evento por día</li>
+                                <li><strong>Alcance:</strong> Todos los establecimientos o selección específica</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="flujo5">
+                    <div class="flow-header">
+                        <h2>5. 🎯 FLUJO: Selección Manual de Ubicación</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="flow-subsection">
+                            <h3>📍 Punto de Entrada</h3>
+                            <ul class="flow-list">
+                                <li>Home clima → Botón <strong>"Buscar por Ubicación"</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🛤️ Flujo Principal</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Usuario en Home Clima]) --> B[Tap "Buscar por Ubicación"]
+                                        B --> C[Selector Provincia]
+                                        C --> D[Lista completa provincias argentinas]
+                                        D --> E[Usuario selecciona provincia]
+                                        E --> F[[Cargar partidos de la provincia]]
+                                        F --> G[Lista partidos filtrada]
+                                        G --> H[Usuario selecciona partido]
+                                        H --> I[[Obtener coordenadas del partido]]
+                                        I --> J{¿Coordenadas encontradas?}
+                                        J -->|Sí| K[[Consultar 5 APIs para ubicación]]
+                                        K --> L[Mostrar clima PROMEDIO para ubicación]
+                                        L --> M[Opción: Guardar como establecimiento temporal]
+                                        M --> N{¿Usuario guarda?}
+                                        N -->|Sí| O[Formulario establecimiento básico]
+                                        O --> P[[Crear establecimiento temporal]]
+                                        P --> Q[[📱 MSG-03: Ubicación guardada]]
+                                        Q --> R([Fin: Nueva ubicación disponible])
+                                        N -->|No| R
+                                        
+                                        J -->|No| S[Error: Ubicación no encontrada]
+                                        S --> T[CTA: Reintentar o elegir otra]
+                                        T --> G
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>📊 Datos Requeridos</h3>
+                            <ul class="flow-list">
+                                <li><strong>Base de datos:</strong> 23 provincias + partidos/departamentos</li>
+                                <li><strong>Coordenadas:</strong> Lat/Lng por centro geográfico del partido</li>
+                                <li><strong>Validación:</strong> Existencia de partido en provincia seleccionada</li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>📍 Establecimiento Temporal</h3>
+                            <ul class="flow-list">
+                                <li><strong>Nombre:</strong> "[Provincia] - [Partido]"</li>
+                                <li><strong>Tipo:</strong> "Ubicación consultada"</li>
+                                <li><strong>Persistencia:</strong> Se mantiene en la lista de establecimientos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="flujo6">
+                    <div class="flow-header">
+                        <h2>6. 🗺️ FLUJO: Gestión de Coordenadas</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="flow-subsection">
+                            <h3>📍 Puntos de Entrada</h3>
+                            <ul class="flow-list">
+                                <li>Establecimiento sin coordenadas → <strong>Auto-redirect</strong></li>
+                                <li>Detalle establecimiento → <strong>"Editar Ubicación"</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🛤️ Flujo Principal</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Establecimiento sin coordenadas]) --> B[Pantalla: Ubicación no configurada]
+                                        B --> C[Mensaje: Necesaria para pronóstico preciso]
+                                        C --> D[Opciones de configuración]
+                                        D --> E{¿Método seleccionado?}
+                                        E -->|Seleccionar por mapa| F[Abrir mapa interactivo]
+                                        F --> G[Usuario toca ubicación en mapa]
+                                        G --> H[Confirmar coordenadas seleccionadas]
+                                        E -->|Ingresar manualmente| I[Campos Latitud/Longitud]
+                                        I --> J[Validación formato coordenadas]
+                                        J --> K{¿Formato correcto?}
+                                        K -->|Sí| H
+                                        K -->|No| L[Error: Formato inválido]
+                                        L --> I
+                                        H --> M[[Validar coordenadas con API]]
+                                        M --> N{¿Coordenadas válidas?}
+                                        N -->|Sí| O[[Guardar coordenadas establecimiento]]
+                                        O --> P[[📱 MSG-04: Ubicación configurada]]
+                                        P --> Q[[Consultar 5 APIs para nueva ubicación]]
+                                        Q --> R[Mostrar clima promedio para nueva ubicación]
+                                        R --> S([Fin: Coordenadas guardadas])
+                                        
+                                        N -->|No| T[Error: Coordenadas fuera de Argentina]
+                                        T --> U[CTA: Corregir ubicación]
+                                        U --> F
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>✅ Validaciones de Coordenadas</h3>
+                            <ul class="flow-list">
+                                <li><strong>Rango Argentina:</strong> Lat -55 a -22, Lng -74 a -53</li>
+                                <li><strong>Precisión:</strong> Hasta 6 decimales</li>
+                                <li><strong>Formato:</strong> Decimal degrees (no DMS)</li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🔧 Fuentes de Coordenadas</h3>
+                            <ul class="flow-list">
+                                <li><strong>Mapa interactivo:</strong> Google Maps integrado</li>
+                                <li><strong>Ingreso manual:</strong> Campos numéricos con validación</li>
+                                <li><strong>Sugerencias:</strong> Basadas en partido/provincia conocidos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="flujo7">
+                    <div class="flow-header">
+                        <h2>7. ➕ FLUJO: Agregar Establecimiento</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="flow-subsection">
+                            <h3>📍 Punto de Entrada</h3>
+                            <ul class="flow-list">
+                                <li>Home clima → Navegación establecimientos → <strong>"+" Agregar</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🛤️ Flujo Principal</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Usuario en navegación establecimientos]) --> B[Tap botón "+" Agregar]
+                                        B --> C[Formulario Nuevo Establecimiento]
+                                        C --> D[Campo: Nombre establecimiento*]
+                                        D --> E[Selector: Provincia*]
+                                        E --> F[Selector: Partido* filtrado]
+                                        F --> G[Selector: Sociedad asociada*]
+                                        G --> H[Campo opcional: Observaciones]
+                                        H --> I[Botón: Crear Establecimiento]
+                                        I --> J[[Validar datos requeridos]]
+                                        J --> K{¿Todos los campos OK?}
+                                        K -->|Sí| L[[Crear establecimiento en BD]]
+                                        L --> M[[Obtener coordenadas por partido]]
+                                        M --> N[[📱 MSG-05: Establecimiento creado]]
+                                        N --> O[Establecimiento disponible inmediatamente]
+                                        O --> P[[Consultar 5 APIs para nuevo establecimiento]]
+                                        P --> Q[Mostrar clima promedio del nuevo establecimiento]
+                                        Q --> R([Fin: Establecimiento operativo])
+                                        
+                                        K -->|No| S[Mostrar errores específicos]
+                                        S --> T{¿Error nombre duplicado?}
+                                        T -->|Sí| U[Error: Nombre ya existe en sociedad]
+                                        T -->|No| V[Errores de campos requeridos]
+                                        U --> D
+                                        V --> C
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>📝 Campos del Formulario</h3>
+                            <ul class="flow-list">
+                                <li><strong>Nombre:</strong> Texto libre, único por sociedad</li>
+                                <li><strong>Provincia:</strong> Selector con 23 provincias</li>
+                                <li><strong>Partido:</strong> Filtrado dinámico por provincia</li>
+                                <li><strong>Sociedad:</strong> Lista de sociedades del usuario</li>
+                                <li><strong>Observaciones:</strong> Campo opcional, 200 caracteres máx</li>
+                            </ul>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>✅ Validaciones</h3>
+                            <ul class="flow-list">
+                                <li><strong>Nombre único:</strong> Por sociedad asociada</li>
+                                <li><strong>Campos requeridos:</strong> Nombre, provincia, partido, sociedad</li>
+                                <li><strong>Integración:</strong> Con sistema existente gestión establecimientos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="flujo8">
+                    <div class="flow-header">
+                        <h2>8. ⚠️ FLUJOS de Error y Contingencia</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="highlight-box">
+                            <h4>⚡ Nueva Estrategia: No hay APIs backup</h4>
+                            <p><strong>Todas las APIs se consultan en paralelo.</strong> Si algunas fallan, se calcula el promedio con las que respondan. Solo si todas fallan se usa cache o se muestra error.</p>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>🔌 8.1 Error de APIs Externas</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Solicitud datos climáticos]) --> B[[Llamada paralela a 5 APIs]]
+                                        B --> C[AccuWeather | YR | Weather Channel | Google | Tomorrow]
+                                        C --> D{¿Al menos 1 API responde?}
+                                        D -->|Sí| E[Calcular promedio con APIs disponibles]
+                                        E --> F[Mostrar fuentes caídas en gris]
+                                        F --> G[Continuar funcionamiento normal]
+                                        D -->|No| H[Reintento paralelo x3 a todas]
+                                        H --> I{¿Alguna API responde?}
+                                        I -->|Sí| E
+                                        I -->|No| J[Modo degradado: datos cache]
+                                        J --> K{¿Cache disponible?}
+                                        K -->|Sí| L[Mostrar datos desactualizados]
+                                        K -->|No| M[Error: Sin datos disponibles]
+                                        M --> N[CTA: Reintentar más tarde]
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>📶 8.2 Error de Conectividad</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Usuario sin conexión]) --> B{¿Cache local disponible?}
+                                        B -->|Sí| C[Mostrar datos cache con promedios]
+                                        C --> D[Banner: Datos no actualizados]
+                                        D --> E[Auto-refresh: consultar 5 APIs cuando vuelva conexión]
+                                        B -->|No| F[Pantalla: Sin conexión]
+                                        F --> G[Mensaje explicativo]
+                                        G --> H[CTA: Verificar conexión]
+                                        H --> I[CTA: Reintentar]
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-subsection">
+                            <h3>📍 8.3 Error de Geolocalización</h3>
+                            <div class="mermaid-container">
+                                <div class="mermaid">
+                                    flowchart TD
+                                        A([Establecimiento sin coordenadas]) --> B[Intentar geolocalización por partido]
+                                        B --> C{¿Coordenadas encontradas?}
+                                        C -->|No| D[Mostrar configuración manual]
+                                        D --> E[Usuario configura ubicación]
+                                        E --> F{¿Configuración exitosa?}
+                                        F -->|Sí| G[[Consultar 5 APIs para nueva ubicación]]
+                                        G --> H[Continuar flujo normal con promedio]
+                                        F -->|No| I[Mantener sin datos climáticos]
+                                        I --> J[Mensaje: Configurar para ver clima]
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="notificaciones">
+                    <div class="flow-header">
+                        <h2>📱 CATÁLOGO de NOTIFICACIONES</h2>
+                    </div>
+                    <div class="flow-content">
+                        <div class="important-note">
+                            <strong>📊 Evaluación basada en promedio:</strong> Todas las notificaciones se evalúan usando el promedio calculado de las fuentes disponibles, no de una fuente individual.
+                        </div>
+                        
+                        <table class="notifications-table">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Canal</th>
+                                <th>Trigger</th>
+                                <th>Mensaje</th>
+                                <th>CTA</th>
+                                <th>SLA</th>
+                            </tr>
+                            <tr>
+                                <td>MSG-01</td>
+                                <td>Establecimiento Creado</td>
+                                <td>PUSH</td>
+                                <td>Después de crear establecimiento</td>
+                                <td>"✅ [Nombre] agregado correctamente. Ya podés ver su clima."</td>
+                                <td>Ver Clima</td>
+                                <td>Inmediato</td>
+                            </tr>
+                            <tr>
+                                <td>MSG-02</td>
+                                <td>Notificaciones Configuradas</td>
+                                <td>PUSH</td>
+                                <td>Al guardar config notificaciones</td>
+                                <td>"🔔 Configuración guardada. Te avisaremos sobre condiciones importantes."</td>
+                                <td>-</td>
+                                <td>Inmediato</td>
+                            </tr>
+                            <tr>
+                                <td>MSG-03</td>
+                                <td>Ubicación Guardada</td>
+                                <td>PUSH</td>
+                                <td>Al guardar ubicación temporal</td>
+                                <td>"📍 [Ubicación] guardada. Accedé desde tu lista de establecimientos."</td>
+                                <td>Ver Lista</td>
+                                <td>Inmediato</td>
+                            </tr>
+                            <tr>
+                                <td>MSG-04</td>
+                                <td>Coordenadas Configuradas</td>
+                                <td>PUSH</td>
+                                <td>Al configurar ubicación establecimiento</td>
+                                <td>"🗺️ Ubicación configurada para [Establecimiento]. Datos climáticos más precisos."</td>
+                                <td>Ver Clima</td>
+                                <td>Inmediato</td>
+                            </tr>
+                            <tr>
+                                <td>MSG-05</td>
+                                <td>Nuevo Establecimiento</td>
+                                <td>PUSH</td>
+                                <td>Al crear desde formulario</td>
+                                <td>"🏭 [Establecimiento] creado en [Sociedad]. Ya está disponible."</td>
+                                <td>Ver Clima</td>
+                                <td>Inmediato</td>
+                            </tr>
+                            <tr>
+                                <td>MSG-06</td>
+                                <td>Alerta Lluvia</td>
+                                <td>PUSH</td>
+                                <td>Cuando lluvia PROMEDIO > umbral</td>
+                                <td>"🌧️ Lluvia prevista en [Establecimiento]: [X]mm. Evaluá aplicaciones."</td>
+                                <td>Ver Detalle</td>
+                                <td>2h antes</td>
+                            </tr>
+                            <tr>
+                                <td>MSG-07</td>
+                                <td>Alerta Viento</td>
+                                <td>PUSH</td>
+                                <td>Cuando viento PROMEDIO > umbral</td>
+                                <td>"💨 Viento fuerte en [Establecimiento]: [X]km/h. Cuidado aplicaciones."</td>
+                                <td>Ver Detalle</td>
+                                <td>3h antes</td>
+                            </tr>
+                            <tr>
+                                <td>MSG-08</td>
+                                <td>Condición No Aplicar</td>
+                                <td>PUSH</td>
+                                <td>Cuando PROMEDIO cambia a 🔴</td>
+                                <td>"⚠️ Condición no apta para aplicar en [Establecimiento]. Suspendé tareas."</td>
+                                <td>Ver Pronóstico</td>
+                                <td>4h antes</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flow-section" id="tracking">
+                    <div class="flow-header">
+                        <h2>📊 EVENTOS de TRACKING</h2>
+                    </div>
+                    <div class="flow-content">
+                        <table class="tracking-table">
+                            <tr>
+                                <th>Evento</th>
+                                <th>Event Action</th>
+                                <th>Dónde</th>
+                                <th>CTA</th>
+                            </tr>
+                            <tr><td>Acceso sección clima</td><td>ClickSeccionClima</td><td>App</td><td>General</td></tr>
+                            <tr><td>Consulta paralela 5 APIs</td><td>ConsultaParalela5APIs</td><td>Backend</td><td>-</td></tr>
+                            <tr><td>Cálculo promedio fuentes</td><td>CalculoPromedioFuentes</td><td>Backend</td><td>-</td></tr>
+                            <tr><td>Visualización establecimiento clima</td><td>VerEstablecimientoClima</td><td>App</td><td>General</td></tr>
+                            <tr><td>Swipe entre establecimientos</td><td>SwipeEstablecimientos</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Acceso detalle clima (tabla completa)</td><td>ClickDetalleClima</td><td>App</td><td>General</td></tr>
+                            <tr><td>Vista tabla comparación fuentes</td><td>VistaTablaComparacion</td><td>App</td><td>General</td></tr>
+                            <tr><td>Navegación entre franjas horarias</td><td>NavegacionFranjas</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Scroll horizontal múltiples días</td><td>ScrollHorizontalDias</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Acceso vista mapa</td><td>ClickVistaMapa</td><td>App</td><td>General</td></tr>
+                            <tr><td>Selector fuente para mapa</td><td>SeleccionFuenteMapa</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Toggle overlay mapa (viento/lluvia)</td><td>ToggleOverlayMapa</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Uso timeline mapa</td><td>SlideTimelineMapa</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Configuración notificaciones</td><td>ClickConfigNotificaciones</td><td>App</td><td>General</td></tr>
+                            <tr><td>Toggle tipo notificación</td><td>ToggleNotificacion</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Cambio umbral notificación</td><td>CambioUmbralNotificacion</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Guardar configuración notificaciones</td><td>GuardarConfigNotificaciones</td><td>App</td><td>General</td></tr>
+                            <tr><td>Selección manual ubicación</td><td>ClickSeleccionManual</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Configurar coordenadas</td><td>ClickConfigurarCoordenadas</td><td>App</td><td>General</td></tr>
+                            <tr><td>Agregar establecimiento</td><td>ClickAgregarEstablecimiento</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Error carga APIs paralelas</td><td>ErrorCargaAPIsParalelas</td><td>Backend</td><td>-</td></tr>
+                            <tr><td>API individual falla (excluida del promedio)</td><td>APIIndividualFalla</td><td>Backend</td><td>-</td></tr>
+                            <tr><td>Todas las APIs fallan</td><td>TodasAPIsFallan</td><td>Backend</td><td>-</td></tr>
+                            <tr><td>Uso cache datos climáticos</td><td>UsoCacheClima</td><td>Backend</td><td>-</td></tr>
+                            <tr><td>Reintento carga datos</td><td>RetryClima</td><td>App</td><td>Particular</td></tr>
+                            <tr><td>Notificación enviada (basada en promedio)</td><td>NotificacionEnviadaPromedio</td><td>Backend</td><td>-</td></tr>
+                            <tr><td>Click en notificación</td><td>ClickNotificacion</td><td>Notificación</td><td>General</td></tr>
+                            <tr><td>Refresh datos climáticos (5 APIs)</td><td>RefreshDatos5APIs</td><td>App</td><td>Particular</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: #f1f5f9; border-radius: 8px;">
+            <p style="color: #64748b; font-style: italic;">
+                <em>Flujos de usuario actualizados - Sin fuente principal, consulta paralela a 5 APIs - deCampoaCampo</em>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

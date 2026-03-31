@@ -6,20 +6,119 @@
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 30px; color: #222; }
-h1 { text-align: center; color: #1F3864; font-size: 22px; margin-bottom: 4px; }
-.subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 28px; }
-.card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 2px 14px rgba(0,0,0,0.1); margin-bottom: 28px; overflow-x: auto; }
-.card h2 { color: #1F3864; font-size: 15px; margin-bottom: 16px; border-bottom: 2px solid #1F3864; padding-bottom: 6px; }
-.nota { background: #FFF8E1; border-left: 4px solid #FFC107; padding: 12px 16px; border-radius: 4px; font-size: 12px; color: #6D4C00; }
+body { font-family: 'Segoe UI', sans-serif; background: #EAF4FB; padding: 30px; color: #222; }
+/* Aislar SVG de Mermaid para que no herede estilos del body */
+.mermaid svg { color: #333; font-family: inherit; }
+.mermaid svg text { font-weight: bold; }
+
+.header-dcac {
+  background: linear-gradient(135deg, #0077B6 0%, #00B4D8 100%);
+  border-radius: 14px;
+  padding: 28px 36px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0,119,182,0.25);
+}
+.header-dcac .brand { color: #fff; }
+.header-dcac .brand h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+.header-dcac .brand p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+.header-dcac .badge {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,119,182,0.08);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  border-top: 3px solid #00B4D8;
+}
+.card h2 {
+  color: #0077B6;
+  font-size: 15px;
+  margin-bottom: 16px;
+  border-bottom: 1.5px solid #E0F0FA;
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card h2::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: #00B4D8;
+  border-radius: 2px;
+}
+
+.leyenda-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(0,119,182,0.08);
+  margin-bottom: 24px;
+  border-top: 3px solid #0077B6;
+}
+.leyenda-card h3 { color: #0077B6; font-size: 13px; margin-bottom: 12px; }
+.leyenda-card table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.leyenda-card th { background: #0077B6; color: white; padding: 8px 12px; text-align: left; }
+.leyenda-card td { padding: 7px 12px; border-bottom: 1px solid #E0F0FA; }
+.leyenda-card tr:nth-child(even) td { background: #F0F8FF; }
+
+.nota {
+  background: #FFF8E1;
+  border-left: 4px solid #FFC107;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #6D4C00;
+  margin-bottom: 16px;
+}
+.get-badge {
+  display: inline-block;
+  background: #FFF3E0;
+  color: #E67E22;
+  border: 1px solid #E67E22;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.post-badge {
+  display: inline-block;
+  background: #F0F8FF;
+  color: #0077B6;
+  border: 1px solid #00B4D8;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
 .mermaid { min-width: 1000px; }
 @media print { body { background: white; padding: 10px; } .card { box-shadow: none; border: 1px solid #ddd; } }
 </style>
 </head>
 <body>
 
-<h1>📊 Diagrama Entidad–Relación — Sistema de Compliance</h1>
-<p class="subtitle">HC DCAC · v4.0 — Campos basados en frontend actual · <script>document.write(new Date().toLocaleDateString('es-AR'))</script></p>
+<div class="header-dcac">
+  <div class="brand">
+    <h1>Diagrama Entidad–Relación · Herramienta Compliance</h1>
+    <p>HC DCAC · v4.0 &nbsp;·&nbsp; Campos basados en frontend actual &nbsp;·&nbsp; <span id="fecha-hoy"></span></p>
+  </div>
+  <div class="badge">INTERNO · USO TÉCNICO</div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
 <!--  DIAGRAMA 0 — Vista general (todas las entidades)    -->
@@ -38,6 +137,7 @@ erDiagram
     DOCUMENTOS_CLIENTE       { ID id PK   ID id_sociedad FK   ID version_activa FK }
     DOCUMENTOS_VERSIONES     { ID id PK   ID id_documento FK   ID aprobado_por FK }
     LOGS_ACCIONES            { ID id PK   ID id_sociedad FK   ID id_usuario_interno FK   UUID id_usuario_sociedad FK   ID id_documento FK }
+    ALERTAS                  { ID id PK   ID id_sociedad FK   UUID id_usuario_sociedad FK }
     BENEFICIARIOS_FINALES    { ID id PK   ID id_usuario_sociedad_tag FK }
     ACCIONISTAS_SOCIOS       { ID id PK   ID id_usuario_sociedad_tag FK }
     SOCIOS_SH                { ID id PK   ID id_usuario_sociedad_tag FK }
@@ -62,6 +162,8 @@ erDiagram
     USUARIOS_SOCIEDAD_TAG  ||--o{  HEREDEROS                 : "es heredero"
     USUARIOS_SOCIEDAD_TAG  ||--o{  ADMINISTRADOR_JUSTICIA    : "es administrador"
     USUARIOS_SOCIEDAD_TAG  ||--o{  APODERADOS                : "es apoderado"
+    SOCIEDADES_TAG         ||--o{  ALERTAS                   : "tiene alertas"
+    USUARIOS_SOCIEDAD      ||--o{  ALERTAS                   : "referida a persona"
 
   </div>
 </div>
@@ -94,8 +196,6 @@ erDiagram
         TEXTO domicilio
         BOOLEANO es_pep
         BOOLEANO figura_en_repet
-        TEXTO notas_repet
-        JSON resultado_screening
         OPCIONES cargo_societario "gerente / director / presidente / vicepresidente / apoderado / ninguno"
         TEXTO rol_interno
         JSON alcance_actos "general / credito / pagos / compras / bancos / alta_cvu / ninguno"
@@ -284,6 +384,7 @@ erDiagram
         TEXTO nombre
         TEXTO apellido
         OPCIONES nivel "nivel_1 / nivel_2 / nivel_3"
+        BOOLEANO activo
     }
 
     USUARIOS_SOCIEDAD {
@@ -305,7 +406,7 @@ erDiagram
         ID id_usuario_interno FK
         UUID id_usuario_sociedad FK
         ID id_documento FK
-        OPCIONES tipo_accion "alta_iniciada / documento_aprobado / documento_rechazado / documento_observado / datos_modificados / alta_psp / alta_psp_excepcion / cvu_habilitado / cvu_bloqueado / cvu_excepcion / screening_realizado / pep_detectado / comentario"
+        OPCIONES tipo_accion "alta_iniciada / alta_guardada_borrador / alta_avanzada_pendiente / alta_completada / alta_excepcion_docs / alta_psp / alta_psp_excepcion / documento_aprobado / documento_rechazado / documento_observado / documento_re_solicitado / datos_modificados / cvu_habilitado / cvu_bloqueado / cvu_excepcion / pep_detectado / comentario"
         TEXTO estado_anterior
         TEXTO estado_nuevo
         TEXTOLARGO motivo
@@ -320,6 +421,43 @@ erDiagram
     USUARIOS           ||--o{  LOGS_ACCIONES  : "realiza acciones"
     USUARIOS_SOCIEDAD  ||--o{  LOGS_ACCIONES  : "genera CVU"
     DOCUMENTOS_CLIENTE ||--o{  LOGS_ACCIONES  : "registra acciones"
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  DIAGRAMA 5 — Alertas                                 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Diagrama 5 — Alertas</h2>
+  <div class="mermaid">
+erDiagram
+
+    SOCIEDADES_TAG {
+        ID id_sociedad PK "GET"
+        TEXTO razon_social "GET"
+    }
+
+    USUARIOS_SOCIEDAD {
+        UUID id PK
+        TEXTO nombre "GET"
+        TEXTO apellido "GET"
+    }
+
+    ALERTAS {
+        ID id PK
+        ID id_sociedad FK
+        UUID id_usuario_sociedad FK
+        OPCIONES tipo_alerta "vencimiento_ddjj / informe_debida_diligencia / solicitud_informacion_pendiente / documentacion_pendiente / renovacion_documento"
+        TEXTO mensaje
+        FECHAHORA fecha_vencimiento
+        OPCIONES estado "pendiente / enviada / resuelta / ignorada"
+        FECHAHORA fecha_creacion
+        FECHAHORA fecha_actualizacion
+    }
+
+    SOCIEDADES_TAG    ||--o{  ALERTAS  : "tiene alertas"
+    USUARIOS_SOCIEDAD ||--o{  ALERTAS  : "referida a persona"
 
   </div>
 </div>
@@ -682,24 +820,23 @@ erDiagram
   </div>
 </div>
 
-<div class="card">
-  <h2>📘 Referencia de tipos y claves</h2>
-  <table style="width:100%;border-collapse:collapse;font-size:12px;">
-    <tr style="background:#1F3864;color:white;">
-      <th style="padding:8px 12px;text-align:left;">Abreviatura</th>
-      <th style="padding:8px 12px;text-align:left;">Significado</th>
-    </tr>
-    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>PK</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Clave Primaria — identifica únicamente cada registro</td></tr>
-    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>FK</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Clave Externa — referencia a otra tabla</td></tr>
-    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>UUID</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Identificador único universal (número generado automáticamente)</td></tr>
-    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>TEXTO</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Campo de texto corto</td></tr>
-    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>TEXTOLARGO</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Campo de texto largo (comentarios, motivos, observaciones)</td></tr>
-    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>BOOLEANO</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Verdadero / Falso (Sí / No)</td></tr>
-    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>FECHA</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Solo fecha (día/mes/año)</td></tr>
-    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>FECHAHORA</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Fecha y hora exacta</td></tr>
-    <tr><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>DECIMAL</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Número con decimales (porcentajes, montos)</td></tr>
-    <tr style="background:#fafafa;"><td style="padding:7px 12px;border-bottom:1px solid #eee;"><strong>OPCIONES</strong></td><td style="padding:7px 12px;border-bottom:1px solid #eee;">Lista de valores fijos permitidos</td></tr>
-    <tr><td style="padding:7px 12px;"><strong>JSON</strong></td><td style="padding:7px 12px;">Objeto con múltiples campos (datos del formulario, resultado screening)</td></tr>
+<div class="leyenda-card">
+  <h3>Referencia de tipos y claves</h3>
+  <table>
+    <tr><th>Abreviatura</th><th>Significado</th></tr>
+    <tr><td><strong>PK</strong></td><td>Clave Primaria — identifica únicamente cada registro</td></tr>
+    <tr><td><strong>FK</strong></td><td>Clave Externa — referencia a otra tabla</td></tr>
+    <tr><td><strong>UUID</strong></td><td>Identificador único universal (solo USUARIOS_SOCIEDAD)</td></tr>
+    <tr><td><strong>TEXTO</strong></td><td>Campo de texto corto</td></tr>
+    <tr><td><strong>TEXTOLARGO</strong></td><td>Campo de texto largo (comentarios, motivos, observaciones)</td></tr>
+    <tr><td><strong>BOOLEANO</strong></td><td>Verdadero / Falso (Sí / No)</td></tr>
+    <tr><td><strong>FECHA</strong></td><td>Solo fecha (día/mes/año)</td></tr>
+    <tr><td><strong>FECHAHORA</strong></td><td>Fecha y hora exacta</td></tr>
+    <tr><td><strong>DECIMAL</strong></td><td>Número con decimales (porcentajes, montos)</td></tr>
+    <tr><td><strong>OPCIONES</strong></td><td>Lista de valores fijos permitidos</td></tr>
+    <tr><td><strong>JSON</strong></td><td>Objeto con múltiples campos (datos del formulario, resultado screening)</td></tr>
+    <tr><td><span class="get-badge">GET</span></td><td>Dato que viene de un sistema externo de producción — no se modifica acá</td></tr>
+    <tr><td><span class="post-badge">POST</span></td><td>Dato creado o modificado por el sistema de compliance</td></tr>
   </table>
 </div>
 
@@ -714,31 +851,28 @@ erDiagram
     er: { diagramPadding: 40, layoutDirection: 'TB', minEntityWidth: 120, minEntityHeight: 75, entityPadding: 15 }
   });
 
+  // Campos GET a colorear en naranja, por nombre exacto del campo
+  const CAMPOS_GET = new Set([
+    'id_sociedad', 'razon_social', 'cuit_cuil', 'tipo_sociedad', 'estado',
+    'id', 'apellido', 'nombre', 'correo_electronico', 'telefono',
+    'id_documento'
+  ]);
+
   function colorearCamposGET() {
-    document.querySelectorAll('.mermaid svg').forEach(function(svgEl) {
-      const allTexts = Array.from(svgEl.querySelectorAll('text'));
-
-      allTexts.forEach(function(textEl) {
-        if (textEl.textContent.trim() !== 'GET') return;
-
-        // getBoundingClientRect da posición real en pantalla, independiente de tspan/transform
-        const getY = textEl.getBoundingClientRect().top;
-
-        allTexts.forEach(function(t) {
-          const tY = t.getBoundingClientRect().top;
-          if (Math.abs(tY - getY) < 8) {
-            t.setAttribute('fill', '#E67E22');
-            t.setAttribute('font-weight', 'bold');
-          }
-        });
-      });
+    document.querySelectorAll('.mermaid svg text').forEach(function(textEl) {
+      if (CAMPOS_GET.has(textEl.textContent.trim())) {
+        textEl.setAttribute('fill', '#E67E22');
+        textEl.setAttribute('font-weight', 'bold');
+      }
     });
   }
 
-  // Esperar a que Mermaid renderice y luego colorear
+  // Fecha en el header
+  document.getElementById('fecha-hoy').textContent = new Date().toLocaleDateString('es-AR');
+
   window.addEventListener('load', function() {
-    setTimeout(colorearCamposGET, 600);
-    setTimeout(colorearCamposGET, 1500);
+    setTimeout(colorearCamposGET, 800);
+    setTimeout(colorearCamposGET, 2000);
   });
 </script>
 </body>

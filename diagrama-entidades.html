@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Diagrama de Entidades — HC DCAC Compliance</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 30px; color: #222; }
+
+h1 { text-align: center; color: #1F3864; font-size: 22px; margin-bottom: 4px; }
+.subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 32px; }
+
+.section-label {
+  text-align: center; font-size: 11px; font-weight: 700; color: #aaa;
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;
+}
+
+.canvas { display: flex; flex-direction: column; gap: 36px; }
+.row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; align-items: flex-start; }
+
+/* ENTITY BOX */
+.entity { width: 270px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 14px rgba(0,0,0,0.13); background: #fff; }
+.entity-header { padding: 10px 14px; color: #fff; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.entity-sub { font-size: 10px; opacity: 0.85; font-weight: 400; margin-top: 2px; }
+
+.field { display: flex; align-items: flex-start; padding: 5px 10px; border-bottom: 1px solid #f3f3f3; font-size: 11.5px; gap: 5px; }
+.field:last-child { border-bottom: none; }
+.fname { flex: 1; color: #333; line-height: 1.4; }
+.ftype { color: #bbb; font-size: 10.5px; white-space: nowrap; }
+
+.badge { font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 3px; white-space: nowrap; margin-top: 1px; }
+.pk  { background: #FFF3CD; color: #856404; }
+.fk  { background: #D1ECF1; color: #0C5460; }
+.obl { background: #D4EDDA; color: #155724; }
+.opc { background: #F8D7DA; color: #721C24; }
+.jsn { background: #E2D9F3; color: #4A235A; }
+.enu { background: #FDE8D8; color: #7D3C00; }
+.new { background: #FFF9C4; color: #5D4037; }
+
+.section-sep { background: #f7f7f7; padding: 4px 10px; font-size: 10px; font-weight: 700; color: #888; border-bottom: 1px solid #eee; letter-spacing: 0.5px; }
+
+/* COLORS */
+.c-blue   { background: #1F3864; }
+.c-red    { background: #C00000; }
+.c-green  { background: #2E7D32; }
+.c-purple { background: #5C4A8A; }
+.c-teal   { background: #1D6A72; }
+.c-orange { background: #E65100; }
+.c-gray   { background: #546E7A; }
+
+/* RELATIONS TABLE */
+.card { background: #fff; border-radius: 8px; padding: 20px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); max-width: 960px; margin: 0 auto; width: 100%; }
+.card h2 { color: #1F3864; font-size: 14px; margin-bottom: 14px; border-bottom: 2px solid #1F3864; padding-bottom: 6px; }
+table.rt { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.rt th { background: #1F3864; color: #fff; padding: 8px 10px; text-align: left; }
+table.rt td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+table.rt tr:last-child td { border-bottom: none; }
+table.rt tr:nth-child(even) td { background: #fafafa; }
+
+/* PERMISOS */
+.check { color: #2E7D32; font-weight: 700; }
+.cross { color: #C00000; font-weight: 700; }
+
+/* LEGEND */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #666; }
+
+/* NOTA */
+.nota { background: #FFF8E1; border-left: 4px solid #FFC107; padding: 10px 16px; border-radius: 4px; font-size: 11.5px; color: #6D4C00; max-width: 960px; margin: 0 auto; width: 100%; }
+
+/* PSP BADGE */
+.psp { background: #E8F5E9; border: 1px solid #A5D6A7; border-radius: 4px; padding: 2px 7px; font-size: 10px; font-weight: 700; color: #1B5E20; }
+</style>
+</head>
+<body>
+
+<h1>🗂 Diagrama de Entidades — Sistema de Compliance</h1>
+<p class="subtitle">HC DCAC · Basado en frontend actual · v2.0 · <script>document.write(new Date().toLocaleDateString('es-AR'))</script></p>
+
+<div class="canvas">
+
+<!-- ══════════════════════════════════════════ -->
+<!-- FILA 1: USUARIOS + CLIENTES               -->
+<!-- ══════════════════════════════════════════ -->
+<p class="section-label">Entidades principales</p>
+<div class="row">
+
+  <!-- USUARIOS -->
+  <div class="entity">
+    <div class="entity-header c-blue">
+      <span>👤</span>
+      <div>USUARIOS<div class="entity-sub">Quienes operan el sistema</div></div>
+    </div>
+    <div class="field"><span class="badge pk">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">email</span><span class="ftype">STRING unique</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">password</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">firstName / lastName</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">role</span><span class="ftype">nivel_1 / nivel_2 / nivel_3</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">isActive</span><span class="ftype">BOOLEAN</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">lastLogin</span><span class="ftype">DATETIME</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">created_at / updated_at</span><span class="ftype">DATETIME</span></div>
+    <div class="section-sep">Roles</div>
+    <div class="field" style="font-size:11px; padding:6px 10px; display:block;">
+      <div style="margin-bottom:3px"><strong>nivel_1</strong> — Oficial de Cumplimiento <span class="psp">Alta PSP</span></div>
+      <div style="margin-bottom:3px"><strong>nivel_2</strong> — Analista de Administración</div>
+      <div><strong>nivel_3</strong> — Solo lectura</div>
+    </div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div class="entity" style="width:310px">
+    <div class="entity-header c-red">
+      <span>🏢</span>
+      <div>CLIENTES<div class="entity-sub">Sociedades y personas que se dan de alta</div></div>
+    </div>
+    <div class="field"><span class="badge pk">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">clientType</span><span class="ftype">persona_humana / persona_juridica</span></div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">tipo_entidad</span><span class="ftype">SA / SRL / SH / sucesion / monotributista</span></div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">status</span><span class="ftype">pendiente / aprobado / rechazado / baja / bloqueado / en_proceso</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">cuit</span><span class="ftype">STRING(13) unique</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">email / phone</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">address / city / province / postalCode / country</span><span class="ftype">STRING</span></div>
+    <div class="section-sep">Solo Persona Humana</div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">firstName / lastName / dni / birthDate / nationality / occupation / maritalStatus</span><span class="ftype"></span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">isPep / pepPosition / pepRelationship</span><span class="ftype">BOOLEAN/STRING</span></div>
+    <div class="section-sep">Solo Persona Jurídica</div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">legalName / tradeName / legalForm / incorporationDate / registrationNumber / mainActivity / secondaryActivity</span><span class="ftype"></span></div>
+    <div class="section-sep">Riesgo</div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">riskLevel</span><span class="ftype">bajo / medio / alto</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">riskScore</span><span class="ftype">INTEGER</span></div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">dueDiligenceType</span><span class="ftype">simplificada / media / reforzada</span></div>
+    <div class="section-sep">Estado PSP <span class="psp">Solo nivel_1</span></div>
+    <div class="field"><span class="badge enu new">NUEVO</span><span class="fname">pspStatus</span><span class="ftype">pendiente / dado_de_alta / dado_de_alta_excepcion</span></div>
+    <div class="field"><span class="badge fk new">NUEVO</span><span class="fname">pspAltaBy</span><span class="ftype">UUID → usuarios</span></div>
+    <div class="field"><span class="badge opc new">NUEVO</span><span class="fname">pspAltaAt</span><span class="ftype">DATETIME</span></div>
+    <div class="field"><span class="badge opc new">NUEVO</span><span class="fname">pspExcepcionMotivo</span><span class="ftype">TEXT (oblig. si excepción)</span></div>
+    <div class="section-sep">Auditoría</div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">approvedBy</span><span class="ftype">UUID → usuarios</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">approvedAt / rejectionReason / notes</span><span class="ftype"></span></div>
+    <div class="field"><span class="badge jsn">JSON</span><span class="fname">formData</span><span class="ftype">JSON</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">created_at / updated_at</span><span class="ftype">DATETIME</span></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- FILA 2: DOCUMENTOS + LOGS (NUEVAS)        -->
+<!-- ══════════════════════════════════════════ -->
+<p class="section-label">⭐ Tablas nuevas — documentación y trazabilidad</p>
+<div class="row">
+
+  <!-- DOCUMENTOS_CLIENTE -->
+  <div class="entity" style="width:290px">
+    <div class="entity-header c-green">
+      <span>📄</span>
+      <div>DOCUMENTOS_CLIENTE<div class="entity-sub">Un registro por cada documento del cliente</div></div>
+    </div>
+    <div class="field"><span class="badge pk">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">clientId</span><span class="ftype">UUID → clientes</span></div>
+    <div class="section-sep">Identificación del documento</div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">tipoEntidad</span><span class="ftype">SA / SRL / SH / sucesion / monotributista</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">documentoId</span><span class="ftype">STRING (estatuto / acta / poder...)</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">documentoNombre</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">categoria</span><span class="ftype">identificacion / societario / pep / beneficiario_final / apoderado / otro</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">esObligatorio</span><span class="ftype">BOOLEAN</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">esCondicional</span><span class="ftype">BOOLEAN</span></div>
+    <div class="section-sep">Archivo subido</div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">archivoNombre / archivoPatch</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">archivoMimeType</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">archivoTamaño</span><span class="ftype">INTEGER (bytes)</span></div>
+    <div class="section-sep">Campos completados</div>
+    <div class="field"><span class="badge jsn">JSON</span><span class="fname">datosFormulario</span><span class="ftype">JSON (todos los campos del doc)</span></div>
+    <div class="section-sep">Estado</div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">estado</span><span class="ftype">pendiente / aprobado / rechazado / observado</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">fechaVencimiento</span><span class="ftype">DATE</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">estaVencido</span><span class="ftype">BOOLEAN</span></div>
+    <div class="section-sep">Auditoría de aprobación</div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">aprobadoPor</span><span class="ftype">UUID → usuarios (nivel_1)</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">aprobadoEn</span><span class="ftype">DATETIME</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">motivoRechazo</span><span class="ftype">TEXT (oblig. si rechazado)</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">observaciones</span><span class="ftype">TEXT</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">created_at / updated_at</span><span class="ftype">DATETIME</span></div>
+  </div>
+
+  <!-- LOGS_ACCIONES -->
+  <div class="entity" style="width:290px">
+    <div class="entity-header c-purple">
+      <span>📋</span>
+      <div>LOGS_ACCIONES<div class="entity-sub">Historial completo de cada acción</div></div>
+    </div>
+    <div class="field"><span class="badge pk">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">clientId</span><span class="ftype">UUID → clientes</span></div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">documentoId</span><span class="ftype">UUID → documentos_cliente (nullable)</span></div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">usuarioId</span><span class="ftype">UUID → usuarios</span></div>
+    <div class="section-sep">Qué pasó</div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">tipoAccion</span><span class="ftype">ver lista abajo ↓</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">estadoAnterior</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">estadoNuevo</span><span class="ftype">STRING</span></div>
+    <div class="section-sep">Detalle</div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">motivo</span><span class="ftype">TEXT (oblig. en rechazos y excepciones)</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">observaciones</span><span class="ftype">TEXT</span></div>
+    <div class="field"><span class="badge jsn">JSON</span><span class="fname">datosAdicionales</span><span class="ftype">JSON</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">ipAddress</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">created_at</span><span class="ftype">DATETIME (sin updated_at)</span></div>
+    <div class="section-sep">tipoAccion — valores posibles</div>
+    <div class="field" style="display:block; font-size:11px; padding: 6px 10px; line-height:1.8;">
+      alta_iniciada · documento_cargado · documento_aprobado · documento_rechazado · documento_observado · datos_modificados · cliente_aprobado · cliente_rechazado · cliente_dado_baja · cliente_bloqueado · screening_realizado · riesgo_evaluado · solicitud_documentacion · pep_detectado · alerta_generada
+      <br><strong style="color:#1B5E20">↳ alta_psp <span class="psp">Solo nivel_1</span></strong>
+      <br><strong style="color:#1B5E20">↳ alta_psp_excepcion <span class="psp">Solo nivel_1 + motivo</span></strong>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- FILA 3: PERSONAS VINCULADAS               -->
+<!-- ══════════════════════════════════════════ -->
+<p class="section-label">Personas vinculadas al cliente</p>
+<div class="row">
+
+  <!-- BENEFICIARIOS FINALES -->
+  <div class="entity">
+    <div class="entity-header c-teal"><span>👥</span><div>BENEFICIARIOS_FINALES</div></div>
+    <div class="field"><span class="badge pk">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">clientId</span><span class="ftype">UUID → clientes</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">firstName / lastName</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">dni / cuit</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">birthDate / nationality / address</span><span class="ftype"></span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">ownershipPercentage</span><span class="ftype">DECIMAL(5,2)</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">isPep / isActive</span><span class="ftype">BOOLEAN</span></div>
+  </div>
+
+  <!-- FIRMANTES -->
+  <div class="entity">
+    <div class="entity-header c-teal"><span>✍️</span><div>FIRMANTES</div></div>
+    <div class="field"><span class="badge pk">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">clientId</span><span class="ftype">UUID → clientes</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">firstName / lastName</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">dni / cuit / position</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge enu">ENUM</span><span class="fname">signatureType</span><span class="ftype">individual / conjunta</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">isPep / isActive</span><span class="ftype">BOOLEAN</span></div>
+  </div>
+
+  <!-- AUTORIDADES -->
+  <div class="entity">
+    <div class="entity-header c-teal"><span>🏛️</span><div>AUTORIDADES</div></div>
+    <div class="field"><span class="badge pk">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">clientId</span><span class="ftype">UUID → clientes</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">firstName / lastName</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">dni / cuit</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">position</span><span class="ftype">Presidente/Director/Gerente</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">appointmentDate / expirationDate</span><span class="ftype">DATE</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">isPep / isActive</span><span class="ftype">BOOLEAN</span></div>
+  </div>
+
+  <!-- APODERADOS -->
+  <div class="entity">
+    <div class="entity-header c-teal"><span>📜</span><div>APODERADOS</div></div>
+    <div class="field"><span class="badge pk">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+    <div class="field"><span class="badge fk">FK</span><span class="fname">clientId</span><span class="ftype">UUID → clientes</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">firstName / lastName</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">dni / cuit</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">powerType / powerScope</span><span class="ftype">STRING/TEXT</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">grantDate / expirationDate</span><span class="ftype">DATE</span></div>
+    <div class="field"><span class="badge opc">OPC</span><span class="fname">notaryName / notaryNumber</span><span class="ftype">STRING</span></div>
+    <div class="field"><span class="badge obl">OBL</span><span class="fname">isPep / isActive</span><span class="ftype">BOOLEAN</span></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- RELACIONES                                -->
+<!-- ══════════════════════════════════════════ -->
+<div class="card">
+  <h2>🔗 Relaciones entre entidades</h2>
+  <table class="rt">
+    <tr><th>Origen</th><th>Relación</th><th>Destino</th><th>Campo FK</th><th>Descripción</th></tr>
+    <tr><td>CLIENTES</td><td>1 → N</td><td>DOCUMENTOS_CLIENTE</td><td>clientId</td><td>Un cliente tiene muchos documentos según su tipo de entidad</td></tr>
+    <tr><td>CLIENTES</td><td>1 → N</td><td>LOGS_ACCIONES</td><td>clientId</td><td>Todas las acciones sobre un cliente quedan registradas</td></tr>
+    <tr><td>DOCUMENTOS_CLIENTE</td><td>1 → N</td><td>LOGS_ACCIONES</td><td>documentoId</td><td>Cada acción sobre un documento queda registrada (nullable)</td></tr>
+    <tr><td>USUARIOS</td><td>1 → N</td><td>LOGS_ACCIONES</td><td>usuarioId</td><td>Cada acción fue realizada por un usuario del sistema</td></tr>
+    <tr><td>USUARIOS</td><td>1 → N</td><td>DOCUMENTOS_CLIENTE</td><td>aprobadoPor</td><td>El usuario (nivel_1) que aprobó el documento</td></tr>
+    <tr><td>USUARIOS</td><td>1 → N</td><td>CLIENTES</td><td>approvedBy / pspAltaBy</td><td>Aprobación del alta y del alta PSP (solo nivel_1)</td></tr>
+    <tr><td>CLIENTES</td><td>1 → N</td><td>BENEFICIARIOS_FINALES</td><td>clientId</td><td>Un cliente puede tener varios beneficiarios finales</td></tr>
+    <tr><td>CLIENTES</td><td>1 → N</td><td>FIRMANTES</td><td>clientId</td><td>Un cliente puede tener varios firmantes</td></tr>
+    <tr><td>CLIENTES</td><td>1 → N</td><td>AUTORIDADES</td><td>clientId</td><td>Una sociedad puede tener varias autoridades</td></tr>
+    <tr><td>CLIENTES</td><td>1 → N</td><td>APODERADOS</td><td>clientId</td><td>Un cliente puede tener varios apoderados</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PERMISOS POR ROL                          -->
+<!-- ══════════════════════════════════════════ -->
+<div class="card">
+  <h2>🔐 Permisos por nivel de usuario</h2>
+  <table class="rt">
+    <tr><th>Acción</th><th>Nivel 1 — Oficial de Cumplimiento</th><th>Nivel 2 — Analista Admin</th><th>Nivel 3 — Solo lectura</th></tr>
+    <tr><td>Ver clientes</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+    <tr><td>Editar datos del cliente</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+    <tr><td>Cargar documentos</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+    <tr><td>Aprobar documento</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+    <tr><td>Rechazar documento</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+    <tr><td>Aprobar alta del cliente</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+    <tr><td><strong>Dar de alta PSP</strong></td><td class="check">✅ <span class="psp">Exclusivo</span></td><td class="cross">❌</td><td class="cross">❌</td></tr>
+    <tr><td><strong>Alta PSP por excepción</strong></td><td class="check">✅ <span class="psp">Exclusivo + motivo</span></td><td class="cross">❌</td><td class="cross">❌</td></tr>
+    <tr><td>Ver logs / historial</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+    <tr><td>Gestionar usuarios</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- ESTADOS PSP                               -->
+<!-- ══════════════════════════════════════════ -->
+<div class="card">
+  <h2>⚡ Estados del Alta PSP — campo pspStatus en CLIENTES</h2>
+  <table class="rt">
+    <tr><th>Estado</th><th>Significado</th><th>Quién lo cambia</th><th>Requiere</th></tr>
+    <tr><td><strong>pendiente</strong></td><td>El cliente aún no fue dado de alta en PSP</td><td>Estado inicial automático</td><td>—</td></tr>
+    <tr><td><strong>dado_de_alta</strong></td><td>El cliente fue aprobado y dado de alta normalmente</td><td>Solo nivel_1</td><td>Todos los docs aprobados</td></tr>
+    <tr><td><strong>dado_de_alta_excepcion</strong></td><td>Se dio de alta por excepción (documentación incompleta o pendiente)</td><td>Solo nivel_1</td><td>Motivo obligatorio</td></tr>
+  </table>
+</div>
+
+<!-- NOTA -->
+<div class="nota">
+  ⚠ <strong>Nota:</strong> Las tablas <strong>DOCUMENTOS_CLIENTE</strong> y <strong>LOGS_ACCIONES</strong> son nuevas (marcadas con ⭐). El campo <strong>pspStatus</strong> en CLIENTES es nuevo. Los cambios ya están implementados en el modelo del backend.
+</div>
+
+<!-- LEYENDA -->
+<div class="legend">
+  <div class="li"><span class="badge pk">PK</span> Clave primaria</div>
+  <div class="li"><span class="badge fk">FK</span> Clave foránea</div>
+  <div class="li"><span class="badge obl">OBL</span> Obligatorio</div>
+  <div class="li"><span class="badge opc">OPC</span> Opcional</div>
+  <div class="li"><span class="badge jsn">JSON</span> Objeto JSON</div>
+  <div class="li"><span class="badge enu">ENUM</span> Valores fijos</div>
+  <div class="li"><span class="badge new">NUEVO</span> Campo nuevo</div>
+  <div class="li"><span class="psp">PSP</span> Solo nivel_1</div>
+</div>
+
+</div>
+</body>
+</html>
