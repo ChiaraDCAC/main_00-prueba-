@@ -286,6 +286,7 @@
           </ul>
           <li><a href="#paso3">Paso 3 — Riesgo</a></li>
           <li><a href="#paso4">Paso 4 — Alta Final</a></li>
+          <li><a href="#paso5">Paso 5 — Alta CVU</a></li>
           <li><a href="#excepciones">Excepciones y borradores</a></li>
         </ul>
       </div>
@@ -312,13 +313,15 @@ flowchart LR
     C -- Sí --> D[Paso 2\nDatos Entidad]
     D --> E[Paso 3\nRiesgo]
     E --> F[Paso 4\nAlta Final]
-    F --> G{Todo\ncompleto?}
-    G -- Sí --> H([Alta Aprobada\n✅])
-    G -- No / Excepción --> I([Borrador\nPendiente\n⏳])
+    F --> G{Alta\naprobada?}
+    G -- No / Excepción --> I([Borrador\nPendiente ⏳])
+    G -- Sí --> H[Paso 5\nAlta CVU]
+    H --> J([CVU Habilitado ✅])
 
     style A fill:#0077B6,color:#fff
-    style H fill:#10b981,color:#fff
+    style J fill:#10b981,color:#fff
     style I fill:#f59e0b,color:#fff
+    style H fill:#0077B6,color:#fff
             </div>
           </div>
 
@@ -333,6 +336,7 @@ flowchart LR
               <tr><td><strong>2</strong></td><td>Datos de la Entidad</td><td>Completar formulario según tipo de sociedad + personas</td><td>Campos obligatorios completos</td></tr>
               <tr><td><strong>3</strong></td><td>Riesgo</td><td>Asignar nivel de riesgo, ventas estimadas, NOSIS</td><td>Nivel de riesgo asignado</td></tr>
               <tr><td><strong>4</strong></td><td>Alta Final</td><td>Chequear todo y confirmar el alta</td><td>Decisión del analista (alta o borrador)</td></tr>
+              <tr><td><strong>5</strong></td><td>Alta CVU</td><td>Habilitar CVU del cliente aprobado</td><td>Solo si el alta fue aprobada en el paso 4</td></tr>
             </tbody>
           </table>
         </div>
@@ -748,17 +752,58 @@ flowchart TD
     A[Analista revisa\ntoda la información] --> B{¿Todo\ncompleto?}
     B -- Sí --> C[Dar de Alta Final]
     B -- No / Excepción --> D[Guardar Borrador]
-    C --> E([Status: aprobado ✅\nSe registra alta_completada])
-    D --> F([Status: pendiente_documentacion ⏳\nSe registra alta_guardada_borrador])
-    E --> G{¿Habilitar CVU?}
-    G -- Sí --> H([CVU Habilitado\ncvu_habilitado en LOGS])
-    G -- Excepción --> I([CVU por Excepción\ncvu_excepcion en LOGS])
-    G -- No todavía --> J([Alta PSP sin CVU\nalta_psp en LOGS])
+    C --> E([Status: aprobado ✅\nalta_completada en LOGS])
+    D --> F([Status: pendiente_documentacion ⏳\nalta_guardada_borrador en LOGS])
+    E --> G([Continúa →\nPaso 5: Alta CVU])
 
     style E fill:#10b981,color:#fff
     style F fill:#f59e0b,color:#fff
     style H fill:#0077B6,color:#fff
               </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PASO 5 -->
+      <div class="flow-section" id="paso5">
+        <div class="flow-header">
+          <div class="paso-badge">5</div>
+          <div>
+            <h2>Paso 5 — Alta CVU</h2>
+            <p>Último paso del proceso. Solo disponible si el alta fue aprobada en el paso 4.</p>
+          </div>
+        </div>
+        <div class="flow-content">
+
+          <div class="flow-subsection">
+            <h3>Habilitación del CVU</h3>
+            <div class="mermaid-container">
+              <div class="mermaid">
+flowchart TD
+    A([Alta aprobada ✅\nPaso 4 completado]) --> B[Habilitar CVU]
+    B --> C{Tipo de\nhabilitación}
+    C -- Normal --> D([CVU Habilitado ✅\ncvu_habilitado en LOGS\nnro_cvu generado])
+    C -- Excepción --> E([CVU por Excepción\ncvu_excepcion en LOGS])
+    D --> F([Proceso de Alta\nFinalizado 🎉])
+    E --> F
+
+    style A fill:#0077B6,color:#fff
+    style D fill:#10b981,color:#fff
+    style F fill:#10b981,color:#fff
+              </div>
+            </div>
+
+            <ul class="flow-list">
+              <li><strong>Prerequisito:</strong> El alta debe estar aprobada (paso 4 completado).</li>
+              <li><strong>CVU normal:</strong> Se habilita la cuenta y se genera el número de CVU. Se registra <em>cvu_habilitado</em> en LOGS_ACCIONES con el número de CVU.</li>
+              <li><strong>CVU por excepción:</strong> Habilitación en casos especiales, requiere aprobación del Oficial de Cumplimiento. Se registra <em>cvu_excepcion</em>.</li>
+              <li><strong>CVU bloqueado:</strong> En cualquier momento posterior se puede bloquear la cuenta. Se registra <em>cvu_bloqueado</em>.</li>
+            </ul>
+
+            <div class="info-box">
+              <strong>Fin del proceso:</strong> Una vez habilitado el CVU, el proceso de alta queda completado. El cliente queda activo en el sistema y a partir de este punto aplica el seguimiento periódico mediante <strong>Alertas</strong>.
             </div>
           </div>
 
