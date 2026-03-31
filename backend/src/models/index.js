@@ -6,7 +6,7 @@ const dbConfig = config[env];
 
 const sequelize = new Sequelize({
   dialect: dbConfig.dialect,
-  storage: dbConfig.storage, // For SQLite
+  storage: dbConfig.storage,
   database: dbConfig.database,
   username: dbConfig.username,
   password: dbConfig.password,
@@ -17,1318 +17,469 @@ const sequelize = new Sequelize({
   pool: dbConfig.pool,
 });
 
-// User Model - Usuarios del sistema (analistas de compliance)
-const User = sequelize.define('User', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+// ─── 1. SOCIEDADES_TAG ───────────────────────────────────────
+// Tabla externa de producción — datos GET
+const SociedadTag = sequelize.define('SociedadTag', {
+  id_sociedad: {
+    type: DataTypes.INTEGER,
     primaryKey: true,
+    autoIncrement: true,
   },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: { isEmail: true },
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  firstName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  lastName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  role: {
-    type: DataTypes.ENUM('admin', 'analyst', 'supervisor', 'auditor'),
-    defaultValue: 'analyst',
-  },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-  lastLogin: {
-    type: DataTypes.DATE,
-  },
+  razon_social: { type: DataTypes.STRING(255) },
+  cuit_cuil:    { type: DataTypes.STRING(20) },
+  tipo_sociedad:{ type: DataTypes.STRING(50) },
+  estado:       { type: DataTypes.STRING(50) },
+}, {
+  tableName: 'sociedades_tag',
+  timestamps: false,
 });
 
-// Client Model - Clientes (personas físicas o jurídicas)
-const Client = sequelize.define('Client', {
+// ─── 2. USUARIOS ─────────────────────────────────────────────
+// Usuarios internos de la herramienta (analistas HC DCAC)
+const Usuario = sequelize.define('Usuario', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  nombre:        { type: DataTypes.STRING(100), allowNull: false },
+  apellido:      { type: DataTypes.STRING(100), allowNull: false },
+  email:         { type: DataTypes.STRING(255), allowNull: false, unique: true },
+  password_hash: { type: DataTypes.STRING(255), allowNull: false },
+  nivel: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    validate: { isIn: [['nivel_1', 'nivel_2', 'nivel_3']] },
+  },
+  activo: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, {
+  tableName: 'usuarios',
+  underscored: true,
+});
+
+// ─── 3. USUARIOS_SOCIEDAD ─────────────────────────────────────
+// Personas vinculadas a sociedades — UUID (GET si existe, POST si nuevo)
+const UsuarioSociedad = sequelize.define('UsuarioSociedad', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  clientType: {
-    type: DataTypes.ENUM('persona_humana', 'persona_juridica'),
+  apellido:           { type: DataTypes.STRING(100), allowNull: false },
+  nombre:             { type: DataTypes.STRING(100), allowNull: false },
+  nro_documento:      { type: DataTypes.STRING(20) },
+  cuit:               { type: DataTypes.STRING(20) },
+  correo_electronico: { type: DataTypes.STRING(255) },
+  telefono:           { type: DataTypes.STRING(50) },
+  domicilio:          { type: DataTypes.TEXT },
+  es_pep:             { type: DataTypes.BOOLEAN, defaultValue: false },
+  figura_en_repet:    { type: DataTypes.BOOLEAN, defaultValue: false },
+  cargo_societario: {
+    type: DataTypes.STRING(50),
+    validate: { isIn: [['gerente','director','presidente','vicepresidente','apoderado','ninguno', null]] },
+  },
+  rol_interno:        { type: DataTypes.STRING(255) },
+  alcance_actos:      { type: DataTypes.JSONB },
+  limite_tipo: {
+    type: DataTypes.STRING(30),
+    validate: { isIn: [['sin_limite','hasta_x','rango_x_a_y', null]] },
+  },
+  limite_monto_hasta: { type: DataTypes.DECIMAL(18, 2) },
+  limite_monto_desde: { type: DataTypes.DECIMAL(18, 2) },
+  tipo_firma: {
+    type: DataTypes.STRING(30),
+    validate: { isIn: [['individual','conjunta','obligatoria_casos','ninguna', null]] },
+  },
+  tipo_firma_casos:   { type: DataTypes.TEXT },
+  activo:             { type: DataTypes.BOOLEAN, defaultValue: true },
+}, {
+  tableName: 'usuarios_sociedad',
+  underscored: true,
+});
+
+// ─── 4. USUARIOS_SOCIEDAD_TAG ─────────────────────────────────
+// Tabla intermedia N:M: personas <-> sociedades
+const UsuarioSociedadTag = sequelize.define('UsuarioSociedadTag', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  id_usuario_sociedad: {
+    type: DataTypes.UUID,
     allowNull: false,
   },
-  status: {
-    type: DataTypes.ENUM('pendiente', 'aprobado', 'rechazado', 'baja'),
+  id_sociedad: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  rol:    { type: DataTypes.STRING(100) },
+  activo: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, {
+  tableName: 'usuarios_sociedad_tag',
+  underscored: true,
+});
+
+// ─── 5. DOCUMENTOS_CLIENTE ────────────────────────────────────
+// Slot de documento: uno por tipo por sociedad
+const DocumentoCliente = sequelize.define('DocumentoCliente', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  id_sociedad:     { type: DataTypes.INTEGER, allowNull: false },
+  version_activa:  { type: DataTypes.INTEGER },
+  tipo_entidad: {
+    type: DataTypes.STRING(30),
+    validate: { isIn: [['SA','SRL','SH','sucesion','monotributista', null]] },
+  },
+  id_documento:     { type: DataTypes.STRING(100), allowNull: false },
+  nombre_documento: { type: DataTypes.STRING(255) },
+  categoria: {
+    type: DataTypes.STRING(50),
+    validate: { isIn: [['identificacion','societario','pep','beneficiario_final','apoderado','otro', null]] },
+  },
+  es_obligatorio:  { type: DataTypes.BOOLEAN, defaultValue: true },
+  es_condicional:  { type: DataTypes.BOOLEAN, defaultValue: false },
+}, {
+  tableName: 'documentos_cliente',
+  underscored: true,
+});
+
+// ─── 6. DOCUMENTOS_VERSIONES ──────────────────────────────────
+// Cada subida de archivo
+const DocumentoVersion = sequelize.define('DocumentoVersion', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  id_documento:    { type: DataTypes.INTEGER, allowNull: false },
+  aprobado_por:    { type: DataTypes.INTEGER },
+  numero_version:  { type: DataTypes.INTEGER, defaultValue: 1 },
+  url_archivo:     { type: DataTypes.STRING(500) },
+  estado: {
+    type: DataTypes.STRING(20),
     defaultValue: 'pendiente',
+    validate: { isIn: [['pendiente','aprobado','rechazado','observado']] },
   },
-  // Datos comunes
-  cuit: {
-    type: DataTypes.STRING(13),
-    allowNull: false,
-    unique: true,
-  },
-  email: {
-    type: DataTypes.STRING,
-    validate: { isEmail: true },
-  },
-  phone: {
-    type: DataTypes.STRING,
-  },
-  address: {
-    type: DataTypes.STRING,
-  },
-  city: {
-    type: DataTypes.STRING,
-  },
-  province: {
-    type: DataTypes.STRING,
-  },
-  postalCode: {
-    type: DataTypes.STRING,
-  },
-  country: {
-    type: DataTypes.STRING,
-    defaultValue: 'Argentina',
-  },
-  // Persona Humana
-  firstName: {
-    type: DataTypes.STRING,
-  },
-  lastName: {
-    type: DataTypes.STRING,
-  },
-  dni: {
-    type: DataTypes.STRING,
-  },
-  birthDate: {
-    type: DataTypes.DATEONLY,
-  },
-  nationality: {
-    type: DataTypes.STRING,
-  },
-  occupation: {
-    type: DataTypes.STRING,
-  },
-  maritalStatus: {
-    type: DataTypes.STRING,
-  },
-  isPep: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  pepPosition: {
-    type: DataTypes.STRING,
-  },
-  pepRelationship: {
-    type: DataTypes.STRING,
-  },
-  // Persona Jurídica
-  legalName: {
-    type: DataTypes.STRING,
-  },
-  tradeName: {
-    type: DataTypes.STRING,
-  },
-  legalForm: {
-    type: DataTypes.STRING, // SA, SRL, SAS, etc.
-  },
-  incorporationDate: {
-    type: DataTypes.DATEONLY,
-  },
-  registrationNumber: {
-    type: DataTypes.STRING,
-  },
-  mainActivity: {
-    type: DataTypes.STRING,
-  },
-  secondaryActivity: {
-    type: DataTypes.STRING,
-  },
-  // Riesgo
-  riskLevel: {
-    type: DataTypes.ENUM('bajo', 'medio', 'alto'),
-    defaultValue: 'medio',
-  },
-  riskScore: {
-    type: DataTypes.INTEGER,
-  },
-  dueDiligenceType: {
-    type: DataTypes.ENUM('simplificada', 'media', 'reforzada'),
-    defaultValue: 'media',
-  },
-  lastRiskAssessment: {
-    type: DataTypes.DATE,
-  },
-  nextRiskReview: {
-    type: DataTypes.DATE,
-  },
-  // Perfil transaccional esperado
-  expectedMonthlyTransactions: {
-    type: DataTypes.INTEGER,
-  },
-  expectedMonthlyAmount: {
-    type: DataTypes.DECIMAL(15, 2),
-  },
-  transactionTypes: {
-    type: DataTypes.JSON, // Changed from ARRAY for SQLite compatibility
-  },
-  // Flags
-  hasFraudFlag: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  fraudFlagReason: {
-    type: DataTypes.TEXT,
-  },
-  fraudFlagDate: {
-    type: DataTypes.DATE,
-  },
-  // Auditoría
-  approvedBy: {
-    type: DataTypes.UUID,
-  },
-  approvedAt: {
-    type: DataTypes.DATE,
-  },
-  rejectionReason: {
-    type: DataTypes.TEXT,
-  },
-  notes: {
-    type: DataTypes.TEXT,
-  },
-  // Form data from frontend (stores all entity-specific fields like gestor_es_representante)
-  formData: {
-    type: DataTypes.JSON,
-  },
+  motivo_rechazo:  { type: DataTypes.TEXT },
+  observaciones:   { type: DataTypes.TEXT },
+  datos_formulario:{ type: DataTypes.JSONB },
+  aprobado_en:     { type: DataTypes.DATE },
+  subido_en:       { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+}, {
+  tableName: 'documentos_versiones',
+  timestamps: false,
 });
 
-// BeneficialOwner - Beneficiarios Finales
-const BeneficialOwner = sequelize.define('BeneficialOwner', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  firstName: {
-    type: DataTypes.STRING,
+// ─── 7. ROLES ─────────────────────────────────────────────────
+
+const BeneficiarioFinal = sequelize.define('BeneficiarioFinal', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_usuario_sociedad_tag:    { type: DataTypes.INTEGER, allowNull: false },
+  porcentaje_participacion:   { type: DataTypes.DECIMAL(5, 2) },
+  es_beneficiario_directo:    { type: DataTypes.BOOLEAN, defaultValue: true },
+}, { tableName: 'beneficiarios_finales', underscored: true });
+
+const AccionistaSocio = sequelize.define('AccionistaSocio', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_usuario_sociedad_tag:    { type: DataTypes.INTEGER, allowNull: false },
+  porcentaje_participacion:   { type: DataTypes.DECIMAL(5, 2) },
+  cantidad_acciones:          { type: DataTypes.INTEGER },
+  tipo_acciones:              { type: DataTypes.STRING(100) },
+}, { tableName: 'accionistas_socios', underscored: true });
+
+const SocioSH = sequelize.define('SocioSH', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_usuario_sociedad_tag:    { type: DataTypes.INTEGER, allowNull: false },
+  porcentaje_participacion:   { type: DataTypes.DECIMAL(5, 2) },
+  es_administrador:           { type: DataTypes.BOOLEAN, defaultValue: false },
+  tiene_firma:                { type: DataTypes.BOOLEAN, defaultValue: false },
+}, { tableName: 'socios_sh', underscored: true });
+
+const Autoridad = sequelize.define('Autoridad', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_usuario_sociedad_tag:    { type: DataTypes.INTEGER, allowNull: false },
+  cargo:                      { type: DataTypes.STRING(100) },
+  fecha_designacion:          { type: DataTypes.DATEONLY },
+  fecha_vencimiento_mandato:  { type: DataTypes.DATEONLY },
+}, { tableName: 'autoridades', underscored: true });
+
+const Apoderado = sequelize.define('Apoderado', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_usuario_sociedad_tag:    { type: DataTypes.INTEGER, allowNull: false },
+  tipo_poder:                 { type: DataTypes.STRING(100) },
+  fecha_poder:                { type: DataTypes.DATEONLY },
+  fecha_vencimiento:          { type: DataTypes.DATEONLY },
+  escribano:                  { type: DataTypes.STRING(255) },
+}, { tableName: 'apoderados', underscored: true });
+
+const Heredero = sequelize.define('Heredero', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_usuario_sociedad_tag:    { type: DataTypes.INTEGER, allowNull: false },
+  vinculo:                    { type: DataTypes.STRING(100) },
+  porcentaje_participacion:   { type: DataTypes.DECIMAL(5, 2) },
+}, { tableName: 'herederos', underscored: true });
+
+const AdministradorJusticia = sequelize.define('AdministradorJusticia', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_usuario_sociedad_tag:    { type: DataTypes.INTEGER, allowNull: false },
+  fecha_designacion:          { type: DataTypes.DATEONLY },
+  juzgado:                    { type: DataTypes.STRING(255) },
+  nro_expediente:             { type: DataTypes.STRING(100) },
+}, { tableName: 'administrador_justicia', underscored: true });
+
+// ─── 8. FORM_* ────────────────────────────────────────────────
+
+const FormEstatutoSA = sequelize.define('FormEstatutoSA', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_version:                 { type: DataTypes.INTEGER, allowNull: false },
+  sa_razon_social:            { type: DataTypes.STRING(255) },
+  sa_cuit:                    { type: DataTypes.STRING(20) },
+  sa_fecha_constitucion:      { type: DataTypes.DATEONLY },
+  sa_nro_inscripcion_igj:     { type: DataTypes.STRING(100) },
+  sa_dom_legal:               { type: DataTypes.TEXT },
+  sa_dom_real:                { type: DataTypes.TEXT },
+  sa_objeto_social:           { type: DataTypes.TEXT },
+  sa_capital_social:          { type: DataTypes.DECIMAL(18, 2) },
+  sa_plazo_duracion:          { type: DataTypes.STRING(100) },
+  sa_fecha_cierre_ejercicio:  { type: DataTypes.DATEONLY },
+  sa_tipo_acciones:           { type: DataTypes.STRING(100) },
+  sa_total_acciones:          { type: DataTypes.INTEGER },
+  sa_valor_nominal_accion:    { type: DataTypes.DECIMAL(10, 4) },
+}, { tableName: 'form_estatuto_sa', timestamps: false });
+
+const FormEstatutoSRL = sequelize.define('FormEstatutoSRL', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_version:                 { type: DataTypes.INTEGER, allowNull: false },
+  srl_razon_social:           { type: DataTypes.STRING(255) },
+  srl_cuit:                   { type: DataTypes.STRING(20) },
+  srl_fecha_constitucion:     { type: DataTypes.DATEONLY },
+  srl_nro_inscripcion_igj:    { type: DataTypes.STRING(100) },
+  srl_dom_legal:              { type: DataTypes.TEXT },
+  srl_dom_real:               { type: DataTypes.TEXT },
+  srl_objeto_social:          { type: DataTypes.TEXT },
+  srl_capital_social:         { type: DataTypes.DECIMAL(18, 2) },
+  srl_total_cuotas:           { type: DataTypes.INTEGER },
+  srl_valor_cuota:            { type: DataTypes.DECIMAL(10, 4) },
+  srl_tipo_gerencia:          { type: DataTypes.STRING(50) },
+  srl_tipo_firma:             { type: DataTypes.STRING(50) },
+}, { tableName: 'form_estatuto_srl', timestamps: false });
+
+const FormEstatutoSH = sequelize.define('FormEstatutoSH', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_version:                     { type: DataTypes.INTEGER, allowNull: false },
+  sh_denominacion:                { type: DataTypes.STRING(255) },
+  sh_fecha_inicio:                { type: DataTypes.DATEONLY },
+  sh_domicilio:                   { type: DataTypes.TEXT },
+  sh_actividad_principal:         { type: DataTypes.STRING(255) },
+  sh_objeto_social:               { type: DataTypes.TEXT },
+  sh_cantidad_socios:             { type: DataTypes.INTEGER },
+  sh_representante:               { type: DataTypes.STRING(255) },
+  sh_cuit_representante:          { type: DataTypes.STRING(20) },
+  sh_gestor_es_representante:     { type: DataTypes.BOOLEAN },
+  sh_tiene_apoderado:             { type: DataTypes.BOOLEAN },
+}, { tableName: 'form_estatuto_sh', timestamps: false });
+
+const FormSucesion = sequelize.define('FormSucesion', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_version:                 { type: DataTypes.INTEGER, allowNull: false },
+  suc_nombre_causante:        { type: DataTypes.STRING(255) },
+  suc_cuit_causante:          { type: DataTypes.STRING(20) },
+  suc_fecha_fallecimiento:    { type: DataTypes.DATEONLY },
+  suc_juzgado:                { type: DataTypes.STRING(255) },
+  suc_nro_expediente:         { type: DataTypes.STRING(100) },
+  suc_fecha_declaratoria:     { type: DataTypes.DATEONLY },
+  suc_administrador:          { type: DataTypes.STRING(255) },
+  suc_cuit_administrador:     { type: DataTypes.STRING(20) },
+}, { tableName: 'form_sucesion', timestamps: false });
+
+const FormMonotributista = sequelize.define('FormMonotributista', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_version:                 { type: DataTypes.INTEGER, allowNull: false },
+  mono_apellido:              { type: DataTypes.STRING(100) },
+  mono_nombre:                { type: DataTypes.STRING(100) },
+  mono_dni:                   { type: DataTypes.STRING(20) },
+  mono_cuit:                  { type: DataTypes.STRING(20) },
+  mono_fecha_nacimiento:      { type: DataTypes.DATEONLY },
+  mono_nacionalidad:          { type: DataTypes.STRING(100) },
+  mono_estado_civil:          { type: DataTypes.STRING(50) },
+  mono_dom_real:              { type: DataTypes.TEXT },
+  mono_dom_fiscal:            { type: DataTypes.TEXT },
+  mono_telefono:              { type: DataTypes.STRING(50) },
+  mono_email:                 { type: DataTypes.STRING(255) },
+  mono_categoria:             { type: DataTypes.STRING(5) },
+  mono_actividad_principal:   { type: DataTypes.STRING(255) },
+  mono_fecha_inscripcion:     { type: DataTypes.DATEONLY },
+  mono_ingresos_anuales:      { type: DataTypes.DECIMAL(18, 2) },
+}, { tableName: 'form_monotributista', timestamps: false });
+
+const FormDDJJBeneficiarios = sequelize.define('FormDDJJBeneficiarios', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_version:             { type: DataTypes.INTEGER, allowNull: false },
+  ddjj_bf_fecha:          { type: DataTypes.DATEONLY },
+  ddjj_bf_observaciones:  { type: DataTypes.TEXT },
+}, { tableName: 'form_ddjj_beneficiarios_finales', timestamps: false });
+
+const FormDDJJPep = sequelize.define('FormDDJJPep', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_version:               { type: DataTypes.INTEGER, allowNull: false },
+  ddjj_pep_fecha:           { type: DataTypes.DATEONLY },
+  ddjj_pep_observaciones:   { type: DataTypes.TEXT },
+}, { tableName: 'form_ddjj_pep', timestamps: false });
+
+// ─── 9. LOGS_ACCIONES ─────────────────────────────────────────
+const LogAccion = sequelize.define('LogAccion', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_sociedad:          { type: DataTypes.INTEGER },
+  id_usuario_interno:   { type: DataTypes.INTEGER },
+  id_usuario_sociedad:  { type: DataTypes.UUID },
+  id_documento:         { type: DataTypes.INTEGER },
+  tipo_accion: {
+    type: DataTypes.STRING(50),
     allowNull: false,
+    validate: {
+      isIn: [[
+        'alta_iniciada', 'alta_guardada_borrador', 'alta_avanzada_pendiente',
+        'alta_completada', 'alta_excepcion_docs', 'alta_psp', 'alta_psp_excepcion',
+        'documento_aprobado', 'documento_rechazado', 'documento_observado',
+        'documento_re_solicitado', 'datos_modificados',
+        'cvu_habilitado', 'cvu_bloqueado', 'cvu_excepcion',
+        'pep_detectado', 'comentario',
+      ]],
+    },
   },
-  lastName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  dni: {
-    type: DataTypes.STRING,
-  },
-  cuit: {
-    type: DataTypes.STRING(13),
-  },
-  birthDate: {
-    type: DataTypes.DATEONLY,
-  },
-  nationality: {
-    type: DataTypes.STRING,
-  },
-  address: {
-    type: DataTypes.STRING,
-  },
-  ownershipPercentage: {
-    type: DataTypes.DECIMAL(5, 2),
-  },
-  isPep: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  pepPosition: {
-    type: DataTypes.STRING,
-  },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
+  estado_anterior:  { type: DataTypes.STRING(100) },
+  estado_nuevo:     { type: DataTypes.STRING(100) },
+  motivo:           { type: DataTypes.TEXT },
+  genera_cvu:       { type: DataTypes.BOOLEAN, defaultValue: false },
+  nro_cvu:          { type: DataTypes.STRING(100) },
+  cvu_generado_en:  { type: DataTypes.DATE },
+  direccion_ip:     { type: DataTypes.STRING(50) },
+}, {
+  tableName: 'logs_acciones',
+  updatedAt: false,
+  underscored: true,
 });
 
-// Signatory - Firmantes
-const Signatory = sequelize.define('Signatory', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  firstName: {
-    type: DataTypes.STRING,
+// ─── 10. ALERTAS ──────────────────────────────────────────────
+const Alerta = sequelize.define('Alerta', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_sociedad:          { type: DataTypes.INTEGER, allowNull: false },
+  id_usuario_sociedad:  { type: DataTypes.UUID },
+  tipo_alerta: {
+    type: DataTypes.STRING(60),
     allowNull: false,
-  },
-  lastName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  dni: {
-    type: DataTypes.STRING,
-  },
-  cuit: {
-    type: DataTypes.STRING(13),
-  },
-  position: {
-    type: DataTypes.STRING,
-  },
-  signatureType: {
-    type: DataTypes.ENUM('individual', 'conjunta'),
-  },
-  isPep: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
-
-// Attorney - Apoderados
-const Attorney = sequelize.define('Attorney', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  firstName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  lastName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  dni: {
-    type: DataTypes.STRING,
-  },
-  cuit: {
-    type: DataTypes.STRING(13),
-  },
-  powerType: {
-    type: DataTypes.STRING, // General, Especial, etc.
-  },
-  powerScope: {
-    type: DataTypes.TEXT,
-  },
-  grantDate: {
-    type: DataTypes.DATEONLY,
-  },
-  expirationDate: {
-    type: DataTypes.DATEONLY,
-  },
-  notaryName: {
-    type: DataTypes.STRING,
-  },
-  notaryNumber: {
-    type: DataTypes.STRING,
-  },
-  isPep: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
-
-// Authority - Autoridades de la sociedad
-const Authority = sequelize.define('Authority', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  firstName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  lastName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  dni: {
-    type: DataTypes.STRING,
-  },
-  cuit: {
-    type: DataTypes.STRING(13),
-  },
-  position: {
-    type: DataTypes.STRING, // Presidente, Director, Gerente, etc.
-  },
-  appointmentDate: {
-    type: DataTypes.DATEONLY,
-  },
-  expirationDate: {
-    type: DataTypes.DATEONLY,
-  },
-  isPep: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
-
-// Document - Documentos
-const Document = sequelize.define('Document', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  documentType: {
-    type: DataTypes.STRING, // DNI, Estatuto, Acta, Poder, etc.
-    allowNull: false,
-  },
-  documentCategory: {
-    type: DataTypes.ENUM('identificacion', 'societario', 'pep', 'beneficiario_final', 'apoderado', 'otro'),
-    allowNull: false,
-  },
-  fileName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  originalName: {
-    type: DataTypes.STRING,
-  },
-  mimeType: {
-    type: DataTypes.STRING,
-  },
-  size: {
-    type: DataTypes.INTEGER,
-  },
-  path: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  issueDate: {
-    type: DataTypes.DATEONLY,
-  },
-  expirationDate: {
-    type: DataTypes.DATEONLY,
-  },
-  isExpired: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  verifiedBy: {
-    type: DataTypes.UUID,
-  },
-  verifiedAt: {
-    type: DataTypes.DATE,
-  },
-  notes: {
-    type: DataTypes.TEXT,
-  },
-});
-
-// RiskAssessment - Evaluaciones de riesgo
-const RiskAssessment = sequelize.define('RiskAssessment', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  assessmentType: {
-    type: DataTypes.ENUM('inicial', 'periodica', 'evento'),
-    allowNull: false,
-  },
-  // Factores de riesgo
-  clientTypeScore: {
-    type: DataTypes.INTEGER,
-  },
-  activityScore: {
-    type: DataTypes.INTEGER,
-  },
-  geographicScore: {
-    type: DataTypes.INTEGER,
-  },
-  productScore: {
-    type: DataTypes.INTEGER,
-  },
-  channelScore: {
-    type: DataTypes.INTEGER,
-  },
-  pepScore: {
-    type: DataTypes.INTEGER,
-  },
-  transactionScore: {
-    type: DataTypes.INTEGER,
-  },
-  // Resultado
-  totalScore: {
-    type: DataTypes.INTEGER,
-  },
-  riskLevel: {
-    type: DataTypes.ENUM('bajo', 'medio', 'alto'),
-    allowNull: false,
-  },
-  dueDiligenceType: {
-    type: DataTypes.ENUM('simplificada', 'media', 'reforzada'),
-    allowNull: false,
-  },
-  justification: {
-    type: DataTypes.TEXT,
-  },
-  assessedBy: {
-    type: DataTypes.UUID,
-  },
-  approvedBy: {
-    type: DataTypes.UUID,
-  },
-  approvedAt: {
-    type: DataTypes.DATE,
-  },
-  nextReviewDate: {
-    type: DataTypes.DATE,
-  },
-});
-
-// Transaction - Transacciones (para monitoreo)
-const Transaction = sequelize.define('Transaction', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  transactionType: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  amount: {
-    type: DataTypes.DECIMAL(15, 2),
-    allowNull: false,
-  },
-  currency: {
-    type: DataTypes.STRING(3),
-    defaultValue: 'ARS',
-  },
-  transactionDate: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-  },
-  counterparty: {
-    type: DataTypes.STRING,
-  },
-  counterpartyAccount: {
-    type: DataTypes.STRING,
-  },
-  channel: {
-    type: DataTypes.STRING,
-  },
-  branch: {
-    type: DataTypes.STRING,
-  },
-  reference: {
-    type: DataTypes.STRING,
-  },
-  isUnusual: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-});
-
-// Alert - Alertas
-const Alert = sequelize.define('Alert', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  alertType: {
-    type: DataTypes.ENUM('umbral_monto', 'umbral_frecuencia', 'desvio_perfil', 'pep', 'lista_negra', 'screening', 'documento_vencido', 'otro'),
-    allowNull: false,
-  },
-  severity: {
-    type: DataTypes.ENUM('baja', 'media', 'alta', 'critica'),
-    allowNull: false,
-  },
-  status: {
-    type: DataTypes.ENUM('pendiente', 'en_revision', 'cerrada', 'escalada'),
+    validate: {
+      isIn: [[
+        'vencimiento_ddjj', 'informe_debida_diligencia',
+        'solicitud_informacion_pendiente', 'documentacion_pendiente',
+        'renovacion_documento',
+      ]],
+    },
+  },
+  mensaje:           { type: DataTypes.TEXT },
+  fecha_vencimiento: { type: DataTypes.DATE },
+  estado: {
+    type: DataTypes.STRING(20),
     defaultValue: 'pendiente',
+    validate: { isIn: [['pendiente', 'enviada', 'resuelta', 'ignorada']] },
   },
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-  },
-  triggerValue: {
-    type: DataTypes.STRING,
-  },
-  thresholdValue: {
-    type: DataTypes.STRING,
-  },
-  assignedTo: {
-    type: DataTypes.UUID,
-  },
-  assignedAt: {
-    type: DataTypes.DATE,
-  },
-  resolvedBy: {
-    type: DataTypes.UUID,
-  },
-  resolvedAt: {
-    type: DataTypes.DATE,
-  },
-  resolution: {
-    type: DataTypes.TEXT,
-  },
+}, {
+  tableName: 'alertas',
+  underscored: true,
 });
 
-// UnusualOperation - Operaciones Inusuales
-const UnusualOperation = sequelize.define('UnusualOperation', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  operationNumber: {
-    type: DataTypes.STRING,
-    unique: true,
-  },
-  detectionDate: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  operationType: {
-    type: DataTypes.STRING,
-  },
-  amount: {
-    type: DataTypes.DECIMAL(15, 2),
-  },
-  currency: {
-    type: DataTypes.STRING(3),
-    defaultValue: 'ARS',
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  unusualIndicators: {
-    type: DataTypes.JSON, // Changed from ARRAY for SQLite compatibility
-  },
-  status: {
-    type: DataTypes.ENUM('pendiente', 'en_analisis', 'justificada', 'sospechosa'),
-    defaultValue: 'pendiente',
-  },
-  analysis: {
-    type: DataTypes.TEXT,
-  },
-  conclusion: {
-    type: DataTypes.TEXT,
-  },
-  analyzedBy: {
-    type: DataTypes.UUID,
-  },
-  analyzedAt: {
-    type: DataTypes.DATE,
-  },
-  approvedBy: {
-    type: DataTypes.UUID,
-  },
-  approvedAt: {
-    type: DataTypes.DATE,
-  },
+// ─── ASOCIACIONES ─────────────────────────────────────────────
+
+// Sociedad → UsuarioSociedadTag
+SociedadTag.hasMany(UsuarioSociedadTag, { foreignKey: 'id_sociedad' });
+UsuarioSociedadTag.belongsTo(SociedadTag, { foreignKey: 'id_sociedad' });
+
+// UsuarioSociedad → UsuarioSociedadTag
+UsuarioSociedad.hasMany(UsuarioSociedadTag, { foreignKey: 'id_usuario_sociedad' });
+UsuarioSociedadTag.belongsTo(UsuarioSociedad, { foreignKey: 'id_usuario_sociedad' });
+
+// Sociedad → DocumentoCliente
+SociedadTag.hasMany(DocumentoCliente, { foreignKey: 'id_sociedad' });
+DocumentoCliente.belongsTo(SociedadTag, { foreignKey: 'id_sociedad' });
+
+// DocumentoCliente → DocumentoVersion
+DocumentoCliente.hasMany(DocumentoVersion, { foreignKey: 'id_documento' });
+DocumentoVersion.belongsTo(DocumentoCliente, { foreignKey: 'id_documento' });
+
+// Usuario aprueba DocumentoVersion
+Usuario.hasMany(DocumentoVersion, { foreignKey: 'aprobado_por' });
+DocumentoVersion.belongsTo(Usuario, { foreignKey: 'aprobado_por' });
+
+// Roles → UsuarioSociedadTag
+const rolesConfig = [
+  [BeneficiarioFinal, 'beneficiarios_finales'],
+  [AccionistaSocio,   'accionistas_socios'],
+  [SocioSH,          'socios_sh'],
+  [Autoridad,        'autoridades'],
+  [Apoderado,        'apoderados'],
+  [Heredero,         'herederos'],
+  [AdministradorJusticia, 'administrador_justicia'],
+];
+rolesConfig.forEach(([Model]) => {
+  UsuarioSociedadTag.hasMany(Model, { foreignKey: 'id_usuario_sociedad_tag' });
+  Model.belongsTo(UsuarioSociedadTag, { foreignKey: 'id_usuario_sociedad_tag' });
 });
 
-// SuspiciousReport - Reporte de Operación Sospechosa (ROS)
-const SuspiciousReport = sequelize.define('SuspiciousReport', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  reportNumber: {
-    type: DataTypes.STRING,
-    unique: true,
-  },
-  reportDate: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  status: {
-    type: DataTypes.ENUM('borrador', 'enviado', 'confirmado'),
-    defaultValue: 'borrador',
-  },
-  suspicionType: {
-    type: DataTypes.STRING,
-  },
-  suspicionDescription: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  totalAmount: {
-    type: DataTypes.DECIMAL(15, 2),
-  },
-  currency: {
-    type: DataTypes.STRING(3),
-    defaultValue: 'ARS',
-  },
-  relatedTransactions: {
-    type: DataTypes.JSON, // Changed from ARRAY for SQLite compatibility
-  },
-  supportingEvidence: {
-    type: DataTypes.TEXT,
-  },
-  createdBy: {
-    type: DataTypes.UUID,
-  },
-  submittedBy: {
-    type: DataTypes.UUID,
-  },
-  submittedAt: {
-    type: DataTypes.DATE,
-  },
-  uifReference: {
-    type: DataTypes.STRING,
-  },
-  isConfidential: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
+// Forms → DocumentoVersion
+const formsConfig = [
+  FormEstatutoSA, FormEstatutoSRL, FormEstatutoSH,
+  FormSucesion, FormMonotributista,
+  FormDDJJBeneficiarios, FormDDJJPep,
+];
+formsConfig.forEach(Model => {
+  DocumentoVersion.hasOne(Model, { foreignKey: 'id_version' });
+  Model.belongsTo(DocumentoVersion, { foreignKey: 'id_version' });
 });
 
-// ScreeningResult - Resultados de screening
-const ScreeningResult = sequelize.define('ScreeningResult', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  screeningType: {
-    type: DataTypes.ENUM('alta', 'periodico', 'modificacion'),
-    allowNull: false,
-  },
-  listType: {
-    type: DataTypes.STRING, // PEP, RePET, OFAC, ONU, etc.
-    allowNull: false,
-  },
-  searchTerm: {
-    type: DataTypes.STRING,
-  },
-  hasMatch: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  matchDetails: {
-    type: DataTypes.JSONB,
-  },
-  matchScore: {
-    type: DataTypes.INTEGER,
-  },
-  status: {
-    type: DataTypes.ENUM('pendiente', 'confirmado', 'descartado'),
-    defaultValue: 'pendiente',
-  },
-  reviewedBy: {
-    type: DataTypes.UUID,
-  },
-  reviewedAt: {
-    type: DataTypes.DATE,
-  },
-  reviewNotes: {
-    type: DataTypes.TEXT,
-  },
-  provider: {
-    type: DataTypes.STRING,
-  },
-  providerReference: {
-    type: DataTypes.STRING,
-  },
-});
+// Logs
+SociedadTag.hasMany(LogAccion, { foreignKey: 'id_sociedad' });
+LogAccion.belongsTo(SociedadTag, { foreignKey: 'id_sociedad' });
+Usuario.hasMany(LogAccion, { foreignKey: 'id_usuario_interno' });
+LogAccion.belongsTo(Usuario, { foreignKey: 'id_usuario_interno' });
+UsuarioSociedad.hasMany(LogAccion, { foreignKey: 'id_usuario_sociedad' });
+LogAccion.belongsTo(UsuarioSociedad, { foreignKey: 'id_usuario_sociedad' });
+DocumentoCliente.hasMany(LogAccion, { foreignKey: 'id_documento' });
+LogAccion.belongsTo(DocumentoCliente, { foreignKey: 'id_documento' });
 
-// AuditLog - Log de auditoría
-const AuditLog = sequelize.define('AuditLog', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  entityType: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  entityId: {
-    type: DataTypes.UUID,
-    allowNull: false,
-  },
-  action: {
-    type: DataTypes.ENUM('create', 'update', 'delete', 'view', 'export', 'approve', 'reject'),
-    allowNull: false,
-  },
-  changes: {
-    type: DataTypes.JSONB,
-  },
-  reason: {
-    type: DataTypes.TEXT,
-  },
-  ipAddress: {
-    type: DataTypes.STRING,
-  },
-  userAgent: {
-    type: DataTypes.STRING,
-  },
-});
+// Alertas
+SociedadTag.hasMany(Alerta, { foreignKey: 'id_sociedad' });
+Alerta.belongsTo(SociedadTag, { foreignKey: 'id_sociedad' });
+UsuarioSociedad.hasMany(Alerta, { foreignKey: 'id_usuario_sociedad' });
+Alerta.belongsTo(UsuarioSociedad, { foreignKey: 'id_usuario_sociedad' });
 
-// RiskMatrix - Matriz de riesgo configurable
-const RiskMatrix = sequelize.define('RiskMatrix', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  factor: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  category: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  value: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  score: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
-
-// AlertThreshold - Umbrales de alerta configurables
-const AlertThreshold = sequelize.define('AlertThreshold', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  thresholdType: {
-    type: DataTypes.ENUM('monto', 'frecuencia', 'desvio_porcentaje'),
-    allowNull: false,
-  },
-  value: {
-    type: DataTypes.DECIMAL(15, 2),
-    allowNull: false,
-  },
-  period: {
-    type: DataTypes.ENUM('diario', 'semanal', 'mensual'),
-  },
-  riskLevel: {
-    type: DataTypes.ENUM('bajo', 'medio', 'alto'),
-  },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
-
-// PepDeclaration - Declaraciones Juradas PEP por persona
-const PepDeclaration = sequelize.define('PepDeclaration', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  // Persona a la que pertenece la DDJJ
-  personId: {
-    type: DataTypes.UUID,
-    allowNull: false,
-  },
-  personType: {
-    type: DataTypes.ENUM('beneficial_owner', 'signatory', 'attorney', 'authority', 'representative'),
-    allowNull: false,
-  },
-  personName: {
-    type: DataTypes.STRING,
-  },
-  personDni: {
-    type: DataTypes.STRING,
-  },
-  // Datos de la declaración
-  isPep: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  pepPosition: {
-    type: DataTypes.STRING, // Cargo/función PEP
-  },
-  pepOrganization: {
-    type: DataTypes.STRING, // Organismo
-  },
-  pepStartDate: {
-    type: DataTypes.DATEONLY, // Fecha inicio cargo
-  },
-  pepEndDate: {
-    type: DataTypes.DATEONLY, // Fecha fin cargo (si aplica)
-  },
-  pepRelationship: {
-    type: DataTypes.STRING, // Si es PEP por relación (cónyuge, familiar, etc.)
-  },
-  // Estado de la declaración
-  status: {
-    type: DataTypes.ENUM('pending', 'completed', 'pending_approval', 'approved', 'rejected'),
-    defaultValue: 'pending',
-  },
-  // Documento de la DDJJ
-  documentUrl: {
-    type: DataTypes.STRING,
-  },
-  fileName: {
-    type: DataTypes.STRING,
-  },
-  declarationDate: {
-    type: DataTypes.DATEONLY,
-  },
-  // Documentación adicional requerida para PEPs
-  additionalDocs: {
-    type: DataTypes.JSON, // { ddjj_ingresos: true, extractos_bancarios: false, ... }
-  },
-  additionalDocsComplete: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  // Aprobación del Oficial de Cumplimiento (solo para PEPs)
-  approvedBy: {
-    type: DataTypes.UUID,
-  },
-  approvedAt: {
-    type: DataTypes.DATE,
-  },
-  rejectedBy: {
-    type: DataTypes.UUID,
-  },
-  rejectedAt: {
-    type: DataTypes.DATE,
-  },
-  rejectionReason: {
-    type: DataTypes.TEXT,
-  },
-  // Auditoría
-  createdBy: {
-    type: DataTypes.UUID,
-  },
-  notes: {
-    type: DataTypes.TEXT,
-  },
-});
-
-// Contract - Contratos de clientes
-const Contract = sequelize.define('Contract', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  contractType: {
-    type: DataTypes.STRING, // 'onboarding', 'amendment', 'termination', etc.
-    allowNull: false,
-  },
-  status: {
-    type: DataTypes.ENUM('draft', 'pending_upload', 'pending_signatures', 'partially_signed', 'completed', 'cancelled'),
-    defaultValue: 'pending_upload',
-  },
-  documentUrl: {
-    type: DataTypes.STRING,
-  },
-  fileName: {
-    type: DataTypes.STRING,
-  },
-  totalSignaturesRequired: {
-    type: DataTypes.INTEGER,
-    defaultValue: 1,
-  },
-  completedSignatures: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  createdBy: {
-    type: DataTypes.UUID,
-  },
-  uploadedAt: {
-    type: DataTypes.DATE,
-  },
-  completedAt: {
-    type: DataTypes.DATE,
-  },
-  notes: {
-    type: DataTypes.TEXT,
-  },
-});
-
-// ContractSignature - Firmas de contrato
-const ContractSignature = sequelize.define('ContractSignature', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  signerName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  signerEmail: {
-    type: DataTypes.STRING,
-  },
-  signerDni: {
-    type: DataTypes.STRING,
-  },
-  signerRole: {
-    type: DataTypes.STRING, // 'socio', 'representante', 'apoderado', 'presidente', etc.
-  },
-  signerId: {
-    type: DataTypes.UUID, // Reference to BeneficialOwner, Signatory, Attorney, or Authority
-  },
-  signerType: {
-    type: DataTypes.STRING, // 'beneficial_owner', 'signatory', 'attorney', 'authority', 'external'
-  },
-  status: {
-    type: DataTypes.ENUM('pending', 'signed', 'rejected'),
-    defaultValue: 'pending',
-  },
-  signedAt: {
-    type: DataTypes.DATE,
-  },
-  signatureMethod: {
-    type: DataTypes.STRING, // 'digital', 'holographic', 'electronic'
-  },
-  signatureData: {
-    type: DataTypes.TEXT, // Signature image or certificate data
-  },
-  ipAddress: {
-    type: DataTypes.STRING,
-  },
-  rejectionReason: {
-    type: DataTypes.TEXT,
-  },
-  notifiedAt: {
-    type: DataTypes.DATE,
-  },
-  reminderCount: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  lastReminderAt: {
-    type: DataTypes.DATE,
-  },
-});
-
-// Associations
-User.hasMany(Client, { foreignKey: 'createdBy', as: 'createdClients' });
-Client.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
-
-Client.hasMany(BeneficialOwner, { foreignKey: 'clientId', as: 'beneficialOwners' });
-BeneficialOwner.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(Signatory, { foreignKey: 'clientId', as: 'signatories' });
-Signatory.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(Attorney, { foreignKey: 'clientId', as: 'attorneys' });
-Attorney.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(Authority, { foreignKey: 'clientId', as: 'authorities' });
-Authority.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(Document, { foreignKey: 'clientId', as: 'documents' });
-Document.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(RiskAssessment, { foreignKey: 'clientId', as: 'riskAssessments' });
-RiskAssessment.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(Transaction, { foreignKey: 'clientId', as: 'transactions' });
-Transaction.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(Alert, { foreignKey: 'clientId', as: 'alerts' });
-Alert.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(UnusualOperation, { foreignKey: 'clientId', as: 'unusualOperations' });
-UnusualOperation.belongsTo(Client, { foreignKey: 'clientId' });
-
-UnusualOperation.hasOne(SuspiciousReport, { foreignKey: 'unusualOperationId', as: 'suspiciousReport' });
-SuspiciousReport.belongsTo(UnusualOperation, { foreignKey: 'unusualOperationId' });
-
-Client.hasMany(SuspiciousReport, { foreignKey: 'clientId', as: 'suspiciousReports' });
-SuspiciousReport.belongsTo(Client, { foreignKey: 'clientId' });
-
-Client.hasMany(ScreeningResult, { foreignKey: 'clientId', as: 'screeningResults' });
-ScreeningResult.belongsTo(Client, { foreignKey: 'clientId' });
-
-User.hasMany(AuditLog, { foreignKey: 'userId', as: 'auditLogs' });
-AuditLog.belongsTo(User, { foreignKey: 'userId' });
-
-Alert.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
-Transaction.hasMany(Alert, { foreignKey: 'transactionId', as: 'alerts' });
-
-// Contract associations
-Client.hasMany(Contract, { foreignKey: 'clientId', as: 'contracts' });
-Contract.belongsTo(Client, { foreignKey: 'clientId' });
-
-Contract.hasMany(ContractSignature, { foreignKey: 'contractId', as: 'signatures' });
-ContractSignature.belongsTo(Contract, { foreignKey: 'contractId' });
-
-// PepDeclaration associations
-Client.hasMany(PepDeclaration, { foreignKey: 'clientId', as: 'pepDeclarations' });
-PepDeclaration.belongsTo(Client, { foreignKey: 'clientId' });
-
-// InvestigationCase - Caso de investigación para operaciones inusuales
-const InvestigationCase = sequelize.define('InvestigationCase', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  caseNumber: {
-    type: DataTypes.STRING,
-    unique: true,
-  },
-  status: {
-    type: DataTypes.ENUM('abierto', 'en_investigacion', 'pendiente_documentacion', 'cerrado_justificado', 'escalado_sospechoso'),
-    defaultValue: 'abierto',
-  },
-  priority: {
-    type: DataTypes.ENUM('baja', 'media', 'alta', 'critica'),
-    defaultValue: 'media',
-  },
-  // Resumen del caso
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-  },
-  // Análisis y conclusiones
-  analysisNotes: {
-    type: DataTypes.TEXT,
-  },
-  riskIndicators: {
-    type: DataTypes.JSON, // Array de indicadores de riesgo detectados
-  },
-  mitigatingFactors: {
-    type: DataTypes.JSON, // Array de factores atenuantes
-  },
-  // Decisión final
-  finalDecision: {
-    type: DataTypes.ENUM('justified', 'suspicious'),
-  },
-  decisionJustification: {
-    type: DataTypes.TEXT,
-  },
-  decisionDate: {
-    type: DataTypes.DATE,
-  },
-  decidedBy: {
-    type: DataTypes.UUID,
-  },
-  // Fechas de seguimiento
-  openedAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-  lastActivityAt: {
-    type: DataTypes.DATE,
-  },
-  closedAt: {
-    type: DataTypes.DATE,
-  },
-  dueDate: {
-    type: DataTypes.DATE, // Fecha límite para resolución
-  },
-  // Referencias
-  createdBy: {
-    type: DataTypes.UUID,
-  },
-  assignedTo: {
-    type: DataTypes.UUID,
-  },
-});
-
-// DocumentRequest - Solicitudes de documentación al cliente
-const DocumentRequest = sequelize.define('DocumentRequest', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  requestType: {
-    type: DataTypes.STRING, // 'origen_fondos', 'comprobante_operacion', 'contrato', 'factura', 'otro'
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  status: {
-    type: DataTypes.ENUM('pendiente', 'enviada', 'recibida', 'aprobada', 'rechazada', 'vencida'),
-    defaultValue: 'pendiente',
-  },
-  priority: {
-    type: DataTypes.ENUM('baja', 'media', 'alta'),
-    defaultValue: 'media',
-  },
-  // Comunicación
-  sentAt: {
-    type: DataTypes.DATE,
-  },
-  sentBy: {
-    type: DataTypes.UUID,
-  },
-  sentMethod: {
-    type: DataTypes.STRING, // 'email', 'telefono', 'presencial', 'carta'
-  },
-  // Respuesta
-  receivedAt: {
-    type: DataTypes.DATE,
-  },
-  responseNotes: {
-    type: DataTypes.TEXT,
-  },
-  // Documento recibido
-  documentUrl: {
-    type: DataTypes.STRING,
-  },
-  fileName: {
-    type: DataTypes.STRING,
-  },
-  // Revisión
-  reviewedAt: {
-    type: DataTypes.DATE,
-  },
-  reviewedBy: {
-    type: DataTypes.UUID,
-  },
-  reviewNotes: {
-    type: DataTypes.TEXT,
-  },
-  // Fechas límite
-  dueDate: {
-    type: DataTypes.DATE,
-  },
-  reminderSentAt: {
-    type: DataTypes.DATE,
-  },
-  reminderCount: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-});
-
-// CaseEvidence - Evidencia adjunta al caso
-const CaseEvidence = sequelize.define('CaseEvidence', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  evidenceType: {
-    type: DataTypes.STRING, // 'documento', 'captura_pantalla', 'correo', 'nota_interna', 'reporte_externo'
-    allowNull: false,
-  },
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-  },
-  // Archivo
-  fileUrl: {
-    type: DataTypes.STRING,
-  },
-  fileName: {
-    type: DataTypes.STRING,
-  },
-  mimeType: {
-    type: DataTypes.STRING,
-  },
-  fileSize: {
-    type: DataTypes.INTEGER,
-  },
-  // Metadata
-  source: {
-    type: DataTypes.STRING, // 'cliente', 'interno', 'externo', 'sistema'
-  },
-  relevance: {
-    type: DataTypes.ENUM('alta', 'media', 'baja'),
-    defaultValue: 'media',
-  },
-  // Auditoría
-  uploadedBy: {
-    type: DataTypes.UUID,
-  },
-  uploadedAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-  notes: {
-    type: DataTypes.TEXT,
-  },
-});
-
-// InvestigationCase associations
-Alert.hasOne(InvestigationCase, { foreignKey: 'alertId', as: 'investigationCase' });
-InvestigationCase.belongsTo(Alert, { foreignKey: 'alertId' });
-
-UnusualOperation.hasOne(InvestigationCase, { foreignKey: 'unusualOperationId', as: 'investigationCase' });
-InvestigationCase.belongsTo(UnusualOperation, { foreignKey: 'unusualOperationId' });
-
-Client.hasMany(InvestigationCase, { foreignKey: 'clientId', as: 'investigationCases' });
-InvestigationCase.belongsTo(Client, { foreignKey: 'clientId' });
-
-InvestigationCase.hasMany(DocumentRequest, { foreignKey: 'caseId', as: 'documentRequests' });
-DocumentRequest.belongsTo(InvestigationCase, { foreignKey: 'caseId' });
-
-InvestigationCase.hasMany(CaseEvidence, { foreignKey: 'caseId', as: 'evidence' });
-CaseEvidence.belongsTo(InvestigationCase, { foreignKey: 'caseId' });
+// ─── EXPORTS ──────────────────────────────────────────────────
 
 module.exports = {
   sequelize,
-  User,
-  Client,
-  BeneficialOwner,
-  Signatory,
-  Attorney,
-  Authority,
-  Document,
-  RiskAssessment,
-  Transaction,
-  Alert,
-  UnusualOperation,
-  SuspiciousReport,
-  ScreeningResult,
-  AuditLog,
-  RiskMatrix,
-  AlertThreshold,
-  Contract,
-  ContractSignature,
-  PepDeclaration,
-  InvestigationCase,
-  DocumentRequest,
-  CaseEvidence,
+  SociedadTag,
+  Usuario,
+  UsuarioSociedad,
+  UsuarioSociedadTag,
+  DocumentoCliente,
+  DocumentoVersion,
+  BeneficiarioFinal,
+  AccionistaSocio,
+  SocioSH,
+  Autoridad,
+  Apoderado,
+  Heredero,
+  AdministradorJusticia,
+  FormEstatutoSA,
+  FormEstatutoSRL,
+  FormEstatutoSH,
+  FormSucesion,
+  FormMonotributista,
+  FormDDJJBeneficiarios,
+  FormDDJJPep,
+  LogAccion,
+  Alerta,
 };
