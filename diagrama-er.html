@@ -115,7 +115,7 @@ body { font-family: 'Segoe UI', sans-serif; background: #EAF4FB; padding: 30px; 
 <div class="header-dcac">
   <div class="brand">
     <h1>Diagrama Entidad–Relación · Herramienta Compliance</h1>
-    <p>HC DCAC · v4.0 &nbsp;·&nbsp; Campos basados en frontend actual &nbsp;·&nbsp; <span id="fecha-hoy"></span></p>
+    <p>HC DCAC · v4.1 &nbsp;·&nbsp; Campos basados en frontend actual &nbsp;·&nbsp; <span id="fecha-hoy"></span></p>
   </div>
   <div class="badge">INTERNO · USO TÉCNICO</div>
 </div>
@@ -145,6 +145,7 @@ erDiagram
     HEREDEROS                { ID id PK   ID id_usuario_sociedad_tag FK }
     ADMINISTRADOR_JUSTICIA   { ID id PK   ID id_usuario_sociedad_tag FK }
     APODERADOS               { ID id PK   ID id_usuario_sociedad_tag FK }
+    FIRMA_CONJUNTA_ESQUEMAS  { UUID uuid PK   ID id_apoderado_origen FK   UUID participante_uuid FK }
 
     SOCIEDADES_TAG         ||--|{  USUARIOS_SOCIEDAD_TAG     : "tiene personas"
     USUARIOS_SOCIEDAD      ||--|{  USUARIOS_SOCIEDAD_TAG     : "pertenece a sociedades"
@@ -162,6 +163,7 @@ erDiagram
     USUARIOS_SOCIEDAD_TAG  ||--o{  HEREDEROS                 : "es heredero"
     USUARIOS_SOCIEDAD_TAG  ||--o{  ADMINISTRADOR_JUSTICIA    : "es administrador"
     USUARIOS_SOCIEDAD_TAG  ||--o{  APODERADOS                : "es apoderado"
+    APODERADOS             ||--o{  FIRMA_CONJUNTA_ESQUEMAS   : "tiene participantes conjunta"
     SOCIEDADES_TAG         ||--o{  ALERTAS                   : "tiene alertas"
     USUARIOS_SOCIEDAD      ||--o{  ALERTAS                   : "referida a persona"
 
@@ -196,7 +198,7 @@ erDiagram
         TEXTO domicilio
         BOOLEANO es_pep
         BOOLEANO figura_en_repet
-        OPCIONES cargo_societario "gerente / director / presidente / vicepresidente / apoderado / ninguno"
+        OPCIONES cargo_societario "presidente / gerente / director / apoderado / ninguno"
         TEXTO rol_interno
         JSON alcance_actos "general / credito / pagos / compras / bancos / alta_cvu / ninguno"
         OPCIONES limite_tipo "sin_limite / hasta_x / rango_x_a_y"
@@ -266,9 +268,11 @@ erDiagram
     AUTORIDADES {
         ID id PK
         ID id_usuario_sociedad_tag FK
-        TEXTO cargo
-        FECHA fecha_inicio_mandato
-        FECHA fecha_fin_mandato
+        OPCIONES cargo "presidente / gerente / director"
+        TEXTO area
+        FECHA fecha_designacion
+        FECHA fecha_vencimiento_mandato
+        BOOLEANO mandato_vigente
         BOOLEANO activo
     }
 
@@ -291,18 +295,30 @@ erDiagram
     APODERADOS {
         ID id PK
         ID id_usuario_sociedad_tag FK
+        OPCIONES tipo_firma "Individual / Conjunta"
+        OPCIONES alcance "General / Credito / Pagos"
         FECHA fecha_otorgamiento
         FECHA fecha_vencimiento_poder
         BOOLEANO activo
     }
 
-    USUARIOS_SOCIEDAD_TAG ||--o{  BENEFICIARIOS_FINALES   : "es beneficiario final"
-    USUARIOS_SOCIEDAD_TAG ||--o{  ACCIONISTAS_SOCIOS      : "es accionista/socio"
-    USUARIOS_SOCIEDAD_TAG ||--o{  SOCIOS_SH               : "es socio SH"
-    USUARIOS_SOCIEDAD_TAG ||--o{  AUTORIDADES             : "es autoridad"
-    USUARIOS_SOCIEDAD_TAG ||--o{  HEREDEROS               : "es heredero"
-    USUARIOS_SOCIEDAD_TAG ||--o{  ADMINISTRADOR_JUSTICIA  : "es administrador"
-    USUARIOS_SOCIEDAD_TAG ||--o{  APODERADOS              : "es apoderado"
+    FIRMA_CONJUNTA_ESQUEMAS {
+        UUID uuid PK
+        ID id_apoderado_origen FK
+        UUID participante_uuid FK
+        BOOLEANO es_optativo
+        OPCIONES alcance_participante "General / Credito / Pagos"
+        ENTERO min_firmantes
+    }
+
+    USUARIOS_SOCIEDAD_TAG ||--o{  BENEFICIARIOS_FINALES     : "es beneficiario final"
+    USUARIOS_SOCIEDAD_TAG ||--o{  ACCIONISTAS_SOCIOS        : "es accionista/socio"
+    USUARIOS_SOCIEDAD_TAG ||--o{  SOCIOS_SH                 : "es socio SH"
+    USUARIOS_SOCIEDAD_TAG ||--o{  AUTORIDADES               : "es autoridad"
+    USUARIOS_SOCIEDAD_TAG ||--o{  HEREDEROS                 : "es heredero"
+    USUARIOS_SOCIEDAD_TAG ||--o{  ADMINISTRADOR_JUSTICIA    : "es administrador"
+    USUARIOS_SOCIEDAD_TAG ||--o{  APODERADOS                : "es apoderado"
+    APODERADOS            ||--o{  FIRMA_CONJUNTA_ESQUEMAS   : "tiene participantes conjunta"
 
   </div>
 </div>
@@ -495,9 +511,9 @@ erDiagram
     FORM_ACTA_AUTORIDADES_SA {
         ID id PK
         ID id_version FK
+        FECHA fecha_designacion
+        FECHA fecha_vencimiento_mandato
         BOOLEANO mandato_vigente
-        FECHA periodo_mandato_inicio
-        FECHA periodo_mandato_fin
     }
 
     FORM_REGISTRO_ACCIONISTAS_SA {
@@ -555,9 +571,9 @@ erDiagram
         ID id PK
         ID id_version FK
         FECHA srl_fecha_asamblea
+        FECHA srl_fecha_designacion
+        FECHA srl_fecha_vencimiento_mandato
         BOOLEANO srl_mandato_vigente
-        FECHA srl_periodo_mandato_inicio
-        FECHA srl_periodo_mandato_fin
     }
 
     FORM_REGISTRO_SOCIOS_SRL {

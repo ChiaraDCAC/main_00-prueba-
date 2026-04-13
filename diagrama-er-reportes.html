@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>DER — Módulo Reportes — HC DCAC Compliance</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #EAF4FB; padding: 30px; color: #222; }
+.mermaid svg { color: #333; font-family: inherit; }
+.mermaid svg text { font-weight: bold; }
+
+.header-dcac {
+  background: linear-gradient(135deg, #0077B6 0%, #00B4D8 100%);
+  border-radius: 14px;
+  padding: 28px 36px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0,119,182,0.25);
+}
+.header-dcac .brand { color: #fff; }
+.header-dcac .brand h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+.header-dcac .brand p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+.header-dcac .badge {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,119,182,0.08);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  border-top: 3px solid #00B4D8;
+}
+.card h2 {
+  color: #0077B6;
+  font-size: 15px;
+  margin-bottom: 16px;
+  border-bottom: 1.5px solid #E0F0FA;
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card h2::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: #00B4D8;
+  border-radius: 2px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.legend-dot {
+  width: 12px; height: 12px;
+  border-radius: 3px;
+}
+.dot-existing  { background: #ADB5BD; }
+.dot-gestion   { background: #0077B6; }
+.dot-regulatorio { background: #7B2D8B; }
+.dot-arca      { background: #D62828; }
+.dot-bcra      { background: #2D6A4F; }
+.dot-uif       { background: #E07A00; }
+
+.table-spec {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.table-spec th {
+  background: #E8F4FD;
+  color: #0077B6;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.table-spec td {
+  padding: 7px 12px;
+  border-bottom: 1px solid #F0F4F8;
+  vertical-align: top;
+}
+.table-spec tr:last-child td { border-bottom: none; }
+.pk  { color: #D62828; font-weight: 700; }
+.fk  { color: #0077B6; font-weight: 700; }
+.tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
+.tag-pk  { background: #FFF0F0; color: #D62828; border: 1px solid #FCCACA; }
+.tag-fk  { background: #E8F4FD; color: #0077B6; border: 1px solid #BDE0F5; }
+.tag-idx { background: #F0FFF4; color: #2D6A4F; border: 1px solid #B2DFCA; }
+.tag-chk { background: #FFF8E7; color: #E07A00; border: 1px solid #F5D990; }
+.tag-new { background: #F3E8FF; color: #7B2D8B; border: 1px solid #D8B4FE; }
+.type    { color: #888; font-size: 11px; font-style: italic; }
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  background: #F8FAFC;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin: 16px 0 8px;
+  border-left: 3px solid #00B4D8;
+}
+.note {
+  background: #FFF8E7;
+  border-left: 4px solid #E07A00;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  color: #7A5000;
+  margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+
+<div class="header-dcac">
+  <div class="brand">
+    <h1>DER — Módulo Reportes</h1>
+    <p>Gestión Interna · Regulatorios (ARCA F.8126 · BCRA Base Padrón · UIF A/B/C) — deCampoPagos Compliance</p>
+  </div>
+  <div class="badge">Versión 1.0 · Abril 2026</div>
+</div>
+
+<div class="note">
+  ⚠️ Las tablas en gris (<strong>sociedades_tag</strong>, <strong>usuarios</strong>, <strong>logs_acciones</strong>) ya existen en el DER principal. Se incluyen aquí solo para mostrar las relaciones con el módulo de reportes.
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot dot-existing"></div> Tablas existentes (referencia)</div>
+  <div class="legend-item"><div class="legend-dot dot-gestion"></div> Gestión interna</div>
+  <div class="legend-item"><div class="legend-dot dot-arca"></div> ARCA F.8126</div>
+  <div class="legend-item"><div class="legend-dot dot-bcra"></div> BCRA Base Padrón</div>
+  <div class="legend-item"><div class="legend-dot dot-uif"></div> UIF Apartados A/B/C</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- DIAGRAMA GENERAL -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Diagrama General — Módulo Reportes</h2>
+  <div class="mermaid">
+erDiagram
+
+    %% ── TABLAS EXISTENTES (referencia) ───────────────────────────
+    sociedades_tag {
+      int id_sociedad PK
+      string razon_social
+      string cuit_cuil
+      string tipo_sociedad
+      string estado
+    }
+
+    usuarios {
+      int id PK
+      string nombre
+      string apellido
+      string email
+      string nivel
+    }
+
+    logs_acciones {
+      int id PK
+      int id_sociedad FK
+      int id_usuario_interno FK
+      string tipo_accion
+      timestamp created_at
+    }
+
+    %% ── GESTIÓN INTERNA ──────────────────────────────────────────
+    operaciones_inusuales {
+      int id PK
+      int id_sociedad FK
+      int id_analista_asignado FK
+      string tipo_operacion
+      decimal monto
+      string moneda
+      date fecha_operacion
+      string estado
+      text descripcion
+      text observaciones
+      timestamp fecha_apertura
+      timestamp fecha_cierre
+      timestamp created_at
+      timestamp updated_at
+    }
+
+    exportaciones_log {
+      int id PK
+      int id_usuario FK
+      string tipo_reporte
+      string periodo
+      jsonb filtros_aplicados
+      int cantidad_registros
+      timestamp created_at
+    }
+
+    %% ── REGULATORIOS ─────────────────────────────────────────────
+    presentaciones_regulatorias {
+      int id PK
+      int id_usuario_generador FK
+      int id_usuario_enviador FK
+      string tipo
+      string periodo
+      int secuencia
+      string estado
+      string url_archivo
+      date fecha_limite
+      timestamp fecha_generacion
+      timestamp fecha_envio
+      jsonb respuesta_organismo
+      timestamp created_at
+      timestamp updated_at
+    }
+
+    %% ── ARCA F.8126 ──────────────────────────────────────────────
+    arca_cuentas {
+      int id PK
+      int id_presentacion FK
+      string tipo_cuenta
+      string identificador_cuenta
+      int cantidad_integrantes
+      date fecha_alta
+      string tipo_operacion_cuenta
+      date fecha_evento
+      int signo_saldo_ars
+      bigint saldo_pesos
+      bigint saldo_moneda_extranjera
+      bigint saldo_moneda_digital
+      string cvu
+    }
+
+    arca_integrantes {
+      int id PK
+      int id_cuenta FK
+      int id_presentacion FK
+      string tipo_documento
+      string nro_documento
+      string nif
+      string nombre_denominacion
+      int tipo_persona
+      int residencia
+      string pais_residencia
+      int caracter
+    }
+
+    arca_movimientos {
+      int id PK
+      int id_presentacion FK
+      string tipo_operacion
+      string tipo_movimiento
+      string moneda_original
+      decimal monto_mensual_moneda_original
+      decimal monto_mensual_pesos
+    }
+
+    arca_detalle_transferencias {
+      int id PK
+      int id_movimiento FK
+      int id_presentacion FK
+      string cbu_cvu_destino
+      decimal monto_pesos
+    }
+
+    %% ── BCRA BASE PADRÓN ─────────────────────────────────────────
+    bcra_padron_novedades {
+      int id PK
+      int id_sociedad FK
+      int id_presentacion FK
+      string tipo_novedad
+      jsonb campos_modificados
+      string periodo
+      string estado
+      timestamp created_at
+    }
+
+    %% ── UIF APARTADOS ────────────────────────────────────────────
+    uif_apartado_a {
+      int id PK
+      int id_presentacion FK
+      string cuit_cliente
+      string tipo_cuenta
+      decimal saldo_al_cierre
+      decimal saldo_promedio
+      string moneda
+    }
+
+    uif_apartado_b {
+      int id PK
+      int id_presentacion FK
+      string cuit_cliente
+      string tipo_operacion
+      decimal monto_total
+      int cantidad_operaciones
+      decimal debitos
+      decimal creditos
+      boolean control_razonabilidad_ok
+    }
+
+    uif_apartado_c {
+      int id PK
+      int id_presentacion FK
+      string cuit_cliente
+      string motivo_inclusion
+      jsonb detalle
+    }
+
+    %% ── RELACIONES ────────────────────────────────────────────────
+    sociedades_tag         ||--o{ operaciones_inusuales         : "tiene"
+    usuarios               ||--o{ operaciones_inusuales         : "asignado_a"
+    usuarios               ||--o{ exportaciones_log             : "realiza"
+    usuarios               ||--o{ presentaciones_regulatorias   : "genera"
+    usuarios               ||--o{ presentaciones_regulatorias   : "envía"
+
+    presentaciones_regulatorias ||--o{ arca_cuentas                    : "contiene"
+    presentaciones_regulatorias ||--o{ arca_integrantes               : "contiene"
+    presentaciones_regulatorias ||--o{ arca_movimientos               : "contiene"
+    arca_cuentas           ||--o{ arca_integrantes                    : "tiene"
+    arca_movimientos       ||--o{ arca_detalle_transferencias         : "detalla"
+    presentaciones_regulatorias ||--o{ arca_detalle_transferencias    : "contiene"
+
+    presentaciones_regulatorias ||--o{ bcra_padron_novedades    : "agrupa"
+    sociedades_tag         ||--o{ bcra_padron_novedades         : "genera"
+
+    presentaciones_regulatorias ||--o{ uif_apartado_a           : "contiene"
+    presentaciones_regulatorias ||--o{ uif_apartado_b           : "contiene"
+    presentaciones_regulatorias ||--o{ uif_apartado_c           : "contiene"
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- ESPECIFICACIÓN DE TABLAS NUEVAS -->
+<!-- ══════════════════════════════════════════════ -->
+
+<!-- OPERACIONES INUSUALES -->
+<div class="card">
+  <h2>operaciones_inusuales — Gestión Interna</h2>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td>Identificador del caso</td></tr>
+    <tr><td class="fk">id_sociedad</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → sociedades_tag</span></td><td>Cliente asociado al caso</td></tr>
+    <tr><td class="fk">id_analista_asignado</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → usuarios</span></td><td>Analista que gestiona el caso</td></tr>
+    <tr><td>tipo_operacion</td><td class="type">VARCHAR(100)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>transferencia_inusual / acumulacion_saldo / origen_fondos / fraccionamiento / otro</code></td></tr>
+    <tr><td>monto</td><td class="type">DECIMAL(18,2)</td><td></td><td>Monto de la operación en cuestión</td></tr>
+    <tr><td>moneda</td><td class="type">VARCHAR(10)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>ARS / USD</code></td></tr>
+    <tr><td>fecha_operacion</td><td class="type">DATE</td><td></td><td>Fecha en que ocurrió la operación</td></tr>
+    <tr><td>estado</td><td class="type">VARCHAR(20)</td><td><span class="tag tag-chk">CHECK</span> <span class="tag tag-idx">IDX</span></td><td><code>nuevo / en_analisis / escalado / cerrado</code></td></tr>
+    <tr><td>descripcion</td><td class="type">TEXT</td><td></td><td>Descripción del caso por el analista</td></tr>
+    <tr><td>observaciones</td><td class="type">TEXT</td><td></td><td>Notas adicionales durante el análisis</td></tr>
+    <tr><td>fecha_apertura</td><td class="type">TIMESTAMPTZ</td><td></td><td>Cuándo se abrió el caso (default: NOW())</td></tr>
+    <tr><td>fecha_cierre</td><td class="type">TIMESTAMPTZ</td><td></td><td>Cuándo se cerró (null si activo)</td></tr>
+    <tr><td>created_at / updated_at</td><td class="type">TIMESTAMPTZ</td><td></td><td>Timestamps automáticos</td></tr>
+  </table>
+</div>
+
+<!-- EXPORTACIONES LOG -->
+<div class="card">
+  <h2>exportaciones_log — Audit Trail de Exportaciones</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Registra cada exportación .txt generada desde el sistema (RF-02.4 / RF-03.4). Inmutable — no se actualiza, solo inserta.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td>Identificador de la exportación</td></tr>
+    <tr><td class="fk">id_usuario</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → usuarios</span></td><td>Quién realizó la exportación</td></tr>
+    <tr><td>tipo_reporte</td><td class="type">VARCHAR(50)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>clientes / operaciones_inusuales / arca_f8126 / bcra_padron / uif_a / uif_b / uif_c</code></td></tr>
+    <tr><td>periodo</td><td class="type">VARCHAR(10)</td><td></td><td>Período cubierto (ej: <code>202503</code>). Null para reportes sin período</td></tr>
+    <tr><td>filtros_aplicados</td><td class="type">JSONB</td><td></td><td>Snapshot de los filtros usados al momento de exportar</td></tr>
+    <tr><td>cantidad_registros</td><td class="type">INTEGER</td><td></td><td>Cuántos registros incluyó el archivo exportado</td></tr>
+    <tr><td>created_at</td><td class="type">TIMESTAMPTZ</td><td></td><td>Timestamp de la exportación (inmutable)</td></tr>
+  </table>
+</div>
+
+<!-- PRESENTACIONES REGULATORIAS -->
+<div class="card">
+  <h2>presentaciones_regulatorias — Master de Reportes Regulatorios</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Registro centralizado de cada presentación ante ARCA, BCRA y UIF. Una fila por presentación. Rectificativas se identifican por <code>secuencia > 0</code>.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td>Identificador de la presentación</td></tr>
+    <tr><td class="fk">id_usuario_generador</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → usuarios</span></td><td>Quien generó el archivo</td></tr>
+    <tr><td class="fk">id_usuario_enviador</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → usuarios</span></td><td>Quien confirmó el envío (puede ser distinto)</td></tr>
+    <tr><td>tipo</td><td class="type">VARCHAR(20)</td><td><span class="tag tag-chk">CHECK</span> <span class="tag tag-idx">IDX</span></td><td><code>arca_f8126 / bcra_padron / uif_a / uif_b / uif_c</code></td></tr>
+    <tr><td>periodo</td><td class="type">VARCHAR(10)</td><td><span class="tag tag-idx">IDX</span></td><td>Período de la declaración (ej: <code>202503</code>)</td></tr>
+    <tr><td>secuencia</td><td class="type">INTEGER</td><td></td><td><code>00</code> = original, <code>01+</code> = rectificativa. Default: <code>0</code></td></tr>
+    <tr><td>estado</td><td class="type">VARCHAR(20)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>borrador / generado / enviado / error / rectificativa_pendiente</code></td></tr>
+    <tr><td>url_archivo</td><td class="type">VARCHAR(500)</td><td></td><td>Path al archivo .txt generado en storage</td></tr>
+    <tr><td>fecha_limite</td><td class="type">DATE</td><td></td><td>Fecha límite regulatoria de presentación</td></tr>
+    <tr><td>fecha_generacion</td><td class="type">TIMESTAMPTZ</td><td></td><td>Cuando se generó el archivo</td></tr>
+    <tr><td>fecha_envio</td><td class="type">TIMESTAMPTZ</td><td></td><td>Cuando se confirmó el envío al organismo</td></tr>
+    <tr><td>respuesta_organismo</td><td class="type">JSONB</td><td></td><td>Respuesta del WS de ARCA (null para BCRA/UIF que son manuales)</td></tr>
+    <tr><td>created_at / updated_at</td><td class="type">TIMESTAMPTZ</td><td></td><td>Timestamps automáticos</td></tr>
+  </table>
+  <p class="section-title">Unique constraint</p>
+  <p style="font-size:12px;color:#555;padding:0 4px;"><code>UNIQUE (tipo, periodo, secuencia)</code> — garantiza una sola presentación por tipo/período/secuencia.</p>
+</div>
+
+<!-- ARCA F.8126 -->
+<div class="card">
+  <h2>arca_cuentas — ARCA F.8126 Registro 02 (Cuentas de Pago / CVU)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Una fila por cuenta activa o con movimientos en el período. El campo <code>cantidad_integrantes</code> debe coincidir con el conteo real de registros 03 vinculados (validado en CU-02).</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción · Valor ARCA</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+    <tr><td class="fk">id_presentacion</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → presentaciones_regulatorias</span> <span class="tag tag-idx">IDX</span></td><td>A qué presentación F.8126 pertenece</td></tr>
+    <tr><td>tipo_cuenta</td><td class="type">CHAR(2)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>01</code> billetera virtual · <code>02</code> otra</td></tr>
+    <tr><td>identificador_cuenta</td><td class="type">VARCHAR(50)</td><td></td><td>CVU o ID interno de la cuenta</td></tr>
+    <tr><td>cantidad_integrantes</td><td class="type">INTEGER</td><td></td><td>Conteo de registros 03 vinculados (calculado)</td></tr>
+    <tr><td>fecha_alta</td><td class="type">DATE</td><td></td><td>Fecha de alta de la cuenta (formato AAAAMMDD en el archivo)</td></tr>
+    <tr><td>tipo_operacion_cuenta</td><td class="type">CHAR(2)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>01</code> apertura · <code>02</code> cierre · <code>03</code> modificación · <code>04</code> sin mod. con movimientos</td></tr>
+    <tr><td>fecha_evento</td><td class="type">DATE</td><td></td><td>Fecha del evento informado (apertura, cierre, etc.)</td></tr>
+    <tr><td>signo_saldo_ars</td><td class="type">INTEGER</td><td><span class="tag tag-chk">CHECK</span></td><td><code>0</code> positivo · <code>1</code> negativo</td></tr>
+    <tr><td>saldo_pesos</td><td class="type">BIGINT</td><td></td><td>Saldo en ARS al cierre del período, sin decimales</td></tr>
+    <tr><td>saldo_moneda_extranjera</td><td class="type">BIGINT</td><td></td><td>Saldo en moneda extranjera (0 si no aplica)</td></tr>
+    <tr><td>saldo_moneda_digital</td><td class="type">BIGINT</td><td></td><td>Saldo cripto (0 si no aplica)</td></tr>
+    <tr><td>cvu</td><td class="type">VARCHAR(22)</td><td></td><td>CVU de 22 dígitos. Obligatorio si <code>tipo_cuenta = 01</code></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>arca_integrantes — ARCA F.8126 Registro 03 (Titulares por Cuenta)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Solo 1 integrante con <code>caracter = 1</code> (titular) por cuenta. Validado en CU-02.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción · Valor ARCA</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+    <tr><td class="fk">id_cuenta</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → arca_cuentas</span></td><td>Cuenta a la que pertenece el integrante</td></tr>
+    <tr><td class="fk">id_presentacion</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → presentaciones_regulatorias</span> <span class="tag tag-idx">IDX</span></td><td>Redundante para facilitar queries por presentación</td></tr>
+    <tr><td>tipo_documento</td><td class="type">VARCHAR(5)</td><td></td><td><code>80</code> CUIT · <code>86</code> CUIL · <code>96</code> DNI · según tabla ARCA</td></tr>
+    <tr><td>nro_documento</td><td class="type">VARCHAR(30)</td><td></td><td>Sin guiones ni espacios</td></tr>
+    <tr><td>nif</td><td class="type">VARCHAR(30)</td><td></td><td>Número de identificación fiscal extranjero (null si residente)</td></tr>
+    <tr><td>nombre_denominacion</td><td class="type">VARCHAR(255)</td><td></td><td>Nombre completo o razón social</td></tr>
+    <tr><td>tipo_persona</td><td class="type">INTEGER</td><td><span class="tag tag-chk">CHECK</span></td><td><code>1</code> Persona Humana · <code>2</code> Persona Jurídica</td></tr>
+    <tr><td>residencia</td><td class="type">INTEGER</td><td><span class="tag tag-chk">CHECK</span></td><td><code>0</code> residente · <code>1</code> no residente</td></tr>
+    <tr><td>pais_residencia</td><td class="type">VARCHAR(10)</td><td></td><td>Código de país según tabla ARCA (null si residente)</td></tr>
+    <tr><td>caracter</td><td class="type">INTEGER</td><td><span class="tag tag-chk">CHECK</span></td><td><code>1</code> Titular · <code>2</code> Cotitular · <code>3</code> Apoderado · <code>4</code> Rep. Legal · <code>5</code> Firmante</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>arca_movimientos — ARCA F.8126 Registro 04 (Movimientos Agregados)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Agrupados por <strong>tipo_operacion + tipo_movimiento + moneda_original</strong>. Una fila por combinación, por presentación. No confundir con UIF Apt. B: acá no hay CUIT por fila — son totales agregados del período.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción · Valor ARCA</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+    <tr><td class="fk">id_presentacion</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → presentaciones_regulatorias</span> <span class="tag tag-idx">IDX</span></td><td></td></tr>
+    <tr><td>tipo_operacion</td><td class="type">CHAR(2)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>01</code> Ingreso · <code>02</code> Egreso</td></tr>
+    <tr><td>tipo_movimiento</td><td class="type">CHAR(2)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>01</code> Efectivo · <code>02</code> Transf. bancaria · <code>03</code> Transf. virtual</td></tr>
+    <tr><td>moneda_original</td><td class="type">VARCHAR(5)</td><td></td><td><code>1</code> ARS · <code>2</code> USD · <code>14</code> Bitcoin · según tabla ARCA</td></tr>
+    <tr><td>monto_mensual_moneda_original</td><td class="type">BIGINT</td><td></td><td>Suma total del grupo en moneda original, sin decimales</td></tr>
+    <tr><td>monto_mensual_pesos</td><td class="type">BIGINT</td><td></td><td>Equivalente en ARS, sin decimales</td></tr>
+  </table>
+  <p class="section-title">Diferencia clave vs. UIF Apartado B</p>
+  <p style="font-size:12px;color:#555;padding:0 4px;">ARCA Reg.04 = <strong>totales agregados sin CUIT</strong>, agrupados por tipo de operación/movimiento/moneda. UIF Apt.B = <strong>subtotales por cliente (CUIT)</strong> con control de razonabilidad individual.</p>
+</div>
+
+<div class="card">
+  <h2>arca_detalle_transferencias — ARCA F.8126 Registro 05 (Detalle de Transferencias)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Solo se genera cuando el Registro 04 asociado tiene <code>tipo_movimiento = 02</code> o <code>03</code>. No existe para movimientos en efectivo.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción · Valor ARCA</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+    <tr><td class="fk">id_movimiento</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → arca_movimientos</span></td><td>Registro 04 al que pertenece este detalle</td></tr>
+    <tr><td class="fk">id_presentacion</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → presentaciones_regulatorias</span> <span class="tag tag-idx">IDX</span></td><td>Redundante para facilitar queries</td></tr>
+    <tr><td>cbu_cvu_destino</td><td class="type">VARCHAR(22)</td><td></td><td>CBU o CVU de 22 dígitos de la cuenta contraparte</td></tr>
+    <tr><td>monto_pesos</td><td class="type">BIGINT</td><td></td><td>Importe individual de la transferencia, sin decimales</td></tr>
+  </table>
+</div>
+
+<!-- BCRA -->
+<div class="card">
+  <h2>bcra_padron_novedades — BCRA Base Padrón (Novedades)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Se registra automáticamente cada vez que un cliente tiene un cambio de estado, condición PEP, o código postal. Al cierre de mes, estas novedades se consolidan en una presentación.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+    <tr><td class="fk">id_sociedad</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → sociedades_tag</span> <span class="tag tag-idx">IDX</span></td><td>Cliente que generó la novedad</td></tr>
+    <tr><td class="fk">id_presentacion</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → presentaciones_regulatorias</span></td><td>Presentación en la que fue incluida (null hasta que se consolida)</td></tr>
+    <tr><td>tipo_novedad</td><td class="type">CHAR(2)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>10</code>=Alta · <code>20</code>=Baja · <code>30</code>=Modificación</td></tr>
+    <tr><td>campos_modificados</td><td class="type">JSONB</td><td></td><td>Snapshot de los campos afectados (antes/después)</td></tr>
+    <tr><td>periodo</td><td class="type">VARCHAR(10)</td><td><span class="tag tag-idx">IDX</span></td><td>Período al que corresponde la novedad (ej: <code>202503</code>)</td></tr>
+    <tr><td>estado</td><td class="type">VARCHAR(20)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>pendiente</code> (no consolidada) / <code>incluida</code> (en una presentación)</td></tr>
+    <tr><td>created_at</td><td class="type">TIMESTAMPTZ</td><td></td><td>Cuándo ocurrió el cambio que generó la novedad</td></tr>
+  </table>
+</div>
+
+<!-- UIF -->
+<div class="card">
+  <h2>uif_apartado_a — UIF Apartado A (Saldos de Cuentas)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Una fila por cliente por presentación. Reporta saldos de cuentas de pago, fondos comunes y saldos a liquidar al cierre del período.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+    <tr><td class="fk">id_presentacion</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → presentaciones_regulatorias</span> <span class="tag tag-idx">IDX</span></td><td></td></tr>
+    <tr><td>cuit_cliente</td><td class="type">VARCHAR(20)</td><td></td><td></td></tr>
+    <tr><td>tipo_cuenta</td><td class="type">VARCHAR(30)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>cuenta_pago / fondo_comun / saldo_liquidar</code></td></tr>
+    <tr><td>saldo_al_cierre</td><td class="type">DECIMAL(18,2)</td><td></td><td></td></tr>
+    <tr><td>saldo_promedio</td><td class="type">DECIMAL(18,2)</td><td></td><td>Saldo promedio del período</td></tr>
+    <tr><td>moneda</td><td class="type">VARCHAR(10)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>ARS / USD</code></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>uif_apartado_b — UIF Apartado B (Operaciones del Período)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Movimientos agregados por cliente. Incluye control de razonabilidad (comparación vs. período anterior) exigido por UIF.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+    <tr><td class="fk">id_presentacion</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → presentaciones_regulatorias</span> <span class="tag tag-idx">IDX</span></td><td></td></tr>
+    <tr><td>cuit_cliente</td><td class="type">VARCHAR(20)</td><td></td><td></td></tr>
+    <tr><td>tipo_operacion</td><td class="type">VARCHAR(50)</td><td></td><td>Ej: <code>transferencia_recibida</code>, <code>pago_servicio</code></td></tr>
+    <tr><td>monto_total</td><td class="type">DECIMAL(18,2)</td><td></td><td>Suma de operaciones del tipo en el período</td></tr>
+    <tr><td>cantidad_operaciones</td><td class="type">INTEGER</td><td></td><td></td></tr>
+    <tr><td>debitos</td><td class="type">DECIMAL(18,2)</td><td></td><td>Total débitos del período</td></tr>
+    <tr><td>creditos</td><td class="type">DECIMAL(18,2)</td><td></td><td>Total créditos del período</td></tr>
+    <tr><td>control_razonabilidad_ok</td><td class="type">BOOLEAN</td><td></td><td>Si pasó el control de variación vs período anterior. Default: <code>true</code></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>uif_apartado_c — UIF Apartado C (Trimestral · Clientes Sensibles)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Trimestral. Clientes que requieren atención especial: PEP, actividades de riesgo elevado, o con alertas sin gestionar.</p>
+  <table class="table-spec">
+    <tr><th>Columna</th><th>Tipo</th><th>Tags</th><th>Descripción</th></tr>
+    <tr><td class="pk">id</td><td class="type">SERIAL</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+    <tr><td class="fk">id_presentacion</td><td class="type">INTEGER</td><td><span class="tag tag-fk">FK → presentaciones_regulatorias</span> <span class="tag tag-idx">IDX</span></td><td></td></tr>
+    <tr><td>cuit_cliente</td><td class="type">VARCHAR(20)</td><td></td><td></td></tr>
+    <tr><td>motivo_inclusion</td><td class="type">VARCHAR(100)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>pep / actividad_sensible / alerta_sin_gestionar / operacion_inusual_reportada</code></td></tr>
+    <tr><td>detalle</td><td class="type">JSONB</td><td></td><td>Información contextual adicional (ej: cargo PEP, descripción de la alerta)</td></tr>
+  </table>
+</div>
+
+<!-- RESUMEN -->
+<div class="card">
+  <h2>Resumen — Tablas Nuevas</h2>
+  <table class="table-spec">
+    <tr><th>Tabla</th><th>Módulo</th><th>PRD</th><th>Descripción</th></tr>
+    <tr><td><strong>operaciones_inusuales</strong></td><td>Gestión Interna</td><td>PRD-Reportes / PRD-Operaciones-Inusuales</td><td>Casos de OI que el analista abre y gestiona</td></tr>
+    <tr><td><strong>exportaciones_log</strong></td><td>Gestión Interna</td><td>PRD-Reportes RF-02.4 / RF-03.4</td><td>Audit trail de cada exportación .txt</td></tr>
+    <tr><td><strong>presentaciones_regulatorias</strong></td><td>Regulatorio</td><td>PRD-Reportes-Regulatorios</td><td>Master table de todas las presentaciones (ARCA/BCRA/UIF)</td></tr>
+    <tr><td><strong>arca_cuentas</strong></td><td>ARCA F.8126</td><td>PRD-Reg. — Reg. 02</td><td>CVU y cuentas de pago por presentación. Incluye saldos y tipo de evento.</td></tr>
+    <tr><td><strong>arca_integrantes</strong></td><td>ARCA F.8126</td><td>PRD-Reg. — Reg. 03</td><td>Personas vinculadas a cada cuenta (tipo doc, carácter, residencia)</td></tr>
+    <tr><td><strong>arca_movimientos</strong></td><td>ARCA F.8126</td><td>PRD-Reg. — Reg. 04</td><td>Totales agregados por tipo_operacion + tipo_movimiento + moneda (≠ UIF Apt.B)</td></tr>
+    <tr><td><strong>arca_detalle_transferencias</strong></td><td>ARCA F.8126</td><td>PRD-Reg. — Reg. 05</td><td>Detalle por transferencia (solo cuando tipo_movimiento = 02 o 03)</td></tr>
+    <tr><td><strong>bcra_padron_novedades</strong></td><td>BCRA Base Padrón</td><td>PRD-Reportes-Regulatorios</td><td>Alta/Baja/Modificación de clientes para RUNOR</td></tr>
+    <tr><td><strong>uif_apartado_a</strong></td><td>UIF</td><td>PRD-Reportes-Regulatorios — Apt. A</td><td>Saldos de cuentas al cierre</td></tr>
+    <tr><td><strong>uif_apartado_b</strong></td><td>UIF</td><td>PRD-Reportes-Regulatorios — Apt. B</td><td>Operaciones agregadas con control de razonabilidad</td></tr>
+    <tr><td><strong>uif_apartado_c</strong></td><td>UIF</td><td>PRD-Reportes-Regulatorios — Apt. C</td><td>Clientes sensibles (PEP, alertas, OI) — trimestral</td></tr>
+  </table>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    er: { diagramPadding: 30, layoutDirection: 'TB', minEntityWidth: 100, minEntityHeight: 75, entityPadding: 15 },
+    themeVariables: {
+      primaryColor: '#E8F4FD',
+      primaryTextColor: '#0077B6',
+      primaryBorderColor: '#00B4D8',
+      lineColor: '#0077B6',
+      secondaryColor: '#F0FFF4',
+      tertiaryColor: '#FFF8E7',
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRD-Alta-Usuario</title>
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 48px 64px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f3460;
+    border-bottom: 3px solid #0f3460;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+    margin-top: 0;
+  }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f3460;
+    background: #eef2ff;
+    padding: 8px 14px;
+    border-left: 4px solid #0f3460;
+    margin-top: 36px;
+    margin-bottom: 16px;
+    border-radius: 0 6px 6px 0;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #16213e;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin-bottom: 12px;
+    color: #334155;
+  }
+
+  ul, ol {
+    padding-left: 22px;
+    margin-bottom: 12px;
+  }
+
+  li {
+    margin-bottom: 5px;
+    color: #334155;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 12.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  thead tr {
+    background: #0f3460;
+    color: #fff;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  tbody tr:hover {
+    background: #eef2ff;
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+
+  code {
+    background: #f1f5f9;
+    color: #0f3460;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 18px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 1.6;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  blockquote {
+    border-left: 4px solid #0f3460;
+    background: #eef2ff;
+    padding: 10px 16px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+    color: #334155;
+    font-style: italic;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 28px 0;
+  }
+
+  strong {
+    color: #0f3460;
+    font-weight: 600;
+  }
+
+  a { color: #0f3460; }
+
+  @media print {
+    body { padding: 20px 32px; }
+    h2 { page-break-before: auto; }
+    pre, table, blockquote { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>PRD - Alta Usuario (KYC Onboarding)</h1>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Status</strong></td>
+<td>En curso</td>
+</tr>
+<tr>
+<td><strong>Author(s)</strong></td>
+<td>Chiara Giralt</td>
+</tr>
+<tr>
+<td><strong>Stakeholders</strong></td>
+<td>Compliance, Legal, Operaciones, Tecnología</td>
+</tr>
+<tr>
+<td><strong>Team</strong></td>
+<td>Dev: Lanfranco Bortolin, Jero Rech</td>
+</tr>
+<tr>
+<td><strong>Last Updated</strong></td>
+<td>Abril 2026</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Resumen Ejecutivo</h2>
+<p>Este PRD documenta el módulo de Alta Usuario dentro del sistema de Compliance KYC/AML de deCampoPagos. El módulo permite al equipo de Compliance registrar, documentar y aprobar o rechazar el alta de nuevos clientes (personas humanas y jurídicas) desde un entorno centralizado, reemplazando el proceso manual disperso en emails y planillas.</p>
+<p>El módulo es el punto de entrada del ciclo de vida de un cliente en la plataforma. Sin él, deCampoPagos no puede operar como PSP bajo los estándares del BCRA y la UIF.</p>
+<hr>
+<h2>Definición del Problema</h2>
+<h3>¿Por qué?</h3>
+<p><strong>Problema del usuario (equipo de Compliance):</strong>
+Hoy no existe un sistema centralizado para gestionar el onboarding de clientes. Los analistas operan de forma manual: documentación dispersa en emails, carpetas compartidas y hojas de cálculo. Esto genera:</p>
+<ul>
+<li>Falta de trazabilidad en las decisiones de aprobación/rechazo.</li>
+<li>Riesgo de inconsistencias o errores en la información registrada.</li>
+<li>Dificultad para auditar el proceso ante el BCRA o la UIF.</li>
+<li>Dependencia de personas clave para ejecutar el proceso.</li>
+</ul>
+<p><strong>Problema del negocio:</strong>
+La operación como PSP requiere que cada cliente tenga un legajo KYC completo y verificable. Sin este módulo, no existe respaldo documental ni trazabilidad para responder ante una auditoría regulatoria.</p>
+<h3>¿Para qué?</h3>
+<ul>
+<li><strong>Para el equipo de Compliance</strong>: Contar con un flujo estructurado de onboarding que centralice datos, documentación y decisiones en un único lugar.</li>
+<li><strong>Para el negocio</strong>: Habilitar la operación como PSP cumpliendo requerimientos del BCRA y la UIF, reduciendo el riesgo de sanciones.</li>
+<li><strong>Para la empresa</strong>: Escalar el proceso de onboarding sin incrementar linealmente el equipo de Compliance.</li>
+</ul>
+<hr>
+<h2>Medición - KPIs y Resultados Esperados</h2>
+<h3>Métricas de Adopción</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>% de altas gestionadas en el sistema vs. total onboardeados</td>
+<td>0%</td>
+<td>100%</td>
+<td>Clientes creados en sistema vs. total reportado por operaciones</td>
+</tr>
+<tr>
+<td>% de documentación cargada en sistema vs. recibida por mail</td>
+<td>0%</td>
+<td>90%</td>
+<td>Documentos en BD vs. flujo de mail</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Uso</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tiempo promedio de revisión de legajo (pendiente → aprobado/rechazado)</td>
+<td>No medido</td>
+<td>&lt; 48 hs</td>
+<td>Diferencia de timestamps en BD</td>
+</tr>
+<tr>
+<td>% de clientes con legajo completo al momento de aprobación</td>
+<td>No medido</td>
+<td>100%</td>
+<td>Documentos requeridos vs. presentes por cliente</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Negocio / Compliance</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clientes aprobados por mes con trazabilidad completa en audit log</td>
+<td>0</td>
+<td>100%</td>
+<td>Audit log en BD</td>
+</tr>
+<tr>
+<td>Tiempo de respuesta ante auditoría regulatoria (consulta de legajo)</td>
+<td>No medido</td>
+<td>&lt; 2 hs</td>
+<td>Manual</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Discovery</h2>
+<h3>Diagrama de Flujo</h3>
+<pre><code>[1. Crear legajo]
+        |
+        v
+[2. Cargar datos del cliente]
+   Persona Humana o Jurídica
+        |
+        v
+[3. Cargar documentación requerida]
+   Checklist según tipo de cliente
+        |
+        v
+[4. Registrar beneficiarios finales]
+   y firmantes (solo Persona Jurídica)
+        |
+        v
+[5. Screening automático en listas]
+   OFAC / ONU / BCRA inhabilitados
+        |
+   ¿Match encontrado?
+   /            \
+[Sí]          [No]
+  |              |
+[Alerta]    [Continúa]
+  \              /
+   \            /
+    v          v
+[6. Evaluación de riesgo automática]
+   Bajo / Medio / Alto
+        |
+        v
+[7. Revisión manual — analista Compliance]
+        |
+   ¿Decisión?
+   /          \
+[Aprueba]  [Rechaza / Pide más info]
+    |               |
+    v               v
+[Cliente activo] [Legajo en espera o rechazado]
+</code></pre>
+<h3>Diseño</h3>
+<ul>
+<li><strong>Web</strong>: [Link a Figma — pendiente]</li>
+</ul>
+<h3>Documentación Técnica</h3>
+<ul>
+<li>Diagrama ER: <code>diagrama-er.html</code></li>
+<li>Flujo de alta original: <code>Flujos_Alta_Compliance.html</code></li>
+<li>Campos por documento: <code>Campos_por_Documento_Compliance.docx</code></li>
+</ul>
+<hr>
+<h2>Requerimientos</h2>
+<h3>1. Como analista de Compliance</h3>
+<p>   quiero crear un nuevo cliente en el sistema (persona humana o jurídica)
+   para iniciar el proceso de onboarding con toda la información registrada en un único lugar</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El formulario permite seleccionar el tipo de cliente: Persona Humana o Persona Jurídica antes de cargar datos.</li>
+<li>Al crear el legajo, el sistema asigna automáticamente el estado <code>Pendiente</code>.</li>
+<li>El sistema genera un ID único de legajo (ej. <code>CLT-0001</code>).</li>
+<li>Se registra en el audit log: fecha de creación, usuario que creó el legajo, estado inicial.</li>
+<li>Si el CUIT ya existe en el sistema, se muestra error con link al legajo existente antes de guardar.</li>
+</ul>
+<hr>
+<h3>2. Como analista de Compliance</h3>
+<p>   quiero registrar los datos de una Persona Humana
+   para identificarla correctamente y cumplir con los requerimientos KYC de la UIF</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Campos obligatorios: nombre completo, CUIT/CUIL (11 dígitos, formato validado), fecha de nacimiento (no futura), nacionalidad, actividad económica, domicilio completo (calle, número, localidad, provincia).</li>
+<li>Campo obligatorio: ¿Es PEP? (Persona Expuesta Políticamente) — boolean.</li>
+<li>Si se marca como PEP, el sistema solicita la carga de la declaración PEP firmada antes de poder aprobar el legajo.</li>
+<li>Campos opcionales: teléfono, email de contacto, notas internas.</li>
+<li>No es posible guardar sin completar los campos obligatorios; el sistema indica cuáles faltan.</li>
+</ul>
+<hr>
+<h3>3. Como analista de Compliance</h3>
+<p>   quiero registrar los datos de una Persona Jurídica
+   para identificarla correctamente y cumplir con los requerimientos KYC de la UIF</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Campos obligatorios: razón social, CUIT (11 dígitos, validado), fecha de constitución, tipo societario (SA, SRL, SAS, Cooperativa, Otro), actividad/objeto social, domicilio legal.</li>
+<li>Campos obligatorios del representante legal: nombre completo y CUIT.</li>
+<li>Campo opcional: domicilio comercial si difiere del legal.</li>
+<li>No es posible guardar sin completar los campos obligatorios; el sistema indica cuáles faltan.</li>
+</ul>
+<hr>
+<h3>4. Como analista de Compliance</h3>
+<p>   quiero cargar y gestionar los documentos requeridos para cada cliente
+   para contar con el legajo completo antes de aprobar el alta</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema muestra el checklist de documentos requeridos según el tipo de cliente:<ul>
+<li><strong>Persona Humana</strong>: DNI frente, DNI dorso, constancia CUIT (AFIP), comprobante de domicilio (&lt; 90 días), declaración PEP firmada, declaración de actividad económica.</li>
+<li><strong>Persona Jurídica</strong>: estatuto/contrato social, acta de designación de autoridades, poderes notariales (condicional), constancia CUIT, último balance cerrado, declaración PEP de cada firmante, declaración PEP de cada beneficiario final, comprobante de domicilio legal.</li>
+</ul>
+</li>
+<li>Formatos aceptados: PDF, JPG, PNG. Tamaño máximo por archivo: 10 MB.</li>
+<li>Cada documento tiene estado: <code>Pendiente de carga</code> / <code>Cargado — Pendiente revisión</code> / <code>Aprobado</code> / <code>Rechazado</code>.</li>
+<li>Al rechazar un documento, el analista debe ingresar el motivo del rechazo (campo texto obligatorio).</li>
+<li>El legajo muestra el porcentaje de completitud documental en tiempo real.</li>
+<li>Se registra en el audit log: quién cargó cada documento y cuándo; quién cambió el estado y cuándo.</li>
+<li>No es posible aprobar el alta si hay documentos obligatorios en estado <code>Pendiente de carga</code> o <code>Rechazado</code> — el sistema muestra advertencia bloqueante.</li>
+</ul>
+<hr>
+<h3>5. Como analista de Compliance</h3>
+<p>   quiero registrar los beneficiarios finales y firmantes de una Persona Jurídica
+   para cumplir con los requerimientos de la UIF sobre identificación de beneficiarios últimos</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema permite agregar N beneficiarios finales con: nombre completo, CUIT, porcentaje de participación (numérico), tipo de vínculo (socio, accionista, fideicomitente, otro), ¿es PEP? (boolean).</li>
+<li>La suma de porcentajes de participación no puede superar el 100%; el sistema valida en tiempo real.</li>
+<li>Si un beneficiario se marca como PEP, se bloquea la aprobación hasta cargar su declaración PEP.</li>
+<li>Mínimo 1 beneficiario final registrado para poder aprobar el legajo de una PJ.</li>
+<li>Para firmantes/apoderados: nombre completo, CUIT, tipo de poder (general, especial, limitado), fecha de vencimiento del poder (si aplica), ¿es PEP? (boolean).</li>
+<li>Si la fecha de vencimiento del poder es pasada, el sistema muestra advertencia (no bloqueante) y registra alerta en el legajo.</li>
+</ul>
+<hr>
+<h3>6. Como sistema</h3>
+<p>   quiero verificar automáticamente si un cliente figura en listas de sanciones internacionales
+   para alertar al equipo de Compliance y cumplir con las obligaciones PLA/FT de la UIF</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El screening se ejecuta automáticamente al: (1) crear el legajo (primer guardado), (2) antes de cambiar el estado a <code>Aprobado</code>.</li>
+<li>Listas verificadas: OFAC, ONU, nómina de inhabilitados BCRA.</li>
+<li>El resultado queda registrado con: fecha de consulta, lista verificada, resultado (match / sin match).</li>
+<li>Si hay match: el sistema bloquea la aprobación y genera una alerta visible en el legajo y en el dashboard.</li>
+<li>El analista puede marcar un match como <strong>&quot;Falso positivo&quot;</strong> con justificación obligatoria; queda registrado en el audit log.</li>
+<li>Si el screening falla por error de conectividad, el sistema lo indica y bloquea la aprobación hasta que se complete exitosamente.</li>
+</ul>
+<hr>
+<h3>7. Como analista de Compliance</h3>
+<p>   quiero ver la evaluación de riesgo calculada automáticamente para cada cliente
+   para enfocar la revisión manual en los casos de mayor exposición</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El riesgo se calcula automáticamente al guardar el legajo y se recalcula si se modifican los datos relevantes.</li>
+<li>Variables: actividad económica (30%), zona geográfica (20%), tipo societario (15%), condición PEP (20%), volumen declarado de operaciones (15%).</li>
+<li>Resultado: <code>Bajo</code> / <code>Medio</code> / <code>Alto</code>.</li>
+<li>La metodología de cálculo es visible en el detalle del legajo (sección expandible o tooltip).</li>
+<li>El analista puede sobrescribir el nivel de riesgo calculado con justificación obligatoria; queda en el audit log.</li>
+<li>Solo Nivel 1 puede configurar los pesos y umbrales de la matriz desde la pantalla de configuración.</li>
+</ul>
+<hr>
+<h3>8. Como analista de Compliance (Nivel 1)</h3>
+<p>   quiero aprobar o rechazar el alta de un cliente con justificación
+   para dejar trazabilidad completa de la decisión con fecha, responsable y motivo</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Estados del legajo: <code>Pendiente</code> → <code>En Revisión</code> → <code>Pendiente de Documentación</code> → <code>Aprobado</code> / <code>Rechazado</code>.</li>
+<li>Solo Nivel 1 (Oficial de Cumplimiento) puede cambiar el estado a <code>Aprobado</code> o <code>Rechazado</code>.</li>
+<li>Nivel 2 puede cambiar a: <code>En Revisión</code>, <code>Pendiente de Documentación</code>.</li>
+<li>Nivel 3 solo puede visualizar, sin modificar estados.</li>
+<li>Cada cambio de estado requiere comentario/justificación obligatorio.</li>
+<li>El historial completo de estados es visible en el detalle del cliente (línea de tiempo).</li>
+<li>El sistema registra en el audit log: estado anterior, estado nuevo, usuario, timestamp, justificación.</li>
+<li>Bloqueos de aprobación: documentos obligatorios pendientes o rechazados / screening no ejecutado o con match sin resolver / PEP sin declaración cargada.</li>
+</ul>
+<hr>
+<h3>9. Como analista de Compliance</h3>
+<p>   quiero ver el listado de clientes con filtros y búsqueda
+   para gestionar eficientemente la cola de revisión</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Columnas: ID legajo, Nombre / Razón social, CUIT, Tipo (PH/PJ), Estado, Nivel de riesgo, Fecha de creación, Responsable asignado.</li>
+<li>Filtros disponibles: Estado (multiselect), Tipo de cliente, Nivel de riesgo, Rango de fechas de creación, Responsable asignado.</li>
+<li>Búsqueda por nombre/razón social o CUIT (búsqueda parcial).</li>
+<li>El listado filtrado puede exportarse a <code>.txt (CSV)</code>.</li>
+<li>Paginación: 20 registros por página por defecto, configurable a 50 o 100.</li>
+</ul>
+<hr>
+<h2>Fuera de Alcance (Out of Scope)</h2>
+<ul>
+<li><strong>Integración en tiempo real con API de la AFIP para validación de CUIT</strong> — Se evaluará en V2; por ahora la validación es de formato.</li>
+<li><strong>Portal de autogestión para que el cliente cargue sus propios documentos</strong> — Requiere diseño de flujo externo no contemplado en esta fase.</li>
+<li><strong>Notificaciones automáticas por email al cliente</strong> — Se evaluará post-lanzamiento según feedback del equipo de Compliance.</li>
+<li><strong>Integración directa con base de datos de listas OFAC/ONU via API</strong> — En V1 puede ser verificación manual o batch; la integración automática queda para V2.</li>
+<li><strong>Firma digital de documentos dentro de la plataforma</strong> — Fuera de alcance regulatorio en esta fase.</li>
+</ul>
+<hr>
+<h2>Riesgos</h2>
+<h3>Técnicos</h3>
+<ul>
+<li><p><strong>El almacenamiento de documentos en producción (S3/Supabase Storage) no está configurado.</strong></p>
+<ul>
+<li>Mitigación: Definir proveedor de storage antes de iniciar el módulo documental. Bloquea la carga de archivos.</li>
+</ul>
+</li>
+<li><p><strong>La migración de SQLite a PostgreSQL está pendiente.</strong></p>
+<ul>
+<li>Mitigación: El módulo debe desarrollarse compatible con Sequelize/PostgreSQL desde el inicio; no asumir SQLite como destino final.</li>
+</ul>
+</li>
+</ul>
+<h3>De Adopción</h3>
+<ul>
+<li><strong>El equipo de Compliance puede seguir usando el proceso manual en paralelo.</strong><ul>
+<li>Mitigación: Definir fecha de corte oficial donde el proceso manual deja de ser la fuente de verdad.</li>
+</ul>
+</li>
+</ul>
+<h3>Regulatorios</h3>
+<ul>
+<li><strong>Los requerimientos documentales de la UIF pueden cambiar.</strong><ul>
+<li>Mitigación: El checklist de documentos debe ser configurable por el Oficial de Cumplimiento sin requerir un deploy.</li>
+</ul>
+</li>
+</ul>
+<h3>De Timeline</h3>
+<ul>
+<li><strong>La definición del proveedor de hosting (Railway/Render, Vercel/Netlify) no está resuelta.</strong><ul>
+<li>Mitigación: Resolver antes del inicio de desarrollo del módulo para no bloquear el ambiente productivo.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Dependencias</h2>
+<table>
+<thead>
+<tr>
+<th>Dependencia</th>
+<th>Estado</th>
+<th>Impacto si no está lista</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Módulo de autenticación y roles (Nivel 1, 2, 3)</td>
+<td>Desarrollado</td>
+<td>Bloqueante — sin roles no se pueden aplicar restricciones de aprobación</td>
+</tr>
+<tr>
+<td>Módulo de Audit Log</td>
+<td>Desarrollado (parcial)</td>
+<td>Bloqueante — el registro de trazabilidad es requerimiento regulatorio</td>
+</tr>
+<tr>
+<td>Almacenamiento de archivos (S3 / Supabase Storage)</td>
+<td>Pendiente</td>
+<td>Bloqueante para carga documental</td>
+</tr>
+<tr>
+<td>Servicio de screening (OFAC/ONU/BCRA)</td>
+<td>Pendiente</td>
+<td>Bloqueante para aprobación de legajos</td>
+</tr>
+<tr>
+<td>Migración a PostgreSQL</td>
+<td>Pendiente</td>
+<td>Necesaria antes de salida a producción</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Tracking / Eventos</h2>
+<table>
+<thead>
+<tr>
+<th>Evento</th>
+<th>Dónde</th>
+<th>Event Category</th>
+<th>Event Action</th>
+<th>Event Name</th>
+<th>Negocio</th>
+<th>Producto</th>
+<th>Placement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Inicio de creación de legajo</td>
+<td><code>/clientes/nuevo</code></td>
+<td>Interacción</td>
+<td>IniciarAltaCliente</td>
+<td>Iniciar alta cliente</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Selección tipo de cliente (PH/PJ)</td>
+<td>Formulario alta</td>
+<td>Interacción</td>
+<td>SeleccionTipoCliente</td>
+<td>Seleccionar tipo cliente</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA Particular</td>
+</tr>
+<tr>
+<td>Guardado de datos del cliente</td>
+<td>Formulario alta</td>
+<td>Interacción</td>
+<td>GuardarDatosCliente</td>
+<td>Guardar datos cliente</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Carga de documento</td>
+<td>Checklist documental</td>
+<td>Interacción</td>
+<td>CargarDocumento</td>
+<td>Cargar documento</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA Particular</td>
+</tr>
+<tr>
+<td>Cambio de estado de documento</td>
+<td>Checklist documental</td>
+<td>Interacción</td>
+<td>CambiarEstadoDocumento</td>
+<td>Cambiar estado documento</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA Particular</td>
+</tr>
+<tr>
+<td>Ejecución de screening</td>
+<td>Detalle legajo</td>
+<td>Interacción</td>
+<td>EjecutarScreening</td>
+<td>Ejecutar screening</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA Particular</td>
+</tr>
+<tr>
+<td>Match encontrado en screening</td>
+<td>Detalle legajo</td>
+<td>Navegación</td>
+<td>MatchScreening</td>
+<td>Match en lista de sanciones</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Cambio de estado del legajo</td>
+<td>Detalle legajo</td>
+<td>Interacción</td>
+<td>CambiarEstadoLegajo</td>
+<td>Cambiar estado legajo</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Legajo aprobado</td>
+<td>Detalle legajo</td>
+<td>Interacción</td>
+<td>AprobarLegajo</td>
+<td>Aprobar legajo</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Legajo rechazado</td>
+<td>Detalle legajo</td>
+<td>Interacción</td>
+<td>RechazarLegajo</td>
+<td>Rechazar legajo</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Exportar listado a .txt (CSV)</td>
+<td>Listado clientes</td>
+<td>Interacción</td>
+<td>ExportarTXTClientes</td>
+<td>Exportar clientes .txt</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Agenda / Plan de Desarrollo</h2>
+<table>
+<thead>
+<tr>
+<th>Instancia</th>
+<th>Status</th>
+<th>Fecha</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Kickoff</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Desarrollo experiencia (UX)</td>
+<td></td>
+<td></td>
+<td>Pendiente diseño en Figma</td>
+</tr>
+<tr>
+<td>Iteración experiencia</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Alineación con negocio</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Desarrollo</td>
+<td>En curso</td>
+<td></td>
+<td>Frontend en DEMO_MODE, backend base desarrollado</td>
+</tr>
+<tr>
+<td>Salida a PROD</td>
+<td></td>
+<td></td>
+<td>Bloqueado por migración a PostgreSQL y storage</td>
+</tr>
+</tbody></table>
+
+</body>
+</html>

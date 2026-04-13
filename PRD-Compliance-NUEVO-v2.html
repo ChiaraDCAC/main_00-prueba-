@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>PRD — Herramienta Compliance PSP · v2</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #EAF4FB; padding: 30px; color: #222; font-size: 14px; }
+
+.header-dcac {
+  background: linear-gradient(135deg, #0077B6 0%, #00B4D8 100%);
+  border-radius: 14px; padding: 28px 36px; margin-bottom: 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0,119,182,0.25);
+}
+.header-dcac .brand { color: #fff; }
+.header-dcac .brand h1 { font-size: 22px; font-weight: 700; }
+.header-dcac .brand p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+.badge-header {
+  background: rgba(255,255,255,0.2); color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4); border-radius: 20px;
+  padding: 6px 16px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+}
+
+.meta-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; background: #fff;
+  border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,119,182,0.08); }
+.meta-table th { background: #0077B6; color: #fff; padding: 8px 14px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 160px; }
+.meta-table td { padding: 8px 14px; border-bottom: 1px solid #E8F4FD; font-size: 13px; }
+.meta-table tr:last-child td { border-bottom: none; }
+.status-badge { display: inline-block; background: #FFF3CD; color: #856404; border: 1px solid #FFC107; border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+
+.card { background: #fff; border-radius: 12px; padding: 24px 28px;
+  box-shadow: 0 2px 12px rgba(0,119,182,0.08); margin-bottom: 22px;
+  border-top: 3px solid #00B4D8; }
+.card h2 { color: #0077B6; font-size: 16px; font-weight: 700; margin-bottom: 14px;
+  padding-bottom: 10px; border-bottom: 1.5px solid #E0F0FA;
+  display: flex; align-items: center; gap: 8px; }
+.card h2::before { content: ''; display: inline-block; width: 4px; height: 16px;
+  background: #00B4D8; border-radius: 2px; flex-shrink: 0; }
+.card h3 { color: #0077B6; font-size: 13px; font-weight: 700; margin: 16px 0 8px; }
+
+p { line-height: 1.6; margin-bottom: 10px; }
+ul, ol { padding-left: 20px; margin-bottom: 10px; }
+li { line-height: 1.7; margin-bottom: 3px; }
+
+.cu-block { background: #F8FBFF; border-left: 4px solid #0077B6; border-radius: 0 8px 8px 0;
+  padding: 14px 18px; margin-bottom: 14px; }
+.cu-block .cu-title { font-weight: 700; color: #0077B6; font-size: 13px; margin-bottom: 6px; }
+.cu-block p { font-size: 13px; margin-bottom: 6px; }
+
+.rf-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rf-table th { background: #E8F4FD; color: #0077B6; padding: 8px 12px; text-align: left;
+  font-weight: 700; font-size: 11px; text-transform: uppercase; }
+.rf-table td { padding: 8px 12px; border-bottom: 1px solid #F0F4F8; vertical-align: top; }
+.rf-table tr:last-child td { border-bottom: none; }
+.rf-table tr:nth-child(even) td { background: #FAFCFF; }
+.rf-id { font-weight: 700; color: #0077B6; white-space: nowrap; }
+
+.ac-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; }
+.ac-table th { background: #0077B6; color: #fff; padding: 9px 12px; text-align: left;
+  font-weight: 700; font-size: 11px; text-transform: uppercase; }
+.ac-table td { padding: 9px 12px; border-bottom: 1px solid #E8F4FD; vertical-align: top; line-height: 1.55; }
+.ac-table tr:last-child td { border-bottom: none; }
+.ac-table tr:nth-child(even) td { background: #F5FAFF; }
+.ac-rf { font-weight: 700; color: #0077B6; white-space: nowrap; font-size: 12px; }
+.ac-desc { color: #555; font-size: 12px; }
+.check { color: #2D6A4F; font-weight: 600; }
+
+.note { background: #FFF8E1; border-left: 4px solid #FFC107; padding: 10px 14px;
+  border-radius: 0 8px 8px 0; font-size: 12px; color: #6D4C00; margin-bottom: 14px; }
+.note-resolved { background: #F0FFF4; border-left: 4px solid #2D6A4F; padding: 10px 14px;
+  border-radius: 0 8px 8px 0; font-size: 12px; color: #1B4332; margin-bottom: 14px; }
+
+.annex-section { margin-bottom: 20px; }
+.annex-section h3 { background: #E8F4FD; color: #0077B6; padding: 8px 14px;
+  border-radius: 6px; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+
+.tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 4px; margin-left: 4px; }
+.tag-get { background: #FFF3E0; color: #E67E22; border: 1px solid #E67E22; }
+.tag-post { background: #E8F4FD; color: #0077B6; border: 1px solid #00B4D8; }
+.tag-new { background: #F3E8FF; color: #7B2D8B; border: 1px solid #D8B4FE; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+.flow-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.flow-num { background: #0077B6; color: #fff; border-radius: 50%; width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.flow-content { font-size: 13px; line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<div class="header-dcac">
+  <div class="brand">
+    <h1>PRD — Herramienta Compliance PSP</h1>
+    <p>HC DCAC · deCampoPagos &nbsp;·&nbsp; Versión 2.0 &nbsp;·&nbsp; Abril 2026</p>
+  </div>
+  <div class="badge-header">INTERNO · USO TÉCNICO</div>
+</div>
+
+<!-- META -->
+<table class="meta-table">
+  <tr><th>Status</th><td><span class="status-badge">En curso</span></td></tr>
+  <tr><th>Autores</th><td>Chiara Giralt · Lanfranco Bortolin · Jerónimo Rech</td></tr>
+  <tr><th>Stakeholders</th><td>Administración · Compliance · Atención al Cliente</td></tr>
+  <tr><th>Team</th><td>Producto · Operaciones</td></tr>
+  <tr><th>Versión</th><td>v2.0 — Criterios de aceptación agregados + comentarios resueltos</td></tr>
+</table>
+
+<!-- CONTEXT -->
+<div class="card">
+  <h2>Contexto</h2>
+  <p>La empresa se encuentra en un proceso de expansión de su modelo de negocio, con el objetivo de incorporar nuevas líneas de productos financieros, tales como <strong>lending y factoring</strong>.</p>
+  <p>Para poder operar bajo estos esquemas, resulta necesario constituirse como <strong>Proveedor de Servicios de Pago (PSP)</strong>, lo cual implica cumplir con una serie de requerimientos regulatorios establecidos por organismos como el <strong>BCRA y la UIF</strong>.</p>
+  <p>En este contexto, surge la necesidad de conformar un equipo de Compliance que garantice el cumplimiento normativo en relación con:</p>
+  <ul>
+    <li>Proceso de onboarding de usuarios</li>
+    <li>Validación y gestión de documentación</li>
+    <li>Monitoreo de operaciones</li>
+    <li>Generación de reportes regulatorios e informativos</li>
+  </ul>
+  <p>Actualmente, estos procesos no cuentan con una herramienta centralizada, lo que genera falta de trazabilidad, dependencia de procesos manuales, riesgo de inconsistencias y dificultad para cumplir con auditorías.</p>
+</div>
+
+<!-- PROBLEM -->
+<div class="card">
+  <h2>Definición del Problema</h2>
+  <p>Los PSP deben cumplir con requerimientos regulatorios estrictos de <strong>BCRA y UIF</strong>, que exigen recolección, verificación y conservación de información KYC, así como la gestión de procesos vinculados a PLA/FT.</p>
+  <p>Sin un sistema centralizado, los riesgos son:</p>
+  <ul>
+    <li>Falta de centralización en la gestión y almacenamiento de documentación</li>
+    <li>Dificultades para auditar procesos de revisión, aprobación o rechazo</li>
+    <li>Riesgo de inconsistencias o errores en la información registrada</li>
+    <li>Mayor complejidad para cumplir con requerimientos regulatorios y responder auditorías</li>
+  </ul>
+</div>
+
+<!-- DISCOVERY -->
+<div class="card">
+  <h2>Discovery</h2>
+  <p>Fuentes de información consultadas: Base Padrón · Apartados ABC · Manual de PLAFTP · Normativas · PRD Alta Usuario · PRD Lending · Capacitación.</p>
+  <p>Recursos visuales de referencia: Procesos ajustes (DER) · Procesos ajustes (BP - Apartados A-B-C) · ScreenFlow · Flujos · DER Proceso Alta Usuario · DER Explicación.</p>
+</div>
+
+<!-- USE CASES -->
+<div class="card">
+  <h2>Casos de Uso</h2>
+
+  <div class="cu-block">
+    <div class="cu-title">CU-00 — Alta de usuario y lectura de documentación</div>
+    <p>El analista de Compliance revisa y aprueba/rechaza la documentación específica según el tipo de sociedad. En caso de rechazo debe ingresar el motivo obligatoriamente. Una vez aprobada la documentación, carga los datos del cliente en el sistema persona por persona. Asigna riesgo y finaliza con la lectura del resumen de alta (modificable con comentarios). Si queda documentación o campos pendientes, el proceso queda en <strong>estado Pendiente de Alta</strong>.</p>
+    <p><strong>Flujo detallado del CU-00:</strong></p>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Revisión de documentación:</strong> El analista recibe los documentos subidos por Atención al Cliente. Los revisa uno a uno y los aprueba o rechaza (con motivo obligatorio). Si toda la documentación obligatoria está aprobada, puede avanzar; si no, el proceso queda pendiente.</div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Carga de datos del legajo:</strong> Con la documentación aprobada como respaldo, el analista carga los campos de cada documento (estatuto, actas, registros) y los datos de cada persona vinculada a la sociedad.</div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Datos de personas — flujo detallado:</strong> Por cada persona se carga: datos identificatorios (nombre, apellido, DNI, CUIT, domicilio, etc.), <strong>rol en la sociedad</strong> (Presidente / Gerente / Director / Apoderado / Accionista / Beneficiario Final / Heredero / Socio SH), <strong>esquema de firma</strong> (Individual o Conjunta con alcance y participantes), <strong>PEP</strong> (Sí/No — Persona Expuesta Políticamente), y <strong>REPET</strong> (figura en el registro público). El sistema guarda automáticamente cada campo a medida que se completa.</div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Asignación de riesgo:</strong> El analista evalúa el perfil del cliente y asigna nivel de riesgo (Bajo / Medio / Alto) con el tipo de debida diligencia correspondiente (simplificada / media / reforzada). Este proceso es manual con asistencia opcional del sistema.</div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Resumen y alta:</strong> El analista lee el resumen completo del cliente, puede dejar comentarios y da de alta al usuario. Si hay documentación o campos faltantes, el estado queda en Pendiente de Alta con alertas de seguimiento.</div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>POST a BD DCAC:</strong> Una vez dado de alta, el sistema postea a la base de datos interna: estado de la cuenta (activa/pendiente/rechazada), datos de personas, roles, esquemas de firma, nivel de riesgo y tipo de debida diligencia.</div></div>
+  </div>
+
+  <div class="cu-block">
+    <div class="cu-title">CU-01 — Envío de reportes regulatorios</div>
+    <p>El analista genera los reportes exigidos por BCRA/UIF (Base Padrón, Apartados A/B/C, ARCA F.8126), consolidando información del sistema. Incluye validaciones automáticas, revisión manual y envío dentro de plazos regulatorios. El sistema permite versionado, almacenamiento histórico, trazabilidad y carga de comprobantes de envío.</p>
+  </div>
+
+  <div class="cu-block">
+    <div class="cu-title">CU-02 — Definición de riesgo</div>
+    <p>El analista evalúa el perfil del cliente en base a múltiples variables y asigna un nivel de riesgo (Bajo/Medio/Alto). En función del análisis, determina el tipo de debida diligencia (simplificada/media/reforzada). La decisión final queda registrada con justificación, asegurando trazabilidad y cumplimiento normativo. El sistema puede asistir mediante reglas o scoring automático.</p>
+  </div>
+
+  <div class="cu-block">
+    <div class="cu-title">CU-03 — Clasificación de operaciones inusuales</div>
+    <p>El analista monitorea transacciones potencialmente inusuales. El sistema genera un caso y asocia la transacción al legajo del cliente. La cuenta puede bloquearse preventivamente. Atención al Cliente solicita y carga la documentación respaldatoria. El analista analiza, registra su análisis y decisión. Si la operación es justificada, se puede levantar el bloqueo. Si no, se escala como Operación Sospechosa. El ROS se gestiona por fuera de la herramienta conforme normativa.</p>
+  </div>
+
+  <div class="cu-block">
+    <div class="cu-title">CU-04 — Gestión de clientes</div>
+    <p>El analista accede al legajo completo del cliente: información, documentación, nivel de riesgo, estado de cuenta y alertas pendientes. Permite seguimiento integral, identificación de vencimientos, revisión de observaciones y control del estado de habilitación operativa.</p>
+  </div>
+
+  <div class="cu-block">
+    <div class="cu-title">CU-05 — Gestión de alertas</div>
+    <p>El analista monitorea y gestiona alertas vinculadas con vencimientos de documentación, altas pendientes y observaciones. El sistema genera alertas automáticas por eventos definidos. Las alertas pueden escalarse y ser visualizadas por otros roles (Atención al Cliente), asegurando gestión coordinada.</p>
+  </div>
+
+  <div class="cu-block">
+    <div class="cu-title">CU-06 — Alta con documentación incompleta (excepción) <span class="tag tag-new">NUEVO</span></div>
+    <p>El analista puede dar de alta una cuenta aunque no cuente con toda la documentación obligatoria, marcándola como <strong>Alta con Excepción</strong>. El sistema registra qué documentación falta, establece un plazo máximo para completarla y genera alertas automáticas de seguimiento. El analista debe dejar justificación del motivo de la excepción. Estas cuentas quedan visibles en una vista separada de "Excepciones pendientes".</p>
+  </div>
+
+  <div class="cu-block">
+    <div class="cu-title">CU-07 — POST de acciones clave a BD DCAC <span class="tag tag-new">NUEVO</span></div>
+    <p>El sistema registra en la BD interna todas las acciones críticas de compliance para mantener trazabilidad y permitir auditorías:</p>
+    <ul style="margin-top:8px">
+      <li><strong>Alta de cuenta:</strong> postea estado, fecha, analista responsable, nivel de riesgo, tipo de debida diligencia</li>
+      <li><strong>Rechazo de cuenta:</strong> postea motivo, analista, fecha</li>
+      <li><strong>Bloqueo/desbloqueo:</strong> postea tipo de acción, motivo, analista, fecha</li>
+      <li><strong>Cambio de riesgo:</strong> actualiza el campo de riesgo dentro del registro existente del cliente (no es un nuevo registro)</li>
+      <li><strong>Aprobación/rechazo de documento:</strong> postea estado, motivo de rechazo si aplica, analista, fecha</li>
+    </ul>
+    <p style="margin-top:8px">Todas estas acciones quedan en el log de acciones vinculado al legajo del cliente.</p>
+  </div>
+</div>
+
+<!-- REQUIREMENTS -->
+<div class="card">
+  <h2>Requerimientos Funcionales</h2>
+  <table class="rf-table">
+    <tr>
+      <th style="width:70px">ID</th>
+      <th>Historia de usuario</th>
+      <th style="width:80px">CU</th>
+    </tr>
+    <tr><td class="rf-id">RF-00</td><td>Como usuario de Compliance quiero poder aprobar documentos para tener registro de toda la documentación de manera correcta y completa para el alta.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-01</td><td>Como usuario de Compliance quiero poder rechazar documentos para tener registro de toda la documentación que debemos solicitar nuevamente.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-02</td><td>Como usuario de Compliance quiero que cuando rechace documentación se solicite obligatoriamente el ingreso del motivo para que quede registro de ello.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-03</td><td>Como usuario de Compliance quiero poder volver a aprobar o rechazar la documentación ya rechazada para verificar si es correcta o no nuevamente.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-04</td><td>Como usuario de Atención al Cliente quiero poder leer los motivos de rechazo de documentación para solicitar nuevamente al cliente.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-05</td><td>Como usuario de Atención al Cliente quiero poder volver a cargar la documentación que fue solicitada para avanzar con el proceso de alta de usuario.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-06</td><td>Como usuario de Compliance quiero tener acceso a la documentación completa para avanzar con el proceso de carga de datos en el alta de usuario.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-07</td><td>Como usuario de Compliance quiero que si no tengo toda la documentación, me deje continuar y guardar aquella información que sí poseo.</td><td>CU-00, CU-06</td></tr>
+    <tr><td class="rf-id">RF-08</td><td>Como usuario de Compliance quiero que se vaya guardando los campos que fui cargando para optimizar el tiempo.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-09</td><td>Como usuario de Compliance quiero asignar riesgo a la sociedad según el perfil transaccional de la misma para cumplir con la normativa del manual de riesgo.</td><td>CU-02</td></tr>
+    <tr><td class="rf-id">RF-10</td><td>Como usuario de Compliance quiero poder dejar comentarios en cada pantalla del flujo de alta de usuario para comunicarme con Atención al Cliente.</td><td>CU-00</td></tr>
+    <tr><td class="rf-id">RF-11</td><td>Como usuario de Compliance quiero poder armar reportes para cumplir con las normativas de los entes reguladores de PSP.</td><td>CU-01</td></tr>
+    <tr><td class="rf-id">RF-12</td><td>Como usuario de Compliance quiero que se me recuerde enviar reportes unos días antes para presentarlos en tiempo y forma.</td><td>CU-01</td></tr>
+    <tr><td class="rf-id">RF-13</td><td>Como usuario de Compliance quiero poder descargar reportes en formato .TXT para cumplir con la formalidad de entrega exigida.</td><td>CU-01</td></tr>
+    <tr><td class="rf-id">RF-14</td><td>Como usuario de Compliance quiero asignar riesgo al cliente según su perfil transaccional para poder dar de alta al usuario.</td><td>CU-02</td></tr>
+    <tr><td class="rf-id">RF-15</td><td>Como usuario de Compliance quiero según su nivel de riesgo asignar el tipo de debida diligencia correspondiente para cumplir con lo requerido en el manual de LA/FT/FP.</td><td>CU-02</td></tr>
+    <tr><td class="rf-id">RF-16</td><td>Como usuario de Compliance quiero cargar el dato del NSE para entender el perfil transaccional del cliente.</td><td>CU-02</td></tr>
+    <tr><td class="rf-id">RF-17</td><td>Como usuario de Compliance quiero poder visualizar todas las operaciones inusuales para tomar las medidas necesarias.</td><td>CU-03</td></tr>
+    <tr><td class="rf-id">RF-18</td><td>Como usuario de Compliance quiero dejar comentarios acerca de qué documentación habría que solicitar para que Atención al Cliente lo solicite.</td><td>CU-03</td></tr>
+    <tr><td class="rf-id">RF-19</td><td>Como usuario de Compliance quiero dejar comentarios acerca del análisis realizado y la decisión tomada para que quede registro.</td><td>CU-03</td></tr>
+    <tr><td class="rf-id">RF-20</td><td>Como usuario de Compliance quiero visualizar toda la información necesaria del cliente: riesgo, motivo OI, tipo de operación, estado, para ser más asertivo en la documentación a solicitar.</td><td>CU-03</td></tr>
+    <tr><td class="rf-id">RF-21</td><td>Como usuario de Atención al Cliente quiero visualizar los comentarios de Compliance para tomar acción.</td><td>CU-03</td></tr>
+    <tr><td class="rf-id">RF-22</td><td>Como usuario de Atención al Cliente quiero cargar la documentación solicitada por Compliance para justificar una operación inusual.</td><td>CU-03</td></tr>
+    <tr><td class="rf-id">RF-23</td><td>Como usuario de Atención al Cliente quiero dejar comentarios para Compliance para mejorar los tiempos de respuesta y que quede registro.</td><td>CU-03</td></tr>
+    <tr><td class="rf-id">RF-24</td><td>Como usuario de Compliance quiero poder modificar el estado de una OI una vez hecho el análisis (justificada o ROS) para cumplir con los requisitos del manual y UIF.</td><td>CU-03</td></tr>
+    <tr><td class="rf-id">RF-25</td><td>Como usuario de Compliance quiero consultar estado de clientes para ver si pueden o no operar con el PSP.</td><td>CU-04</td></tr>
+    <tr><td class="rf-id">RF-26</td><td>Como usuario de Compliance quiero poder editar cualquier información solicitada en el alta para mantenerla actualizada.</td><td>CU-04, CU-07</td></tr>
+    <tr><td class="rf-id">RF-27</td><td>Como usuario de Compliance quiero recibir alertas de vencimiento de documentación para solicitar al cliente que la reenvíe en tiempo y forma.</td><td>CU-05</td></tr>
+    <tr><td class="rf-id">RF-28</td><td>Como usuario de Compliance quiero tener los datos actualizados para el armado del legajo cuando se lo requiera.</td><td>CU-04</td></tr>
+    <tr><td class="rf-id">RF-29</td><td>Como usuario de Atención al Cliente quiero saber qué documentación hay que volver a solicitar para pedirla al cliente en tiempo y forma.</td><td>CU-05</td></tr>
+    <tr><td class="rf-id">RF-30</td><td>Como usuario de Atención al Cliente quiero visualizar toda la información del cliente y de su cuenta para comentarle ante cualquier consulta.</td><td>CU-04</td></tr>
+    <tr><td class="rf-id">RF-31</td><td>Como usuario de Atención al Cliente quiero ver el estado de la cuenta para informarle al cliente en caso de consulta.</td><td>CU-04</td></tr>
+    <tr><td class="rf-id">RF-32</td><td>Como usuario de Compliance quiero saber cuáles son las altas y bajas de cada mes para el armado de Base Padrón (BCRA).</td><td>CU-01</td></tr>
+    <tr><td class="rf-id">RF-33</td><td>Como usuario de Compliance quiero monitorear alertas de vencimiento de documentación para solicitar su actualización cuando corresponda.</td><td>CU-05</td></tr>
+    <tr><td class="rf-id">RF-34</td><td>Como usuario de Compliance quiero visualizar alertas de altas pendientes para dar seguimiento a casos no aprobados y evitar demoras.</td><td>CU-05</td></tr>
+    <tr><td class="rf-id">RF-35</td><td>Como usuario de Compliance quiero registrar observaciones sobre el cliente para dejar constancia de cambios, incidencias o información relevante.</td><td>CU-04</td></tr>
+    <tr><td class="rf-id">RF-36</td><td>Como usuario de Atención al Cliente quiero acceder a las alertas generadas para poder solicitar al cliente la documentación o información pendiente.</td><td>CU-05</td></tr>
+    <tr><td class="rf-id">RF-37</td><td>Como usuario de Compliance quiero poder desbloquear o no una cuenta.</td><td>CU-03, CU-07</td></tr>
+    <tr><td class="rf-id">RF-38</td><td>Como usuario de Compliance quiero que me lleguen alertas de cuentas bloqueadas y cuentas en estado pendiente de alta por falta de documentación.</td><td>CU-05</td></tr>
+    <tr><td class="rf-id">RF-39</td><td>Como usuario de Atención al Cliente quiero poder ver el estado integral de una cuenta (documentación aprobada/pendiente, usuarios, legajos, riesgos, estado de cuenta).</td><td>CU-04</td></tr>
+    <tr><td class="rf-id">RF-40</td><td>Como usuario de Compliance quiero ver separados los clientes dados de alta con documentación completa de los que están en estado pendiente.</td><td>CU-04</td></tr>
+    <tr><td class="rf-id">RF-41 <span class="tag tag-new">NUEVO</span></td><td>Como usuario de Compliance quiero poder dar de alta una cuenta con documentación incompleta marcándola como excepción, con un plazo definido para completarla y recibir alertas de seguimiento.</td><td>CU-06</td></tr>
+    <tr><td class="rf-id">RF-42 <span class="tag tag-new">NUEVO</span></td><td>Como usuario de Compliance quiero que todas las acciones clave (alta, rechazo, bloqueo, cambio de riesgo, aprobación de documento) queden registradas en la BD interna de DCAC con trazabilidad completa.</td><td>CU-07</td></tr>
+  </table>
+</div>
+
+<!-- ACCEPTANCE CRITERIA -->
+<div class="card">
+  <h2>Criterios de Aceptación</h2>
+
+  <div class="note-resolved">✅ Comentario de Lanfranco resuelto — se agregan criterios de aceptación para cada requerimiento funcional.</div>
+
+  <table class="ac-table">
+    <tr>
+      <th style="width:70px">RF</th>
+      <th style="width:220px">Condición</th>
+      <th>Criterio de aceptación</th>
+    </tr>
+
+    <tr>
+      <td class="ac-rf">RF-00</td>
+      <td class="ac-desc">Aprobar documentos</td>
+      <td><span class="check">✓</span> Al hacer clic en "Aprobar", el documento cambia a estado <em>aprobado</em> con fecha y analista registrados.<br><span class="check">✓</span> La acción queda en el log de acciones del cliente.<br><span class="check">✓</span> No se puede aprobar sin haber visualizado el documento primero.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-01</td>
+      <td class="ac-desc">Rechazar documentos</td>
+      <td><span class="check">✓</span> El botón "Rechazar" muestra obligatoriamente un campo de motivo antes de confirmar.<br><span class="check">✓</span> El documento cambia a estado <em>rechazado</em> con motivo, fecha y analista registrados.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-02</td>
+      <td class="ac-desc">Motivo obligatorio</td>
+      <td><span class="check">✓</span> No es posible confirmar el rechazo si el campo motivo está vacío — el botón queda deshabilitado o se muestra error de validación.<br><span class="check">✓</span> El motivo tiene mínimo 10 caracteres.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-03</td>
+      <td class="ac-desc">Re-revisión de documentos</td>
+      <td><span class="check">✓</span> Un documento en estado <em>rechazado</em> puede volver a ser aprobado o rechazado cuando el cliente sube una nueva versión.<br><span class="check">✓</span> Cada cambio de estado queda registrado en el historial de versiones del documento.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-04</td>
+      <td class="ac-desc">Lectura de motivos (ATC)</td>
+      <td><span class="check">✓</span> El usuario de Atención al Cliente visualiza el motivo de rechazo en el legajo del documento, sin poder modificarlo.<br><span class="check">✓</span> El motivo es visible en la pantalla de gestión del cliente.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-05</td>
+      <td class="ac-desc">Re-carga de documentos (ATC)</td>
+      <td><span class="check">✓</span> El usuario de ATC puede subir una nueva versión de un documento rechazado, lo que cambia su estado a <em>pendiente</em>.<br><span class="check">✓</span> La nueva versión queda asociada al mismo documento (no crea uno nuevo).</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-06</td>
+      <td class="ac-desc">Acceso a documentación para carga</td>
+      <td><span class="check">✓</span> En la pantalla de carga de datos, el analista puede visualizar el documento aprobado correspondiente (visor inline) sin salir del flujo.<br><span class="check">✓</span> Solo los documentos en estado <em>aprobado</em> habilitan la carga de sus campos de formulario.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-07</td>
+      <td class="ac-desc">Avanzar con documentación incompleta</td>
+      <td><span class="check">✓</span> El sistema permite guardar y avanzar aunque no estén completos todos los campos o documentos.<br><span class="check">✓</span> Los campos completados se guardan; los pendientes quedan marcados visualmente.<br><span class="check">✓</span> El estado del proceso queda en <em>Pendiente de Alta</em> con indicador de qué falta.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-08</td>
+      <td class="ac-desc">Guardado automático</td>
+      <td><span class="check">✓</span> Al cambiar de campo (blur) o al pasar de sección, los datos se guardan automáticamente (sin necesidad de botón Guardar explícito).<br><span class="check">✓</span> Se muestra un indicador visual de "Guardado" o "Guardando...".</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-09 / RF-14</td>
+      <td class="ac-desc">Asignación de riesgo</td>
+      <td><span class="check">✓</span> El analista puede seleccionar Riesgo Bajo / Medio / Alto con justificación obligatoria.<br><span class="check">✓</span> No se puede completar el alta sin tener riesgo asignado.<br><span class="check">✓</span> El riesgo queda asociado al legajo con fecha y analista que lo asignó.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-10</td>
+      <td class="ac-desc">Comentarios por pantalla</td>
+      <td><span class="check">✓</span> En cada sección del flujo existe un campo de comentarios.<br><span class="check">✓</span> Los comentarios quedan asociados a la sección específica y son visibles por ATC.<br><span class="check">✓</span> Se registra el autor y la fecha de cada comentario.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-11</td>
+      <td class="ac-desc">Generación de reportes</td>
+      <td><span class="check">✓</span> El sistema genera reportes regulatorios (Base Padrón, Apartados A/B/C, ARCA F.8126) con datos del período seleccionado.<br><span class="check">✓</span> Antes de generar, el sistema valida formato, completitud y consistencia de la información, mostrando errores si los hay.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-12</td>
+      <td class="ac-desc">Recordatorio de envío</td>
+      <td><span class="check">✓</span> El sistema genera una alerta X días antes de la fecha límite de cada reporte regulatorio (configurable).<br><span class="check">✓</span> La alerta es visible en el panel del analista de Compliance.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-13</td>
+      <td class="ac-desc">Descarga en .TXT</td>
+      <td><span class="check">✓</span> El reporte generado puede descargarse en formato .TXT con la estructura exacta requerida por cada organismo.<br><span class="check">✓</span> El sistema guarda una copia del archivo generado con fecha y versión.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-15</td>
+      <td class="ac-desc">Debida diligencia por riesgo</td>
+      <td><span class="check">✓</span> Al asignar riesgo, el sistema sugiere automáticamente el tipo de debida diligencia (Simplificada / Media / Reforzada).<br><span class="check">✓</span> El analista puede confirmar o modificar la sugerencia, dejando registro de la decisión final.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-16</td>
+      <td class="ac-desc">Campo NSE</td>
+      <td><span class="check">✓</span> El campo NSE está disponible en el formulario de datos del cliente.<br><span class="check">✓</span> El campo es opcional pero queda registrado si se completa.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-17</td>
+      <td class="ac-desc">Visualización de OI</td>
+      <td><span class="check">✓</span> El panel de OI muestra todas las operaciones con estado, cliente, monto, tipo y fecha.<br><span class="check">✓</span> Se puede filtrar por estado, fecha y tipo de operación.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-18 / RF-19 / RF-23</td>
+      <td class="ac-desc">Comentarios en OI</td>
+      <td><span class="check">✓</span> Tanto Compliance como ATC pueden dejar comentarios en cada OI.<br><span class="check">✓</span> Los comentarios tienen autor, fecha, y son visibles para ambos roles.<br><span class="check">✓</span> Los comentarios son inmutables una vez guardados.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-20</td>
+      <td class="ac-desc">Info completa en OI</td>
+      <td><span class="check">✓</span> La vista de una OI muestra: datos del cliente, nivel de riesgo, motivo de la OI, tipo de operación, estado actual, documentación adjunta y historial de comentarios.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-21 / RF-22</td>
+      <td class="ac-desc">ATC en OI</td>
+      <td><span class="check">✓</span> ATC puede ver los comentarios de Compliance en la OI.<br><span class="check">✓</span> ATC puede adjuntar documentación desde la OI.<br><span class="check">✓</span> La documentación adjuntada queda vinculada al legajo y a la OI.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-24</td>
+      <td class="ac-desc">Cambio de estado OI</td>
+      <td><span class="check">✓</span> El analista puede cambiar el estado de la OI a: <em>En análisis / Justificada / Escalada a ROS</em>.<br><span class="check">✓</span> El estado <em>Escalada a ROS</em> requiere texto de justificación y bloquea cambios posteriores.<br><span class="check">✓</span> Todos los cambios de estado quedan en el log.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-25 / RF-31</td>
+      <td class="ac-desc">Estado de cuentas</td>
+      <td><span class="check">✓</span> Desde el listado de clientes se puede ver el estado actual de cada cuenta: Activa / Pendiente de Alta / Bloqueada / Alta con Excepción / Rechazada.<br><span class="check">✓</span> El estado es visible tanto para Compliance como para ATC.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-26</td>
+      <td class="ac-desc">Edición de información</td>
+      <td><span class="check">✓</span> Cualquier campo cargado en el alta puede editarse desde el legajo del cliente.<br><span class="check">✓</span> Cada edición queda registrada en el log con el valor anterior, el nuevo valor, el analista y la fecha.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-27 / RF-33</td>
+      <td class="ac-desc">Alertas de vencimiento</td>
+      <td><span class="check">✓</span> El sistema genera alertas automáticas cuando un documento se aproxima a su fecha de vencimiento (configurable: ej. 30/15/7 días antes).<br><span class="check">✓</span> Las alertas aparecen en el panel del analista y están vinculadas al legajo del cliente.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-28 / RF-30 / RF-39</td>
+      <td class="ac-desc">Vista integral del cliente</td>
+      <td><span class="check">✓</span> El legajo del cliente muestra: datos generales, personas vinculadas, documentación (estado por documento), nivel de riesgo, tipo de debida diligencia, estado de cuenta y alertas activas.<br><span class="check">✓</span> La vista es accesible para Compliance y ATC (con permisos diferenciados).</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-29 / RF-36</td>
+      <td class="ac-desc">ATC y documentación pendiente</td>
+      <td><span class="check">✓</span> ATC visualiza en el legajo qué documentos están pendientes o rechazados y sus motivos.<br><span class="check">✓</span> ATC puede subir documentación directamente desde esa vista.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-32</td>
+      <td class="ac-desc">Altas y bajas mensuales</td>
+      <td><span class="check">✓</span> El módulo de reportes muestra un resumen de altas y bajas por mes, filtrables por período.<br><span class="check">✓</span> Este dato es la fuente para armar el reporte Base Padrón del BCRA.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-34</td>
+      <td class="ac-desc">Alertas de altas pendientes</td>
+      <td><span class="check">✓</span> Los procesos de alta que llevan más de X días sin completarse generan una alerta automática (X configurable).<br><span class="check">✓</span> La alerta identifica qué paso está pendiente (documentación / carga de datos / riesgo / revisión final).</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-35</td>
+      <td class="ac-desc">Observaciones del cliente</td>
+      <td><span class="check">✓</span> El legajo permite registrar observaciones libres sobre el cliente.<br><span class="check">✓</span> Cada observación queda con autor y fecha, es inmutable y forma parte del historial del legajo.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-37</td>
+      <td class="ac-desc">Bloqueo/desbloqueo de cuenta</td>
+      <td><span class="check">✓</span> El analista puede bloquear o desbloquear una cuenta con motivo obligatorio.<br><span class="check">✓</span> La acción se postea a la BD DCAC actualizando el estado de la cuenta en el registro existente.<br><span class="check">✓</span> Queda registrado en el log con analista y fecha.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-38</td>
+      <td class="ac-desc">Alertas de bloqueos y pendientes</td>
+      <td><span class="check">✓</span> El panel de alertas muestra un listado diferenciado de cuentas bloqueadas y cuentas en estado pendiente de alta.<br><span class="check">✓</span> Las alertas se pueden ordenar por antigüedad y filtrar por tipo.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-40</td>
+      <td class="ac-desc">Vista separada activos/pendientes</td>
+      <td><span class="check">✓</span> El listado de clientes tiene filtros/vistas diferenciadas: <em>Activos</em> (documentación completa) y <em>Pendientes</em> (documentación incompleta).<br><span class="check">✓</span> El conteo de cada grupo es visible en el header de la lista.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-41 <span class="tag tag-new">NUEVO</span></td>
+      <td class="ac-desc">Alta con excepción</td>
+      <td><span class="check">✓</span> El analista puede marcar el alta como "Excepción" indicando qué documentos faltan y un plazo para completarlos.<br><span class="check">✓</span> El sistema genera alertas automáticas a medida que se acerca el plazo.<br><span class="check">✓</span> Las cuentas en excepción aparecen en una vista separada claramente identificada.<br><span class="check">✓</span> El motivo de la excepción queda registrado y es auditabe.</td>
+    </tr>
+    <tr>
+      <td class="ac-rf">RF-42 <span class="tag tag-new">NUEVO</span></td>
+      <td class="ac-desc">POST a BD DCAC</td>
+      <td><span class="check">✓</span> Alta de cuenta: se postea estado, fecha, analista, riesgo y tipo de debida diligencia al registro del cliente en BD DCAC.<br><span class="check">✓</span> Rechazo: se postea motivo, analista y fecha.<br><span class="check">✓</span> Bloqueo/desbloqueo: se actualiza el estado de la cuenta en el registro existente (no se crea un registro nuevo).<br><span class="check">✓</span> Cambio de riesgo: se actualiza el campo riesgo en el registro existente.<br><span class="check">✓</span> Cada acción genera una entrada en el log de acciones vinculado al cliente.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- MÉTRICAS -->
+<div class="card">
+  <h2>Métricas de Producto</h2>
+
+  <h3>Eficiencia operativa</h3>
+  <table class="ac-table">
+    <tr>
+      <th style="width:260px">Métrica</th>
+      <th style="width:160px">Cómo se mide</th>
+      <th>Objetivo inicial</th>
+    </tr>
+    <tr>
+      <td>Tiempo promedio de onboarding completo</td>
+      <td>Fecha inicio alta → fecha habilitación</td>
+      <td>Establecer baseline en primeros 3 meses</td>
+    </tr>
+    <tr>
+      <td>Tiempo promedio de revisión por documento</td>
+      <td>Timestamp aprobación/rechazo − timestamp subida</td>
+      <td>Establecer baseline en primeros 3 meses</td>
+    </tr>
+    <tr>
+      <td>% de altas completadas en ≤ 5 días hábiles</td>
+      <td>Altas en ≤5d / total altas × 100</td>
+      <td>≥ 70% al 6° mes</td>
+    </tr>
+  </table>
+
+  <h3>Calidad del proceso</h3>
+  <table class="ac-table">
+    <tr>
+      <th style="width:260px">Métrica</th>
+      <th style="width:160px">Cómo se mide</th>
+      <th>Objetivo inicial</th>
+    </tr>
+    <tr>
+      <td>% de documentos rechazados sobre total revisados</td>
+      <td>Docs rechazados / total docs revisados × 100</td>
+      <td>Referencia para detectar problemas de calidad en carga del cliente</td>
+    </tr>
+    <tr>
+      <td>% de altas en estado Pendiente de Alta</td>
+      <td>Altas pendientes / total altas iniciadas × 100</td>
+      <td>Tender a la baja mes a mes</td>
+    </tr>
+    <tr>
+      <td>% de altas con excepción</td>
+      <td>Altas con excepción / total altas × 100</td>
+      <td>Monitorear — no debería superar 15%</td>
+    </tr>
+  </table>
+
+  <h3>Cumplimiento regulatorio</h3>
+  <table class="ac-table">
+    <tr>
+      <th style="width:260px">Métrica</th>
+      <th style="width:160px">Cómo se mide</th>
+      <th>Objetivo</th>
+    </tr>
+    <tr>
+      <td>% de reportes regulatorios enviados en plazo</td>
+      <td>Reportes enviados a tiempo / total reportes × 100</td>
+      <td>100% — no negociable</td>
+    </tr>
+    <tr>
+      <td>% de alertas de vencimiento resueltas antes del vencimiento</td>
+      <td>Alertas resueltas a tiempo / total alertas vencimiento × 100</td>
+      <td>≥ 90%</td>
+    </tr>
+  </table>
+
+  <h3>Carga operativa del equipo</h3>
+  <table class="ac-table">
+    <tr>
+      <th style="width:260px">Métrica</th>
+      <th style="width:160px">Cómo se mide</th>
+      <th>Objetivo inicial</th>
+    </tr>
+    <tr>
+      <td>Cantidad de OI abiertas por mes</td>
+      <td>Count OI creadas por período</td>
+      <td>Establecer baseline — detectar picos</td>
+    </tr>
+    <tr>
+      <td>Tiempo promedio de resolución de una OI</td>
+      <td>Fecha cierre − fecha apertura</td>
+      <td>Establecer baseline en primeros 3 meses</td>
+    </tr>
+    <tr>
+      <td>Alertas activas pendientes por analista</td>
+      <td>Count alertas sin resolver / cantidad analistas</td>
+      <td>Monitorear — detectar sobrecarga</td>
+    </tr>
+  </table>
+
+  <h3>Adopción</h3>
+  <table class="ac-table">
+    <tr>
+      <th style="width:260px">Métrica</th>
+      <th style="width:160px">Cómo se mide</th>
+      <th>Objetivo inicial</th>
+    </tr>
+    <tr>
+      <td>Acciones registradas por usuario por semana</td>
+      <td>Count log_acciones agrupado por usuario y semana</td>
+      <td>Proxy de uso real — crecimiento sostenido en primeros 2 meses</td>
+    </tr>
+  </table>
+</div>
+
+<!-- POST MVP -->
+<div class="card">
+  <h2>Post MVP</h2>
+  <ul>
+    <li><strong>RF–00 Post MVP:</strong> Lectura automática de documentos con tecnología OCR.</li>
+  </ul>
+</div>
+
+<!-- ANNEX -->
+<div class="card">
+  <h2>Anexo — Documentación y campos por tipo de sociedad</h2>
+
+  <div class="two-col">
+    <div class="annex-section">
+      <h3>SA — Sociedad Anónima</h3>
+      <p><strong>Documentación obligatoria:</strong></p>
+      <ul>
+        <li>Estatuto</li>
+        <li>Última Acta de Designación de Autoridades</li>
+        <li>Última página del Libro de Registro de Accionistas</li>
+        <li>Poder</li>
+      </ul>
+      <p style="margin-top:10px"><strong>Campos:</strong></p>
+      <ul>
+        <li>Duración societaria <span class="tag tag-post">POST</span></li>
+        <li>Capital suscripto <span class="tag tag-post">POST</span></li>
+        <li>Mandato vigente <span class="tag tag-post">POST</span></li>
+        <li>Fecha de Designación (exacta) <span class="tag tag-post">POST</span></li>
+        <li>Fecha de Vencimiento del Mandato (exacta) <span class="tag tag-post">POST</span></li>
+        <li>Total acciones emitidas <span class="tag tag-post">POST</span></li>
+        <li>Fecha última anotación libro <span class="tag tag-post">POST</span></li>
+        <li>Denominación social coincide <span class="tag tag-post">POST</span></li>
+        <li>Poder verificado y vigente <span class="tag tag-post">POST</span></li>
+        <li>Observaciones poder <span class="tag tag-post">POST</span></li>
+        <li>Fecha DDJJ beneficiarios finales <span class="tag tag-post">POST</span></li>
+      </ul>
+    </div>
+    <div class="annex-section">
+      <h3>SRL — Sociedad de Responsabilidad Limitada</h3>
+      <p><strong>Documentación obligatoria:</strong></p>
+      <ul>
+        <li>Contrato Social</li>
+        <li>Última Acta de Asamblea o Reunión de Socios</li>
+        <li>Libro de Registro de Socios (última hoja)</li>
+        <li>Poder</li>
+      </ul>
+      <p style="margin-top:10px"><strong>Campos:</strong></p>
+      <ul>
+        <li>Plazo <span class="tag tag-post">POST</span></li>
+        <li>Capital social <span class="tag tag-post">POST</span></li>
+        <li>Fecha Asamblea <span class="tag tag-post">POST</span></li>
+        <li>Mandato vigente <span class="tag tag-post">POST</span></li>
+        <li>Fecha de Designación (exacta) <span class="tag tag-post">POST</span></li>
+        <li>Fecha de Vencimiento del Mandato (exacta) <span class="tag tag-post">POST</span></li>
+        <li>Total cuotas emitidas <span class="tag tag-post">POST</span></li>
+        <li>Fecha última anotación <span class="tag tag-post">POST</span></li>
+        <li>Los datos coinciden ARCA <span class="tag tag-post">POST</span></li>
+        <li>Poder verificado y vigente <span class="tag tag-post">POST</span></li>
+        <li>Observaciones poder <span class="tag tag-post">POST</span></li>
+        <li>Fecha DDJJ beneficiarios finales + observaciones <span class="tag tag-post">POST</span></li>
+        <li>Fecha DDJJ PEP + observaciones <span class="tag tag-post">POST</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:16px">
+    <div class="annex-section">
+      <h3>SH — Sociedad de Hecho</h3>
+      <p><strong>Documentación obligatoria:</strong></p>
+      <ul>
+        <li>Contrato Social Privado / Acuerdo de Constitución</li>
+        <li>DNI de todos los socios</li>
+        <li>DDJJ de Designación de Representante / Apoderado (si aplica)</li>
+      </ul>
+      <p style="margin-top:10px"><strong>Campos:</strong></p>
+      <ul>
+        <li>Fecha constitución, Domicilio completo, Objeto social, Duración, Capital <span class="tag tag-post">POST</span></li>
+        <li>Fecha DDJJ BF + observaciones, Fecha DDJJ PEP + observaciones <span class="tag tag-post">POST</span></li>
+      </ul>
+    </div>
+    <div class="annex-section">
+      <h3>Sucesión / Sucesión Indivisa</h3>
+      <p><strong>Documentación obligatoria:</strong></p>
+      <ul>
+        <li>Declaratoria de Herederos o Testamento Protocolizado</li>
+        <li>Designación de Administrador (si corresponde)</li>
+        <li>DNI de todos los herederos / administrador</li>
+        <li>Poder (opcional)</li>
+      </ul>
+      <p style="margin-top:10px"><strong>Campos:</strong></p>
+      <ul>
+        <li>Juzgado, N° Expediente, Carátula, Tipo Sucesión, Estado trámite <span class="tag tag-post">POST</span></li>
+        <li>¿Existe administrador?, Fecha Designación, Estado Aceptación Cargo <span class="tag tag-post">POST</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="annex-section" style="margin-top:16px">
+    <h3>Monotributista</h3>
+    <p><strong>Documentación obligatoria:</strong> Constancia de actividad/inscripción · DDJJ PEP · DNI frente · DNI dorso</p>
+    <p><strong>Campos:</strong> Nacionalidad, Sexo, Fecha emisión DNI, Fecha vencimiento DNI, N° trámite, DNI Vigente <span class="tag tag-post">POST</span></p>
+  </div>
+
+  <div class="annex-section" style="margin-top:16px">
+    <h3>Complementarios — todos los tipos de sociedad</h3>
+    <ul>
+      <li>Declaración Jurada de Beneficiarios Finales</li>
+      <li>Declaración Jurada PEP</li>
+    </ul>
+  </div>
+
+  <div class="annex-section" style="margin-top:16px">
+    <h3>Personas — campos independientemente del tipo de sociedad</h3>
+    <ul>
+      <li>Nombre, Apellido, Email, Teléfono, Actividad laboral <span class="tag tag-get">GET</span></li>
+      <li>CUIT/CUIL <span class="tag tag-get">GET</span> / <span class="tag tag-post">POST</span></li>
+      <li>Tipo doc, N° doc, Fecha nacimiento, Domicilio, Created_at, Updated_at <span class="tag tag-post">POST</span></li>
+      <li>Rol en la sociedad: Presidente / Gerente / Director / Apoderado / Accionista / Beneficiario Final / Heredero / Socio SH <span class="tag tag-post">POST</span></li>
+      <li>Esquema de firma: Individual o Conjunta (con alcance y participantes) <span class="tag tag-post">POST</span></li>
+      <li>Condición PEP (Sí/No) <span class="tag tag-post">POST</span></li>
+      <li>REPET (Sí/No) <span class="tag tag-post">POST</span></li>
+    </ul>
+  </div>
+</div>
+
+<div style="text-align:center; color:#aaa; font-size:11px; margin-top:10px; padding-bottom:20px;">
+  PRD Herramienta Compliance PSP · v2.0 · HC DCAC · deCampoPagos · Abril 2026
+</div>
+
+</body>
+</html>

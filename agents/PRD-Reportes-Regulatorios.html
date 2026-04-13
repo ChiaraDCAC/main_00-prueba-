@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRD-Reportes-Regulatorios</title>
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 48px 64px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f3460;
+    border-bottom: 3px solid #0f3460;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+    margin-top: 0;
+  }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f3460;
+    background: #eef2ff;
+    padding: 8px 14px;
+    border-left: 4px solid #0f3460;
+    margin-top: 36px;
+    margin-bottom: 16px;
+    border-radius: 0 6px 6px 0;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #16213e;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin-bottom: 12px;
+    color: #334155;
+  }
+
+  ul, ol {
+    padding-left: 22px;
+    margin-bottom: 12px;
+  }
+
+  li {
+    margin-bottom: 5px;
+    color: #334155;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 12.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  thead tr {
+    background: #0f3460;
+    color: #fff;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  tbody tr:hover {
+    background: #eef2ff;
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+
+  code {
+    background: #f1f5f9;
+    color: #0f3460;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 18px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 1.6;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  blockquote {
+    border-left: 4px solid #0f3460;
+    background: #eef2ff;
+    padding: 10px 16px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+    color: #334155;
+    font-style: italic;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 28px 0;
+  }
+
+  strong {
+    color: #0f3460;
+    font-weight: 600;
+  }
+
+  a { color: #0f3460; }
+
+  @media print {
+    body { padding: 20px 32px; }
+    h2 { page-break-before: auto; }
+    pre, table, blockquote { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>PRD - Reportes Regulatorios (ARCA F.8126 / BCRA Base Padrón / UIF Apartados A-B-C)</h1>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Status</strong></td>
+<td>En curso</td>
+</tr>
+<tr>
+<td><strong>Author(s)</strong></td>
+<td>Chiara Giralt</td>
+</tr>
+<tr>
+<td><strong>Stakeholders</strong></td>
+<td>Compliance, Legal, Finanzas, Tecnología, Dirección</td>
+</tr>
+<tr>
+<td><strong>Team</strong></td>
+<td>Dev: Lanfranco Bortolin, Jero Rech</td>
+</tr>
+<tr>
+<td><strong>Last Updated</strong></td>
+<td>Abril 2026</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Resumen Ejecutivo</h2>
+<p>Este PRD documenta el módulo de Reportes Regulatorios del sistema de Compliance de deCampoPagos. Como PSP (Proveedor de Servicios de Pago), la empresa debe presentar información periódica ante tres organismos: <strong>ARCA</strong> (F.8126 mensual, vía Web Services), <strong>BCRA</strong> (Base Padrón mensual, vía RUNOR) y <strong>UIF</strong> (Apartados A y B mensuales, Apartado C trimestral).</p>
+<p>El módulo centraliza la generación, validación y envío de estos reportes desde la herramienta, eliminando la construcción manual de archivos y garantizando que la información enviada sea consistente con los datos del sistema. Para ARCA, el envío se realiza automáticamente vía WSM (Web Services ARCA). Para BCRA y UIF, el analista puede exportar el reporte en <code>.txt</code> y enviarlo manualmente desde la herramienta.</p>
+<hr>
+<h2>Definición del Problema</h2>
+<h3>¿Por qué?</h3>
+<p><strong>Problema del usuario (equipo de Compliance y Finanzas):</strong>
+Hoy los reportes regulatorios se construyen manualmente, extrayendo datos de distintas fuentes (planillas, sistemas, emails) y armando los archivos según los formatos exigidos por cada organismo. Esto genera:</p>
+<ul>
+<li>Alto riesgo de errores humanos en la construcción del archivo (campos mal formateados, datos inconsistentes, totales incorrectos).</li>
+<li>Tiempo operativo elevado cada cierre de mes.</li>
+<li>Falta de trazabilidad sobre qué versión fue enviada, cuándo y por quién.</li>
+<li>Dificultad para realizar rectificativas si se detecta un error post-envío.</li>
+</ul>
+<p><strong>Problema del negocio:</strong>
+El incumplimiento en los plazos de presentación o la presentación de información errónea ante ARCA, BCRA o la UIF expone a deCampoPagos a sanciones regulatorias y al riesgo de revocación del certificado como PSP.</p>
+<h3>¿Para qué?</h3>
+<ul>
+<li><strong>Para el equipo de Compliance</strong>: Generar los reportes regulatorios directamente desde el sistema, con los datos ya validados, sin construcción manual de archivos.</li>
+<li><strong>Para el negocio</strong>: Cumplir en tiempo y forma con las obligaciones de presentación ante ARCA, BCRA y UIF.</li>
+<li><strong>Para reducir el riesgo operativo</strong>: Tener trazabilidad de cada presentación (versión, fecha de envío, usuario responsable) y poder generar rectificativas cuando sea necesario.</li>
+</ul>
+<hr>
+<h2>Medición - KPIs y Resultados Esperados</h2>
+<h3>Métricas de Adopción</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>% de presentaciones regulatorias generadas desde el sistema vs. de forma manual</td>
+<td>0%</td>
+<td>100%</td>
+<td>Registros de presentación en BD</td>
+</tr>
+<tr>
+<td>% de presentaciones enviadas dentro del plazo regulatorio</td>
+<td>No medido</td>
+<td>100%</td>
+<td>Fecha de envío vs. fecha límite por tipo de reporte</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Uso</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tiempo de generación del reporte F.8126 (desde inicio hasta archivo listo)</td>
+<td>No medido</td>
+<td>&lt; 30 min</td>
+<td>Timestamps en BD</td>
+</tr>
+<tr>
+<td>Cantidad de rectificativas por errores detectados post-envío</td>
+<td>No medido</td>
+<td>0 por trimestre</td>
+<td>Registros de secuencia &gt; &quot;00&quot; en BD</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Negocio / Compliance</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Presentaciones vencidas (enviadas fuera del plazo)</td>
+<td>No medido</td>
+<td>0</td>
+<td>Fecha de envío vs. fecha límite</td>
+</tr>
+<tr>
+<td>Control de razonabilidad UIF Apartado B aprobado sin ajuste manual</td>
+<td>No medido</td>
+<td>100% de los cierres</td>
+<td>Flag validación en BD</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Discovery</h2>
+<h3>Diagrama de Flujo — ARCA F.8126 (WSM)</h3>
+<pre><code>[Cierre del mes]
+       |
+       v
+[El analista inicia la generación del F.8126]
+  Selecciona período (AAAAMM)
+       |
+       v
+[El sistema construye el archivo automáticamente]
+  - Registro 01: Cabecera
+  - Registro 02: Cuentas (CVU/cuentas de pago)
+  - Registro 03: Integrantes (titulares por cuenta)
+  - Registro 04: Movimientos mensuales agregados
+  - Registro 05: Detalle de transferencias (si aplica)
+       |
+       v
+[Vista previa del archivo generado]
+  El analista puede revisar registros
+       |
+   ¿Errores de validación?
+   /              \
+ [Sí]           [No]
+   |               |
+   v               v
+[Detalle de      [Confirmar envío]
+ errores a            |
+ corregir]            v
+                [Envío automático vía WSM a ARCA]
+                      |
+                  ¿Respuesta ARCA?
+                  /           \
+              [OK]          [Error]
+                |               |
+                v               v
+        [Registro exitoso]  [Alerta + log]
+        [en el sistema]    [para reintento]
+</code></pre>
+<h3>Diagrama de Flujo — BCRA Base Padrón (RUNOR)</h3>
+<pre><code>[Durante el mes]
+       |
+       v
+[El sistema registra novedades de clientes]
+  Alta (10) / Baja (20) / Modificación (30)
+  - Cambio condición PEP
+  - Cambio código postal
+       |
+       v
+[Al cierre del mes: generar reporte Base Padrón]
+       |
+       v
+[El sistema consolida novedades del período]
+  (Primera presentación: base completa de activos)
+       |
+       v
+[Vista previa del reporte]
+       |
+       v
+[Exportar a .txt]
+       |
+       v
+[Analista envía manualmente al BCRA vía RUNOR]
+       |
+       v
+[Registra la presentación en el sistema]
+  (fecha de envío, usuario, período, estado)
+</code></pre>
+<h3>Diagrama de Flujo — UIF Apartados A / B / C</h3>
+<pre><code>[Cierre del mes (o trimestre para Apartado C)]
+       |
+       v
+[Analista selecciona tipo de apartado a generar]
+  Apartado A / Apartado B / Apartado C
+       |
+       v
+[El sistema consolida los datos del período]
+  Apartado A: saldos de cuentas, fondos comunes, saldos a liquidar
+  Apartado B: transacciones, transferencias, clientes, préstamos
+  Apartado C: (generación de template para auditor externo)
+       |
+       v
+[Control de razonabilidad automático]
+  (solo Apartado B)
+  Saldo nuevo = Saldo anterior + Créditos − Débitos
+       |
+   ¿Razonabilidad OK?
+   /             \
+ [No]           [Sí]
+   |               |
+   v               v
+[Alerta con      [Vista previa del reporte]
+ diferencia              |
+ detectada]              v
+                  [Exportar a .txt]
+                         |
+                         v
+             [Analista envía al BCRA / UIF]
+             (vía plataforma del organismo)
+                         |
+                         v
+             [Registra la presentación en el sistema]
+</code></pre>
+<h3>Diseño</h3>
+<ul>
+<li><strong>Web</strong>: [Link a Figma — pendiente]</li>
+</ul>
+<h3>Documentación Técnica</h3>
+<ul>
+<li>PRD padre: <code>PRD-Sistema-Compliance.md</code></li>
+<li>Documento fuente regulatorio: <code>agents/Reportes.pdf</code></li>
+<li>Diagrama ER: <code>diagrama-er.html</code></li>
+<li>Documentación WSM ARCA: [Link a documentación oficial ARCA — pendiente]</li>
+<li>Sistema RUNOR BCRA: [Link a documentación BCRA — pendiente]</li>
+</ul>
+<hr>
+<h2>Requerimientos</h2>
+<hr>
+<h3>Módulo A: ARCA — F.8126</h3>
+<hr>
+<h4>CU-01 — Generar archivo F.8126</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista de Compliance (Nivel 1 o Nivel 2)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Sesión iniciada. Datos de cuentas, titulares y movimientos del período disponibles en BD. Tablas de códigos ARCA cargadas.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Mensual (cierre de mes)</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista navega a <code>Reportes Regulatorios &gt; ARCA F.8126</code>.</li>
+<li>Selecciona el período a informar (AAAAMM) y confirma la generación.</li>
+<li>El sistema construye el archivo con los 5 tipos de registros y muestra vista previa con conteo por tipo.</li>
+<li>El analista revisa y presiona &quot;Validar&quot; (continúa en CU-02).</li>
+<li>Sin errores, el botón &quot;Enviar a ARCA (WSM)&quot; se habilita.</li>
+<li>El analista confirma el envío (continúa en CU-03).</li>
+</ol>
+<p><strong>Flujo alternativo A — Rectificativa:</strong></p>
+<ul>
+<li>Si el período ya tiene una presentación exitosa, el sistema pregunta si se desea rectificar. Si se confirma, la secuencia se incrementa automáticamente (01, 02…).</li>
+</ul>
+<p><strong>Flujo alternativo B — Errores de validación:</strong></p>
+<ul>
+<li>Si el paso 4 devuelve errores, el envío queda bloqueado. El analista corrige los datos y regenera.</li>
+</ul>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><p><strong>RF-01.1</strong> Generar Registro 01 (Cabecera, 1 línea, 261 caracteres):</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor / Fuente</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tipo de registro</td>
+<td><code>01</code> (fijo)</td>
+</tr>
+<tr>
+<td>CUIT informante</td>
+<td>CUIT de deCampoPagos (configuración del sistema)</td>
+</tr>
+<tr>
+<td>Período informado</td>
+<td>AAAAMM seleccionado</td>
+</tr>
+<tr>
+<td>Secuencia</td>
+<td><code>00</code> original; incremento automático para rectificativas</td>
+</tr>
+<tr>
+<td>Denominación</td>
+<td>Razón social de deCampoPagos (configuración)</td>
+</tr>
+<tr>
+<td>Hora</td>
+<td>Timestamp HHMMSS de generación</td>
+</tr>
+<tr>
+<td>Código de impuesto</td>
+<td><code>0103</code> (fijo)</td>
+</tr>
+<tr>
+<td>Código de concepto</td>
+<td><code>812</code> (fijo)</td>
+</tr>
+<tr>
+<td>Número de formulario</td>
+<td><code>8126</code> (fijo)</td>
+</tr>
+<tr>
+<td>Versión del aplicativo</td>
+<td><code>00200</code> (configurable sin deploy)</td>
+</tr>
+<tr>
+<td>Establecimiento</td>
+<td><code>00</code> (fijo)</td>
+</tr>
+<tr>
+<td>Cantidad total de líneas</td>
+<td>Calculado al cerrar el archivo</td>
+</tr>
+<tr>
+<td>Cantidad de registros de detalle</td>
+<td>Calculado al cerrar el archivo</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>RF-01.2</strong> Generar Registro 02 (Cuenta) por cada cuenta activa o con movimientos en el período:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor / Fuente</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tipo de registro</td>
+<td><code>02</code></td>
+</tr>
+<tr>
+<td>Tipo de cuenta</td>
+<td><code>01</code> billetera virtual / <code>02</code> otra</td>
+</tr>
+<tr>
+<td>Identificador de cuenta</td>
+<td>CVU o ID interno</td>
+</tr>
+<tr>
+<td>Cantidad de integrantes</td>
+<td>Conteo de registros 03 vinculados</td>
+</tr>
+<tr>
+<td>Fecha de alta</td>
+<td>AAAAMMDD de creación</td>
+</tr>
+<tr>
+<td>Tipo de operación</td>
+<td><code>01</code> apertura / <code>02</code> cierre / <code>03</code> modificación / <code>04</code> sin modificación con movimientos</td>
+</tr>
+<tr>
+<td>Fecha del evento</td>
+<td>AAAAMMDD</td>
+</tr>
+<tr>
+<td>Signo saldo ARS</td>
+<td><code>0</code> positivo / <code>1</code> negativo</td>
+</tr>
+<tr>
+<td>Saldo en pesos</td>
+<td>Saldo al cierre del período, sin decimales</td>
+</tr>
+<tr>
+<td>Saldo moneda extranjera</td>
+<td>Si aplica</td>
+</tr>
+<tr>
+<td>Saldo moneda digital</td>
+<td>Si aplica (cripto)</td>
+</tr>
+<tr>
+<td>CVU</td>
+<td>22 dígitos (obligatorio si tipo cuenta = <code>01</code>)</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>RF-01.3</strong> Generar Registro 03 (Integrante) por cada persona asociada a cada cuenta:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor / Fuente</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tipo de registro</td>
+<td><code>03</code></td>
+</tr>
+<tr>
+<td>Tipo de documento</td>
+<td><code>80</code> CUIT / <code>86</code> CUIL / <code>96</code> DNI / según tabla ARCA</td>
+</tr>
+<tr>
+<td>Número de documento</td>
+<td>Sin guiones</td>
+</tr>
+<tr>
+<td>NIF</td>
+<td>Si aplica (no residente)</td>
+</tr>
+<tr>
+<td>Apellido y nombre / Denominación</td>
+<td>Nombre completo o razón social</td>
+</tr>
+<tr>
+<td>Tipo de persona</td>
+<td><code>1</code> Persona Humana / <code>2</code> Persona Jurídica</td>
+</tr>
+<tr>
+<td>Residencia</td>
+<td><code>0</code> residente / <code>1</code> no residente</td>
+</tr>
+<tr>
+<td>País de residencia</td>
+<td>Código según tabla (si no residente)</td>
+</tr>
+<tr>
+<td>Carácter</td>
+<td><code>1</code> Titular / <code>2</code> Cotitular / <code>3</code> Apoderado / <code>4</code> Rep. Legal / <code>5</code> Firmante</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>RF-01.4</strong> Generar Registros 04 (Movimientos mensuales) agrupados por: tipo de operación + tipo de movimiento + moneda:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor / Fuente</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tipo de registro</td>
+<td><code>04</code></td>
+</tr>
+<tr>
+<td>Tipo de operación</td>
+<td><code>01</code> Ingreso / <code>02</code> Egreso</td>
+</tr>
+<tr>
+<td>Tipo de movimiento</td>
+<td><code>01</code> Efectivo / <code>02</code> Transf. bancaria / <code>03</code> Transf. virtual</td>
+</tr>
+<tr>
+<td>Moneda original</td>
+<td><code>1</code> ARS / <code>2</code> USD / <code>14</code> Bitcoin / según tabla ARCA</td>
+</tr>
+<tr>
+<td>Monto mensual en moneda original</td>
+<td>Suma total del grupo, sin decimales</td>
+</tr>
+<tr>
+<td>Monto mensual en pesos</td>
+<td>Equivalente en ARS</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>RF-01.5</strong> Generar Registro 05 (Detalle de transferencias) solo cuando el tipo de movimiento del Registro 04 asociado sea <code>02</code> o <code>03</code>. No se genera para efectivo:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor / Fuente</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tipo de registro</td>
+<td><code>05</code></td>
+</tr>
+<tr>
+<td>CBU o CVU destino</td>
+<td>22 dígitos de la cuenta contraparte</td>
+</tr>
+<tr>
+<td>Monto en pesos</td>
+<td>Importe individual, sin decimales</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>RF-01.6</strong> Mostrar vista previa con conteo de registros por tipo antes de habilitar el envío.</p>
+</li>
+<li><p><strong>RF-01.7</strong> El nombre del archivo debe seguir el formato definido por ARCA.</p>
+</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-01.1</strong> El Registro 01 aparece una sola vez y es la primera línea del archivo.</li>
+<li><strong>CA-01.2</strong> Los campos de longitud fija cumplen exactamente el largo especificado; los cortos se rellenan con espacios o ceros según la especificación ARCA.</li>
+<li><strong>CA-01.3</strong> El campo &quot;cantidad total de líneas&quot; coincide con el número real de líneas del archivo.</li>
+<li><strong>CA-01.4</strong> El campo &quot;cantidad de registros de detalle&quot; coincide con el conteo real de registros 02+03+04+05.</li>
+<li><strong>CA-01.5</strong> El CVU está presente en todos los registros 02 con tipo de cuenta = <code>01</code>.</li>
+<li><strong>CA-01.6</strong> Para una rectificativa, la secuencia del Registro 01 es mayor en 1 respecto a la última presentación exitosa del mismo período.</li>
+<li><strong>CA-01.7</strong> La vista previa muestra el conteo correcto por tipo de registro antes de confirmar el envío.</li>
+</ul>
+<hr>
+<h4>CU-02 — Validar integridad del archivo F.8126</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Sistema (automático)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Archivo F.8126 generado en CU-01.</td>
+</tr>
+<tr>
+<td><strong>Disparador</strong></td>
+<td>El analista presiona &quot;Validar&quot; en la vista previa.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El sistema ejecuta el conjunto completo de validaciones de integridad.</li>
+<li>Si no hay errores: habilita el botón &quot;Enviar a ARCA (WSM)&quot; con indicador verde.</li>
+<li>Si hay errores: muestra listado con descripción y registro afectado. El botón de envío permanece deshabilitado.</li>
+</ol>
+<p><strong>Flujo alternativo — Corrección y revalidación:</strong></p>
+<ul>
+<li>El analista corrige los datos en el módulo correspondiente, regenera el archivo y ejecuta la validación nuevamente.</li>
+</ul>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><p><strong>RF-02.1</strong> Ejecutar automáticamente las siguientes validaciones:</p>
+<ul>
+<li>Registro 01 presente y único.</li>
+<li>Cantidad total de líneas del Registro 01 coincide con el conteo real del archivo.</li>
+<li>Cantidad de registros de detalle coincide con el conteo de 02+03+04+05.</li>
+<li>Cada Registro 02 tiene al menos 1 Registro 03 vinculado.</li>
+<li>La cantidad de integrantes declarada en el 02 coincide con los registros 03 asociados.</li>
+<li>Solo 1 integrante con carácter = <code>1</code> (titular) por cuenta.</li>
+<li>CVU presente en todas las cuentas de tipo <code>01</code>.</li>
+<li>Registros 05 solo presentes cuando el tipo de movimiento del 04 asociado es <code>02</code> o <code>03</code>.</li>
+<li>Todos los campos de longitud fija cumplen el largo especificado.</li>
+</ul>
+</li>
+<li><p><strong>RF-02.2</strong> Mostrar listado de errores con: tipo de error, número de registro afectado y descripción accionable.</p>
+</li>
+<li><p><strong>RF-02.3</strong> El botón &quot;Enviar a ARCA (WSM)&quot; debe permanecer deshabilitado mientras existan errores sin resolver.</p>
+</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-02.1</strong> Sin errores → indicador verde y botón de envío habilitado.</li>
+<li><strong>CA-02.2</strong> Con errores → listado visible con número de línea o registro afectado y descripción clara.</li>
+<li><strong>CA-02.3</strong> El envío no puede forzarse si la última validación tuvo errores.</li>
+<li><strong>CA-02.4</strong> Tras corregir y regenerar, la validación puede ejecutarse nuevamente sin restricciones.</li>
+</ul>
+<hr>
+<h4>CU-03 — Enviar F.8126 vía WSM a ARCA</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista de Compliance (Nivel 1)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Archivo validado sin errores (CU-02). Credenciales WSM ARCA configuradas y homologadas.</td>
+</tr>
+<tr>
+<td><strong>Disparador</strong></td>
+<td>El analista presiona &quot;Enviar a ARCA (WSM)&quot; y confirma el diálogo.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El sistema establece la conexión WSM con ARCA usando las credenciales configuradas.</li>
+<li>Envía el archivo y espera la respuesta.</li>
+<li>ARCA devuelve código de respuesta y mensaje.</li>
+<li>El sistema registra la presentación como <code>Enviada</code> con la respuesta completa y notifica al analista.</li>
+</ol>
+<p><strong>Flujo alternativo — Fallo de conexión o rechazo:</strong></p>
+<ul>
+<li>El sistema reintenta automáticamente hasta 3 veces (intervalo: 5 minutos).</li>
+<li>Si persiste el error, el estado queda como <code>Error en envío — pendiente reintento</code> con el detalle técnico.</li>
+<li>El analista puede reintentar manualmente desde el historial.</li>
+</ul>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-03.1</strong> El envío debe realizarse vía WSM con las credenciales configuradas en el backoffice.</li>
+<li><strong>RF-03.2</strong> Registrar la respuesta completa de ARCA: código, mensaje, timestamp de envío y de respuesta.</li>
+<li><strong>RF-03.3</strong> Reintentar automáticamente hasta 3 veces ante fallos de conexión (intervalo: 5 min).</li>
+<li><strong>RF-03.4</strong> El historial de presentaciones debe incluir: período, secuencia, fecha/hora, usuario, estado y respuesta de ARCA.</li>
+<li><strong>RF-03.5</strong> Un archivo enviado exitosamente no puede reenviarse como original; solo puede generarse una rectificativa.</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-03.1</strong> Envío exitoso → estado <code>Enviada</code> con respuesta de confirmación de ARCA visible en el historial.</li>
+<li><strong>CA-03.2</strong> Envío fallido → estado <code>Error en envío</code> con detalle técnico visible para el analista.</li>
+<li><strong>CA-03.3</strong> El analista puede reintentar desde el historial sin necesidad de regenerar el archivo.</li>
+<li><strong>CA-03.4</strong> Para rectificativa, el sistema incrementa la secuencia automáticamente en el Registro 01.</li>
+<li><strong>CA-03.5</strong> El historial es de solo lectura; no puede modificarse ni eliminarse.</li>
+<li><strong>CA-03.6</strong> El archivo enviado puede descargarse desde cada entrada del historial.</li>
+</ul>
+<hr>
+<h3>Módulo B: BCRA — Base Padrón</h3>
+<hr>
+<h4>CU-04 — Capturar novedades de clientes para Base Padrón</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Sistema (automático)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Módulo de Clientes operativo.</td>
+</tr>
+<tr>
+<td><strong>Disparador</strong></td>
+<td>Cualquier evento de alta, baja o modificación de cliente.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>Cliente aprobado por primera vez → sistema registra Alta <code>(10)</code> en la cola del Base Padrón.</li>
+<li>Cliente desactivado → sistema registra Baja <code>(20)</code>.</li>
+<li>Cambio de condición PEP o código postal → sistema registra Modificación <code>(30)</code>.</li>
+<li>Al cierre del mes la cola contiene todas las novedades del período, listas para el reporte.</li>
+</ol>
+<p><strong>Caso especial — Primera presentación:</strong></p>
+<ul>
+<li>El sistema informa la base completa de clientes activos, no solo novedades.</li>
+</ul>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><p><strong>RF-04.1</strong> Registrar automáticamente en la cola los eventos:</p>
+<ul>
+<li><code>Alta (10)</code>: cliente cambia a estado <code>Aprobado</code> por primera vez.</li>
+<li><code>Baja (20)</code>: cliente desactivado o dado de baja.</li>
+<li><code>Modificación (30)</code>: cambio de condición PEP o cambio de código postal.</li>
+</ul>
+</li>
+<li><p><strong>RF-04.2</strong> Cada registro en la cola debe incluir:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Opciones</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tipo de movimiento</td>
+<td><code>10</code> Alta / <code>20</code> Baja / <code>30</code> Modificación</td>
+</tr>
+<tr>
+<td>Tipo de persona</td>
+<td>Jurídica (SA, SRL, SH) / Humana</td>
+</tr>
+<tr>
+<td>Nacionalidad</td>
+<td>Extranjera / Nacional</td>
+</tr>
+<tr>
+<td>Identificación tributaria</td>
+<td>CUIT / CUIL / CDI</td>
+</tr>
+<tr>
+<td>Número de ident. tributaria</td>
+<td><code>11</code> / <code>97</code> / <code>98</code> / <code>99</code></td>
+</tr>
+<tr>
+<td>Identificación personal</td>
+<td>DNI / LE / LC / Cédula / Cédula Mercosur / Pasaporte / DNI Exterior</td>
+</tr>
+<tr>
+<td>Número de ident. personal</td>
+<td><code>00</code> a <code>07</code></td>
+</tr>
+<tr>
+<td>Condición PEP</td>
+<td>SI / NO</td>
+</tr>
+<tr>
+<td>Código postal</td>
+<td>Formato resolución BCRA</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>RF-04.3</strong> En la primera presentación, incluir la base completa de clientes activos independientemente de novedades del mes.</p>
+</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-04.1</strong> Cada aprobación nueva genera automáticamente un Alta (10) en la cola, sin intervención manual.</li>
+<li><strong>CA-04.2</strong> Cada desactivación genera automáticamente una Baja (20).</li>
+<li><strong>CA-04.3</strong> Cambio de condición PEP genera Modificación (30) con el campo actualizado.</li>
+<li><strong>CA-04.4</strong> Cambio de código postal genera Modificación (30) con el nuevo valor.</li>
+<li><strong>CA-04.5</strong> Si un cliente tuvo múltiples modificaciones en el mismo mes, se conserva solo la más reciente de cada campo.</li>
+<li><strong>CA-04.6</strong> En la primera presentación, la cola contiene todos los clientes activos aunque no hayan tenido novedades.</li>
+</ul>
+<hr>
+<h4>CU-05 — Generar y exportar reporte Base Padrón</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista de Compliance (Nivel 1 o Nivel 2)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Cola de novedades del período disponible.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Mensual. Envío al BCRA vía RUNOR.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista navega a <code>Reportes Regulatorios &gt; BCRA Base Padrón</code>.</li>
+<li>Selecciona el período y presiona &quot;Generar reporte&quot;.</li>
+<li>El sistema consolida novedades y muestra vista previa con totales (altas, bajas, modificaciones) y detalle de cada registro.</li>
+<li>El analista revisa y presiona &quot;Exportar .txt&quot;.</li>
+<li>El sistema genera el archivo <code>.txt</code> con el formato requerido por el BCRA.</li>
+<li>El analista envía el <code>.txt</code> al BCRA vía RUNOR y regresa al sistema.</li>
+<li>El analista marca la presentación como <code>Enviada al BCRA</code> con la fecha de envío.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-05.1</strong> Consolidar las novedades del período (altas, bajas, modificaciones) al generar el reporte.</li>
+<li><strong>RF-05.2</strong> Mostrar en la vista previa: totales por tipo de movimiento y detalle de cada registro con todos sus campos.</li>
+<li><strong>RF-05.3</strong> Permitir exportar a <code>.txt</code> con un botón &quot;Exportar .txt&quot; claramente visible.</li>
+<li><strong>RF-05.4</strong> El <code>.txt</code> debe incluir todos los campos exigidos por el BCRA en el formato de presentación vigente.</li>
+<li><strong>RF-05.5</strong> Permitir marcar la presentación como <code>Enviada al BCRA</code> con fecha de envío ingresada manualmente.</li>
+<li><strong>RF-05.6</strong> Registrar en el audit log: quién generó, cuándo, quién marcó el envío y con qué fecha.</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-05.1</strong> El reporte incluye únicamente las novedades del período seleccionado.</li>
+<li><strong>CA-05.2</strong> Los totales de la vista previa coinciden con el conteo real de registros en el detalle.</li>
+<li><strong>CA-05.3</strong> El <code>.txt</code> se genera correctamente con todos los campos del BCRA y puede abrirse sin errores.</li>
+<li><strong>CA-05.4</strong> Al marcar como <code>Enviada</code>, el sistema registra usuario, fecha del marcado y fecha de envío informada.</li>
+<li><strong>CA-05.5</strong> Un reporte marcado como <code>Enviado</code> no puede regenerarse para el mismo período sin confirmación explícita.</li>
+</ul>
+<hr>
+<h3>Módulo C: UIF — Apartados A, B y C</h3>
+<hr>
+<h4>CU-06 — Generar Apartado A (Supervisión BCRA)</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista de Compliance (Nivel 1 o Nivel 2)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Datos de saldos de cuentas, FCIs y saldos a liquidar del período disponibles en BD.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Mensual. Vencimiento: día 22 del mes siguiente (o día hábil posterior).</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista navega a <code>Reportes Regulatorios &gt; UIF &gt; Apartado A</code>.</li>
+<li>Selecciona el período y presiona &quot;Generar&quot;.</li>
+<li>El sistema consolida automáticamente los datos del período.</li>
+<li>El analista revisa la vista previa y presiona &quot;Exportar .txt&quot;.</li>
+<li>Envía el <code>.txt</code> a la UIF y marca la presentación como <code>Enviada a UIF</code> con fecha de envío.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><p><strong>RF-06.1</strong> Consolidar y mostrar los siguientes datos del período:</p>
+<p><strong>A. Cuentas de pago de clientes:</strong></p>
+<ul>
+<li>a.1 Saldo total de fondos acreditados en cuentas de pago.</li>
+<li>a.2 Cantidad de cuentas con saldo &gt; 0.</li>
+<li>a.3 Cantidad total de cuentas (con y sin saldo).</li>
+<li>a.4 Por cada entidad financiera depositaria: CBU y saldo en cuenta a la vista.</li>
+</ul>
+<p><strong>B. Saldos invertidos en FCIs:</strong></p>
+<ul>
+<li>b.1 Saldo total de clientes en FCIs.</li>
+<li>b.2 Cantidad de clientes con inversiones en FCIs.</li>
+<li>b.3 Por fondo: número de registro CNV, denominación, saldo, tipo de agente (I/II/III), denominación del agente, CUIT del agente.</li>
+</ul>
+<p><strong>C. Saldos a liquidar:</strong></p>
+<ul>
+<li>c.1 Saldo pendiente de acreditación en cuentas de pago.</li>
+<li>c.2 Cantidad de cuentas con saldo pendiente de liquidación.</li>
+</ul>
+</li>
+<li><p><strong>RF-06.2</strong> Importes en <strong>miles de pesos, sin decimales</strong>, con redondeo estándar (≥5 incrementa, &lt;5 descarta).</p>
+</li>
+<li><p><strong>RF-06.3</strong> Exportar a <code>.txt</code> con botón &quot;Exportar .txt&quot;.</p>
+</li>
+<li><p><strong>RF-06.4</strong> Permitir marcar la presentación como <code>Enviada a UIF</code> con fecha de envío.</p>
+</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-06.1</strong> Todos los importes están en miles de pesos sin decimales.</li>
+<li><strong>CA-06.2</strong> El saldo a.1 es igual a la suma de saldos individuales de todas las cuentas al cierre del período.</li>
+<li><strong>CA-06.3</strong> Las cantidades a.2 y a.3 coinciden con los conteos reales de cuentas en el sistema.</li>
+<li><strong>CA-06.4</strong> El <code>.txt</code> contiene todos los campos del modelo de información del Apartado A.</li>
+<li><strong>CA-06.5</strong> La presentación marcada como <code>Enviada a UIF</code> queda en el historial con usuario y fechas.</li>
+</ul>
+<hr>
+<h4>CU-07 — Generar Apartado B (Información estadística mensual)</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista de Compliance (Nivel 1 o Nivel 2)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Datos de transacciones, transferencias y clientes del período en BD. Apartado A del período anterior disponible para el control de razonabilidad.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Mensual. Vencimiento: día 22 del mes siguiente (o día hábil posterior).</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista navega a <code>Reportes Regulatorios &gt; UIF &gt; Apartado B</code>.</li>
+<li>Selecciona el período y presiona &quot;Generar&quot;.</li>
+<li>El sistema consolida los datos estadísticos y ejecuta el control de razonabilidad.</li>
+<li>Si la razonabilidad es correcta → indicador verde. Si hay diferencia → alerta con monto de discrepancia.</li>
+<li>El analista revisa (y justifica si hay diferencia) y presiona &quot;Exportar .txt&quot;.</li>
+<li>Envía el <code>.txt</code> a la UIF y marca la presentación como <code>Enviada a UIF</code>.</li>
+</ol>
+<p><strong>Flujo alternativo — Discrepancia en razonabilidad:</strong></p>
+<ul>
+<li>El analista ingresa una justificación obligatoria de la diferencia antes de exportar. Queda registrado en el audit log.</li>
+</ul>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><p><strong>RF-07.1</strong> Consolidar y mostrar:</p>
+<p><strong>A. Transacciones</strong> (Crédito / Débito):</p>
+<ul>
+<li>Créditos y Débitos: cuenta propia Comercial / cuenta propia Personal o No Comercial.</li>
+<li>Solo Débitos: cuenta de otros PSPCP / Entidad Financiera / Otros.</li>
+<li>Tipo de titular (cuenta propia): Persona Humana (<code>10</code>) / Persona Jurídica (<code>20</code>).</li>
+<li>Método de iniciación: NFC / QR / Botón de pago / TPV Banda magnética / TPV Chip / Sucursal-Agente-Comercio / Cajero automático / No disponible.</li>
+<li>Medios de pago (Tabla 1): tarjeta crédito / débito / prepaga / efectivo / transf. push / pull / PCT / SPOT / SPOT Recurrente.</li>
+<li>Esquema de pago: código de marca de tarjeta o <code>00007</code> / <code>00008</code> / <code>00009</code>.</li>
+</ul>
+<p><strong>B. Transferencias:</strong></p>
+<ul>
+<li>CVU → CBU / CBU → CVU / CVU → CVU Acreditadas / CVU → CVU Debitadas: monto y cantidad por tipo.</li>
+</ul>
+<p><strong>C. Clientes y cuentas:</strong></p>
+<ul>
+<li>Clientes y cuentas involucrados en A y B, separados por uso Comercial / Personal o No Comercial.</li>
+<li>Total de clientes y cuentas del PSP, separados por tipo de uso.</li>
+</ul>
+<p><strong>D. Préstamos:</strong></p>
+<ul>
+<li>Otorgamiento (<code>10XXXXX</code>) y cancelación (<code>20XXXXX</code>), desagregados por medio de pago y esquema.</li>
+</ul>
+</li>
+<li><p><strong>RF-07.2</strong> Control de razonabilidad automático:
+<code>Saldo nuevo = Saldo anterior (Apt. A mes previo) + Créditos del mes − Débitos del mes</code>
+Comparar con el saldo informado en el Apartado A del período actual.</p>
+</li>
+<li><p><strong>RF-07.3</strong> Si hay diferencia en la razonabilidad: requerir justificación obligatoria antes de permitir la exportación.</p>
+</li>
+<li><p><strong>RF-07.4</strong> Importes en <strong>miles de pesos, sin decimales</strong>, con redondeo estándar.</p>
+</li>
+<li><p><strong>RF-07.5</strong> Exportar a <code>.txt</code> con botón &quot;Exportar .txt&quot;.</p>
+</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-07.1</strong> El control de razonabilidad se ejecuta automáticamente antes de mostrar la vista previa.</li>
+<li><strong>CA-07.2</strong> Razonabilidad correcta → indicador verde visible en la vista previa.</li>
+<li><strong>CA-07.3</strong> Con diferencia → el analista no puede exportar sin ingresar justificación.</li>
+<li><strong>CA-07.4</strong> La justificación queda en el audit log con usuario, timestamp y monto de la diferencia.</li>
+<li><strong>CA-07.5</strong> Los montos del Apartado B son consistentes con los movimientos del módulo transaccional para el mismo período.</li>
+<li><strong>CA-07.6</strong> El <code>.txt</code> sigue el modelo de información del Apartado B (BCRA).</li>
+</ul>
+<hr>
+<h4>CU-08 — Generar template Apartado C (Auditor externo)</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Oficial de Cumplimiento (Nivel 1)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Apartados A de los 3 meses del trimestre disponibles y marcados como enviados.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Trimestral. Al 31 de diciembre incluye sección adicional de protección de usuarios.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El Oficial navega a <code>Reportes Regulatorios &gt; UIF &gt; Apartado C</code>.</li>
+<li>Selecciona el trimestre a informar.</li>
+<li>El sistema genera el template <code>.txt</code> con los datos del Apartado A del trimestre y datos de la entidad.</li>
+<li>Si el trimestre es Q4 (cierre 31/12), el template incluye la sección adicional de opinión sobre protección de usuarios.</li>
+<li>El Oficial descarga el template y lo entrega al auditor externo para certificación.</li>
+<li>Una vez presentado al BCRA, el Oficial marca el Apartado C como <code>Enviado</code>.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-08.1</strong> Generar el template del Apartado C con: datos de la entidad informante, resumen del Apartado A de los 3 meses del trimestre, y secciones a completar por el auditor.</li>
+<li><strong>RF-08.2</strong> Para cierre del 31 de diciembre, incluir la sección adicional de opinión sobre protección de usuarios de servicios financieros.</li>
+<li><strong>RF-08.3</strong> Exportar el template a <code>.txt</code>.</li>
+<li><strong>RF-08.4</strong> Permitir marcar como <code>Enviado</code> con fecha de presentación al BCRA.</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-08.1</strong> El template incluye correctamente los datos del Apartado A de los 3 meses del trimestre.</li>
+<li><strong>CA-08.2</strong> Para el cierre del 31 de diciembre, la sección adicional de protección de usuarios está presente.</li>
+<li><strong>CA-08.3</strong> El <code>.txt</code> puede entregarse al auditor externo sin modificaciones en los datos del sistema.</li>
+<li><strong>CA-08.4</strong> La presentación marcada como <code>Enviado</code> queda registrada con fecha, usuario y trimestre.</li>
+</ul>
+<hr>
+<h4>CU-09 — Consultar calendario de vencimientos regulatorios</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista de Compliance (Nivel 1 o Nivel 2)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Sesión iniciada. Fechas de vencimiento configuradas en el sistema.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Consulta en cualquier momento del mes.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista accede al dashboard o navega a <code>Reportes Regulatorios &gt; Calendario</code>.</li>
+<li>El sistema muestra los vencimientos del mes en curso y del siguiente.</li>
+<li>Vencimientos en los próximos 5 días hábiles → resaltados en amarillo.</li>
+<li>Vencimientos pasados sin presentación → resaltados en rojo.</li>
+<li>El analista hace click en un vencimiento y navega directamente al módulo del reporte.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-09.1</strong> Mostrar vencimientos de todos los reportes activos:<ul>
+<li>F.8126 ARCA: mensual, configurable.</li>
+<li>Base Padrón BCRA: mensual, configurable.</li>
+<li>UIF Apartados A y B: día 22 del mes siguiente (o día hábil posterior).</li>
+<li>UIF Apartado C: trimestral, configurable.</li>
+</ul>
+</li>
+<li><strong>RF-09.2</strong> Resaltar en amarillo los reportes con vencimiento ≤ 5 días hábiles.</li>
+<li><strong>RF-09.3</strong> Resaltar en rojo los reportes vencidos sin presentación registrada.</li>
+<li><strong>RF-09.4</strong> El dashboard debe incluir el indicador de &quot;Próximos vencimientos regulatorios&quot; sin necesidad de navegar al módulo.</li>
+<li><strong>RF-09.5</strong> Cada item del calendario debe ser clickeable y navegar al módulo correspondiente.</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-09.1</strong> El calendario muestra correctamente todos los vencimientos del mes actual y del siguiente.</li>
+<li><strong>CA-09.2</strong> Un reporte con estado <code>Enviado</code> para el período vigente no aparece en rojo aunque la fecha haya pasado.</li>
+<li><strong>CA-09.3</strong> Un reporte sin <code>Enviado</code> con fecha vencida aparece en rojo con indicación del retraso en días.</li>
+<li><strong>CA-09.4</strong> El indicador del dashboard muestra en tiempo real el conteo de vencimientos próximos y vencidos.</li>
+<li><strong>CA-09.5</strong> Las fechas de vencimiento son configurables por el Oficial de Cumplimiento sin requerir deploy.</li>
+</ul>
+<hr>
+<h2>Fuera de Alcance (Out of Scope)</h2>
+<ul>
+<li><strong>Integración directa con el portal de presentación de la UIF</strong> — En V1 el envío de Apartados A, B y C es manual (export <code>.txt</code> + carga en plataforma UIF); la integración automática queda para V2.</li>
+<li><strong>Integración con RUNOR BCRA para envío automático del Base Padrón</strong> — En V1 el envío es manual; se evalúa integración en V2.</li>
+<li><strong>Generación del informe del auditor externo (Apartado C)</strong> — La herramienta genera el template; el informe final es responsabilidad del auditor externo.</li>
+<li><strong>Soporte multi-período simultáneo (generar varios meses en paralelo)</strong> — En V1 se genera de a un período por vez.</li>
+<li><strong>Generación automática programada (cron job mensual)</strong> — En V1 el analista dispara la generación manualmente; la generación automática queda para V2.</li>
+<li><strong>Validación en tiempo real contra el Web Service de ARCA previo a la generación</strong> — En V1 la validación es local contra las reglas del sistema.</li>
+</ul>
+<hr>
+<h2>Riesgos</h2>
+<h3>Técnicos</h3>
+<ul>
+<li><p><strong>Las especificaciones de formato del F.8126 (longitud fija de campos, tablas de códigos) pueden cambiar por nuevas versiones del aplicativo ARCA.</strong></p>
+<ul>
+<li>Mitigación: La versión del aplicativo (<code>00200</code>) debe ser configurable por el Oficial de Cumplimiento sin deploy. Registrar la versión utilizada en cada presentación.</li>
+</ul>
+</li>
+<li><p><strong>La conexión WSM con ARCA puede estar no disponible en el momento de envío.</strong></p>
+<ul>
+<li>Mitigación: Implementar reintentos automáticos (hasta 3 intentos) con intervalo configurable. El analista puede reintentar manualmente desde el historial.</li>
+</ul>
+</li>
+<li><p><strong>Los datos de saldos y movimientos deben estar consolidados y correctos al momento de generar el reporte; si hay transacciones pendientes de conciliación, el reporte puede ser incorrecto.</strong></p>
+<ul>
+<li>Mitigación: Mostrar advertencia antes de generar si existen transacciones del período sin conciliar.</li>
+</ul>
+</li>
+<li><p><strong>El Apartado B requiere agregar movimientos por combinaciones de tipo + método + moneda, lo que implica queries de agregación sobre la tabla de transacciones.</strong></p>
+<ul>
+<li>Mitigación: Crear vistas o índices específicos para estas consultas antes del desarrollo. Testear performance con volúmenes reales.</li>
+</ul>
+</li>
+</ul>
+<h3>Regulatorios</h3>
+<ul>
+<li><p><strong>Las tablas de códigos de ARCA (tipos de documento, monedas, métodos de iniciación) pueden actualizarse.</strong></p>
+<ul>
+<li>Mitigación: Las tablas de códigos deben ser configurables por el Oficial de Cumplimiento desde el backoffice del sistema.</li>
+</ul>
+</li>
+<li><p><strong>La fecha de primer vencimiento (Apartados A y B) se activa a partir del certificado de inscripción en el Registro de PSPCP de la SEFyC.</strong></p>
+<ul>
+<li>Mitigación: El sistema debe permitir configurar la fecha de inicio de obligación de presentación por tipo de reporte.</li>
+</ul>
+</li>
+</ul>
+<h3>De Adopción</h3>
+<ul>
+<li><strong>Si el equipo no confía en que los datos generados son correctos, puede seguir usando la construcción manual en paralelo.</strong><ul>
+<li>Mitigación: Incluir el control de razonabilidad del Apartado B como validación visible y exportable. Generar reportes de revisión previos al envío.</li>
+</ul>
+</li>
+</ul>
+<h3>De Timeline</h3>
+<ul>
+<li><strong>La integración WSM con ARCA requiere homologación previa con el organismo, lo que puede tomar tiempo.</strong><ul>
+<li>Mitigación: Iniciar el proceso de homologación con ARCA en paralelo con el desarrollo. En caso de demora, ofrecer exportación del archivo para envío manual como fallback.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Dependencias</h2>
+<table>
+<thead>
+<tr>
+<th>Dependencia</th>
+<th>Estado</th>
+<th>Impacto si no está lista</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Módulo de Clientes (Alta Usuario)</td>
+<td>En desarrollo</td>
+<td>Bloqueante — los registros 02, 03 y Base Padrón usan datos de clientes</td>
+</tr>
+<tr>
+<td>Datos de transacciones y saldos disponibles en BD</td>
+<td>Pendiente de definición</td>
+<td>Bloqueante para registros 04, 05 y Apartados A y B</td>
+</tr>
+<tr>
+<td>Credenciales WSM ARCA configuradas y homologadas</td>
+<td>Pendiente</td>
+<td>Bloqueante para envío automático F.8126</td>
+</tr>
+<tr>
+<td>Tablas de códigos ARCA cargadas en el sistema</td>
+<td>Pendiente</td>
+<td>Bloqueante para validación y generación del F.8126</td>
+</tr>
+<tr>
+<td>Generación de archivos <code>.txt</code></td>
+<td>Pendiente de definición</td>
+<td>Bloqueante para exportación de reportes BCRA y UIF</td>
+</tr>
+<tr>
+<td>Migración a PostgreSQL</td>
+<td>Pendiente</td>
+<td>Necesaria antes de salida a producción</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Tracking / Eventos</h2>
+<table>
+<thead>
+<tr>
+<th>Evento</th>
+<th>Dónde</th>
+<th>Event Category</th>
+<th>Event Action</th>
+<th>Event Name</th>
+<th>Negocio</th>
+<th>Producto</th>
+<th>Placement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Iniciar generación F.8126</td>
+<td>Módulo ARCA</td>
+<td>Interacción</td>
+<td>IniciarGeneracionF8126</td>
+<td>Iniciar F.8126</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Validar archivo F.8126</td>
+<td>Módulo ARCA</td>
+<td>Interacción</td>
+<td>ValidarArchivoF8126</td>
+<td>Validar F.8126</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Enviar F.8126 vía WSM</td>
+<td>Módulo ARCA</td>
+<td>Interacción</td>
+<td>EnviarF8126WSM</td>
+<td>Enviar F.8126 WSM</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Error en envío WSM</td>
+<td>Módulo ARCA</td>
+<td>Navegación</td>
+<td>ErrorEnvioWSM</td>
+<td>Error envío ARCA WSM</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Generar Base Padrón BCRA</td>
+<td>Módulo BCRA</td>
+<td>Interacción</td>
+<td>GenerarBasePadron</td>
+<td>Generar Base Padrón</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Exportar Base Padrón .txt</td>
+<td>Módulo BCRA</td>
+<td>Interacción</td>
+<td>ExportarBasePadronTXT</td>
+<td>Exportar Base Padrón .txt</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Generar Apartado A UIF</td>
+<td>Módulo UIF</td>
+<td>Interacción</td>
+<td>GenerarApartadoA</td>
+<td>Generar Apartado A UIF</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Generar Apartado B UIF</td>
+<td>Módulo UIF</td>
+<td>Interacción</td>
+<td>GenerarApartadoB</td>
+<td>Generar Apartado B UIF</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Generar Apartado C UIF</td>
+<td>Módulo UIF</td>
+<td>Interacción</td>
+<td>GenerarApartadoC</td>
+<td>Generar Apartado C UIF</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Exportar Apartado A .txt</td>
+<td>Módulo UIF</td>
+<td>Interacción</td>
+<td>ExportarApartadoATXT</td>
+<td>Exportar Apartado A .txt</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Exportar Apartado B .txt</td>
+<td>Módulo UIF</td>
+<td>Interacción</td>
+<td>ExportarApartadoBTXT</td>
+<td>Exportar Apartado B .txt</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Control razonabilidad aprobado</td>
+<td>Módulo UIF</td>
+<td>Navegación</td>
+<td>RazonabilidadOK</td>
+<td>Razonabilidad Apt. B OK</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Control razonabilidad con diferencia</td>
+<td>Módulo UIF</td>
+<td>Navegación</td>
+<td>RazonabilidadError</td>
+<td>Razonabilidad Apt. B con diferencia</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Marcar presentación como enviada</td>
+<td>Historial reportes</td>
+<td>Interacción</td>
+<td>MarcarPresentacionEnviada</td>
+<td>Marcar presentación enviada</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA Particular</td>
+</tr>
+<tr>
+<td>Ver calendario vencimientos</td>
+<td>Dashboard</td>
+<td>Navegación</td>
+<td>VerCalendarioVencimientos</td>
+<td>Ver calendario vencimientos regulatorios</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>-</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Agenda / Plan de Desarrollo</h2>
+<table>
+<thead>
+<tr>
+<th>Instancia</th>
+<th>Status</th>
+<th>Fecha</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Kickoff</td>
+<td></td>
+<td></td>
+<td>Incluir representante de ARCA/BCRA/UIF si posible</td>
+</tr>
+<tr>
+<td>Desarrollo experiencia (UX)</td>
+<td></td>
+<td></td>
+<td>Pendiente diseño en Figma — priorizar flujo F.8126</td>
+</tr>
+<tr>
+<td>Iteración experiencia</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Proceso de homologación WSM con ARCA</td>
+<td></td>
+<td></td>
+<td>Iniciar en paralelo con desarrollo</td>
+</tr>
+<tr>
+<td>Alineación con negocio</td>
+<td></td>
+<td></td>
+<td>Confirmar fecha de primer vencimiento regulatorio</td>
+</tr>
+<tr>
+<td>Desarrollo — Base Padrón BCRA</td>
+<td></td>
+<td></td>
+<td>Primer módulo recomendado (más simple, sin WSM)</td>
+</tr>
+<tr>
+<td>Desarrollo — UIF Apartados A y B</td>
+<td></td>
+<td></td>
+<td>Depende de datos de transacciones en BD</td>
+</tr>
+<tr>
+<td>Desarrollo — F.8126 ARCA (sin WSM)</td>
+<td></td>
+<td></td>
+<td>Generación del archivo + validaciones</td>
+</tr>
+<tr>
+<td>Desarrollo — Integración WSM ARCA</td>
+<td></td>
+<td></td>
+<td>Depende de homologación con ARCA</td>
+</tr>
+<tr>
+<td>Desarrollo — UIF Apartado C</td>
+<td></td>
+<td></td>
+<td>Menor prioridad (trimestral, template manual)</td>
+</tr>
+<tr>
+<td>Salida a PROD</td>
+<td></td>
+<td></td>
+<td>Bloqueado por migración a PostgreSQL y homologación WSM</td>
+</tr>
+</tbody></table>
+
+</body>
+</html>

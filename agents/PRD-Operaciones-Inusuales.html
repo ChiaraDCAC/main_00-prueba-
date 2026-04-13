@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRD-Operaciones-Inusuales</title>
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 48px 64px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f3460;
+    border-bottom: 3px solid #0f3460;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+    margin-top: 0;
+  }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f3460;
+    background: #eef2ff;
+    padding: 8px 14px;
+    border-left: 4px solid #0f3460;
+    margin-top: 36px;
+    margin-bottom: 16px;
+    border-radius: 0 6px 6px 0;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #16213e;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin-bottom: 12px;
+    color: #334155;
+  }
+
+  ul, ol {
+    padding-left: 22px;
+    margin-bottom: 12px;
+  }
+
+  li {
+    margin-bottom: 5px;
+    color: #334155;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 12.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  thead tr {
+    background: #0f3460;
+    color: #fff;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  tbody tr:hover {
+    background: #eef2ff;
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+
+  code {
+    background: #f1f5f9;
+    color: #0f3460;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 18px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 1.6;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  blockquote {
+    border-left: 4px solid #0f3460;
+    background: #eef2ff;
+    padding: 10px 16px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+    color: #334155;
+    font-style: italic;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 28px 0;
+  }
+
+  strong {
+    color: #0f3460;
+    font-weight: 600;
+  }
+
+  a { color: #0f3460; }
+
+  @media print {
+    body { padding: 20px 32px; }
+    h2 { page-break-before: auto; }
+    pre, table, blockquote { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>PRD - Operaciones Inusuales (Monitoreo AML)</h1>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Status</strong></td>
+<td>En curso</td>
+</tr>
+<tr>
+<td><strong>Author(s)</strong></td>
+<td>Chiara Giralt</td>
+</tr>
+<tr>
+<td><strong>Stakeholders</strong></td>
+<td>Compliance, Legal, Operaciones, Tecnología</td>
+</tr>
+<tr>
+<td><strong>Team</strong></td>
+<td>Dev: Lanfranco Bortolin, Jero Rech</td>
+</tr>
+<tr>
+<td><strong>Last Updated</strong></td>
+<td>Abril 2026</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Resumen Ejecutivo</h2>
+<p>Este PRD documenta el módulo de Operaciones Inusuales dentro del sistema de Compliance KYC/AML de deCampoPagos. El módulo permite al equipo de Compliance detectar, analizar y resolver operaciones que presentan señales de alerta de lavado de activos o financiamiento del terrorismo (PLA/FT).</p>
+<p><strong>Las Operaciones Inusuales (OI) son detectadas por un sistema externo y levantadas automáticamente por esta herramienta. El analista no puede crear OI de forma manual.</strong> Cada OI tiene dos posibles cierres: <code>Justificada</code> (con comentario obligatorio) o <code>OS — Operación Sospechosa</code> (el ROS se emite fuera de la herramienta).</p>
+<hr>
+<h2>Definición del Problema</h2>
+<h3>¿Por qué?</h3>
+<p><strong>Problema del usuario (equipo de Compliance):</strong>
+Hoy no existe un sistema para gestionar operaciones inusuales detectadas automáticamente. Los analistas documentan estos casos de forma ad-hoc en emails o planillas, sin un flujo estructurado ni trazabilidad del proceso de análisis. Esto genera:</p>
+<ul>
+<li>Imposibilidad de demostrar ante la UIF que se siguió un proceso de análisis antes de emitir o descartar un ROS.</li>
+<li>Riesgo de que casos se pierdan o no se resuelvan a tiempo.</li>
+<li>Falta de visibilidad para el Oficial de Cumplimiento sobre el estado de los casos abiertos.</li>
+</ul>
+<p><strong>Problema del negocio:</strong>
+La UIF exige que los sujetos obligados (como deCampoPagos como PSP) cuenten con un sistema de monitoreo de operaciones y un proceso documentado para la gestión de OI y la emisión de ROS. La ausencia de este módulo expone a la empresa a sanciones regulatorias.</p>
+<h3>¿Para qué?</h3>
+<ul>
+<li><strong>Para el equipo de Compliance</strong>: Tener un flujo estructurado para gestionar OI, con evidencia adjunta, comentarios de análisis y estados claramente definidos.</li>
+<li><strong>Para el negocio</strong>: Cumplir con la obligación regulatoria de monitoreo de operaciones ante la UIF, reduciendo el riesgo de sanciones.</li>
+<li><strong>Para la empresa</strong>: Generar evidencia documentada del proceso de compliance ante cualquier auditoría.</li>
+</ul>
+<hr>
+<h2>Medición - KPIs y Resultados Esperados</h2>
+<h3>Métricas de Adopción</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>% de OI generadas resueltas dentro de las 48 hs</td>
+<td>No medido</td>
+<td>80%</td>
+<td>Timestamps en BD</td>
+</tr>
+<tr>
+<td>% de OI cerradas como OS vs. total de OI generadas</td>
+<td>No medido</td>
+<td>A definir con Compliance</td>
+<td>Conteo en BD</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Uso</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tiempo promedio de resolución de una OI (apertura → cierre)</td>
+<td>No medido</td>
+<td>&lt; 48 hs</td>
+<td>Diferencia de timestamps en BD</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Negocio / Compliance</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OI no resueltas visibles en el dashboard (&gt; 48 hs)</td>
+<td>No medido</td>
+<td>0 en todo momento</td>
+<td>Conteo en dashboard</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Discovery</h2>
+<h3>Diagrama de Flujo</h3>
+<pre><code>[Sistema externo detecta operación inusual]
+  (integración via API/JSON — pendiente definición técnica)
+             |
+             v
+[Herramienta levanta la OI — estado: Nueva]
+             |
+             v
+          [Revisión del analista]
+          (Nivel 1 o Nivel 2)
+             |
+          ¿Qué decide?
+          /                      \
+   [Justificada]             [OS — Operación Sospechosa]
+  (comentario obligatorio)    (comentario obligatorio)
+         |                              |
+         v                             v
+  [OI cerrada — Justificada]   [OI cerrada — OS]
+                               [ROS se emite fuera
+                                de la herramienta]
+</code></pre>
+<h3>Diseño</h3>
+<ul>
+<li><strong>Web</strong>: [Link a Figma — pendiente]</li>
+</ul>
+<h3>Documentación Técnica</h3>
+<ul>
+<li>PRD padre: <code>PRD-Sistema-Compliance.md</code></li>
+<li>Diagrama ER: <code>diagrama-er.html</code></li>
+<li>Flujo monitoreo operacional: <code>Flujos_Alta_Compliance.html</code></li>
+</ul>
+<hr>
+<h2>Requerimientos</h2>
+<hr>
+<h4>CU-01 — Levantamiento de Operaciones Inusuales desde sistema externo</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Sistema (integración con sistema externo)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Integración con el sistema externo configurada y activa.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Automática, según la frecuencia de sincronización definida (pendiente de definición técnica).</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El sistema externo detecta una operación inusual y la expone vía API/JSON.</li>
+<li>La herramienta de Compliance levanta la OI y la registra con estado <code>Nueva</code>.</li>
+<li>La OI queda vinculada al cliente correspondiente en el sistema.</li>
+<li>La OI aparece en el dashboard y en el listado para gestión del analista.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-01.1</strong> El sistema levanta automáticamente las OI expuestas por el sistema externo (integración via API/JSON — método a definir por el equipo técnico).</li>
+<li><strong>RF-01.2</strong> Cada OI levantada recibe un ID único interno (ej. <code>OI-0001</code>) y queda vinculada al cliente correspondiente.</li>
+<li><strong>RF-01.3</strong> La OI aparece en el dashboard (conteo de OI abiertas) y en el listado de gestión con estado <code>Nueva</code>.</li>
+<li><strong>RF-01.4</strong> El analista no puede crear una OI de forma manual.</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-01.1</strong> Toda OI recibida del sistema externo queda registrada en la BD con estado <code>Nueva</code> y vinculada al cliente.</li>
+<li><strong>CA-01.2</strong> El ID interno de OI es único e irrepetible.</li>
+<li><strong>CA-01.3</strong> La OI aparece en el listado y en el dashboard dentro de los 5 minutos de recibida.</li>
+<li><strong>CA-01.4</strong> El sistema no permite crear OI desde el formulario del analista.</li>
+</ul>
+<hr>
+<h4>CU-02 — Resolver una Operación Inusual</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista (Nivel 2) / Oficial de Cumplimiento (Nivel 1)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>OI en estado <code>Nueva</code>. Sesión iniciada.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>A demanda, al revisar cada OI generada por el sistema.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista accede al detalle de la OI desde el listado o el dashboard.</li>
+<li>Revisa la información de la transacción y el historial del cliente.</li>
+<li>Adjunta evidencia relevante y registra comentarios de análisis.</li>
+<li>Decide el cierre:<ul>
+<li><strong>Justificada</strong>: ingresa comentario obligatorio explicando el motivo; la OI se cierra como <code>Justificada</code>.</li>
+<li><strong>OS (Operación Sospechosa)</strong>: ingresa comentario obligatorio; la OI se cierra como <code>OS</code>. El ROS se emite por fuera de la herramienta.</li>
+</ul>
+</li>
+<li>El sistema registra el cambio en el audit log.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-02.1</strong> Los estados posibles de una OI son: <code>Nueva</code> → <code>Justificada</code> o <code>OS</code>.</li>
+<li><strong>RF-02.2</strong> Tanto Nivel 1 como Nivel 2 pueden resolver una OI (cerrarla como <code>Justificada</code> o <code>OS</code>).</li>
+<li><strong>RF-02.3</strong> El cierre de una OI (por cualquier vía) requiere comentario obligatorio.</li>
+<li><strong>RF-02.4</strong> Una vez cerrada (<code>Justificada</code> u <code>OS</code>), la OI no puede reabrirse ni editarse.</li>
+<li><strong>RF-02.5</strong> Cada cambio de estado queda registrado en el audit log: usuario, timestamp, estado anterior, estado nuevo, comentario.</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-02.1</strong> No es posible cerrar una OI sin ingresar un comentario; el sistema bloquea la acción y muestra mensaje de error.</li>
+<li><strong>CA-02.2</strong> Al cerrar como <code>OS</code>, la OI queda marcada en la BD y el analista recibe confirmación de que el ROS debe emitirse fuera de la herramienta.</li>
+<li><strong>CA-02.3</strong> Una OI cerrada no puede ser modificada ni reabierta desde la interfaz.</li>
+<li><strong>CA-02.4</strong> El audit log refleja usuario, timestamp y comentario para cada cierre.</li>
+</ul>
+<hr>
+<h4>CU-03 — Adjuntar evidencia a una OI</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista (Nivel 2) / Oficial de Cumplimiento (Nivel 1)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>OI en estado <code>Nueva</code>. Sesión iniciada.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Durante el proceso de análisis, antes del cierre.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista accede al detalle de la OI.</li>
+<li>Selecciona el archivo a adjuntar desde su equipo.</li>
+<li>El sistema valida formato y tamaño.</li>
+<li>El archivo queda adjunto a la OI con registro de quién lo cargó y cuándo.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-03.1</strong> El sistema permite adjuntar N archivos por OI.</li>
+<li><strong>RF-03.2</strong> Formatos aceptados: PDF, JPG, PNG, XLSX, DOCX. Tamaño máximo: 20 MB por archivo.</li>
+<li><strong>RF-03.3</strong> Cada adjunto registra: usuario que lo cargó y timestamp.</li>
+<li><strong>RF-03.4</strong> Los adjuntos son visibles solo para usuarios con acceso al sistema.</li>
+<li><strong>RF-03.5</strong> Solo se puede eliminar un adjunto mientras la OI está en estado <code>Nueva</code>. Una vez cerrada, los adjuntos no pueden eliminarse.</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-03.1</strong> Un archivo fuera de formato o que supera 20 MB es rechazado con mensaje de error claro.</li>
+<li><strong>CA-03.2</strong> Cada adjunto muestra nombre, fecha de carga y usuario que lo subió.</li>
+<li><strong>CA-03.3</strong> Intentar eliminar un adjunto de una OI cerrada devuelve error; la opción no está disponible en la UI.</li>
+</ul>
+<hr>
+<h4>CU-04 — Registrar comentarios de análisis</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista (Nivel 2) / Oficial de Cumplimiento (Nivel 1)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>OI en estado <code>Nueva</code>. Sesión iniciada.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Durante el proceso de análisis.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista accede al detalle de la OI.</li>
+<li>Escribe un comentario en el hilo de análisis.</li>
+<li>El sistema guarda el comentario con usuario y timestamp.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-04.1</strong> La OI cuenta con un hilo de comentarios internos ordenado cronológicamente.</li>
+<li><strong>RF-04.2</strong> Cada comentario registra: texto, usuario y timestamp.</li>
+<li><strong>RF-04.3</strong> Los comentarios no pueden editarse ni eliminarse (inmutabilidad del historial).</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-04.1</strong> El hilo de comentarios muestra todos los registros ordenados de más antiguo a más reciente.</li>
+<li><strong>CA-04.2</strong> No existe opción de editar o eliminar un comentario ya guardado.</li>
+</ul>
+<hr>
+<h4>CU-05 — Ver listado de OI con filtros y exportar</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Analista (Nivel 2) / Oficial de Cumplimiento (Nivel 1)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Sesión iniciada.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Consulta diaria / gestión de cola de trabajo.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista navega a <code>Operaciones Inusuales</code>.</li>
+<li>Aplica filtros según necesidad.</li>
+<li>Visualiza el listado de OI.</li>
+<li>Opcionalmente exporta el listado a <code>.txt (CSV)</code>.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><strong>RF-05.1</strong> El listado muestra: ID OI, Cliente asociado, Monto, Fecha de la transacción, Estado, Analista asignado, Fecha de generación, Días abierto.</li>
+<li><strong>RF-05.2</strong> Filtros disponibles: Estado (multiselect), Rango de fechas de generación, Analista asignado.</li>
+<li><strong>RF-05.3</strong> Búsqueda por nombre/CUIT del cliente o ID de OI.</li>
+<li><strong>RF-05.4</strong> Ordenamiento por días abierto (descendente por defecto).</li>
+<li><strong>RF-05.5</strong> El listado puede exportarse a <code>.txt (CSV)</code>. La exportación queda registrada en el audit log.</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-05.1</strong> Los filtros reducen correctamente los resultados mostrados.</li>
+<li><strong>CA-05.2</strong> El archivo <code>.txt</code> exportado contiene exactamente los registros visibles con los filtros aplicados.</li>
+<li><strong>CA-05.3</strong> La exportación queda registrada en el audit log con usuario, timestamp y filtros aplicados.</li>
+</ul>
+<hr>
+<h2>Fuera de Alcance (Out of Scope)</h2>
+<ul>
+<li><strong>Detección de operaciones inusuales</strong> — La detección y configuración de umbrales es responsabilidad del sistema externo, no de esta herramienta.</li>
+<li><strong>Configuración de umbrales de monitoreo</strong> — Pertenece al sistema externo.</li>
+<li><strong>Notificaciones por email o WhatsApp al analista</strong> — Se evaluará en V2.</li>
+<li><strong>Módulo de gestión de contrapartes sospechosas (listas negras internas)</strong> — Se definirá en una fase posterior con Legal y Compliance.</li>
+<li><strong>Visualizaciones de red de vínculos entre clientes</strong> — Fuera de alcance en V1.</li>
+<li><strong>Emisión del ROS</strong> — Se gestiona fuera de la herramienta de Compliance.</li>
+</ul>
+<hr>
+<h2>Riesgos</h2>
+<h3>Técnicos</h3>
+<ul>
+<li><p><strong>La integración con el sistema externo es bloqueante para el módulo completo.</strong></p>
+<ul>
+<li>Mitigación: Definir el contrato de integración (API/JSON, frecuencia de sincronización, formato de datos) antes del inicio del desarrollo.</li>
+</ul>
+</li>
+<li><p><strong>La migración a PostgreSQL está pendiente; las tablas de OI deben soportar volúmenes transaccionales.</strong></p>
+<ul>
+<li>Mitigación: Asegurar que las tablas de OI estén indexadas correctamente desde el diseño inicial.</li>
+</ul>
+</li>
+</ul>
+<h3>Regulatorios</h3>
+<ul>
+<li><strong>La UIF puede emitir nuevas normativas que cambien los criterios de reporte.</strong><ul>
+<li>Mitigación: Los umbrales deben ser configurables por el Oficial de Cumplimiento sin requerir un deploy.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Dependencias</h2>
+<table>
+<thead>
+<tr>
+<th>Dependencia</th>
+<th>Estado</th>
+<th>Impacto si no está lista</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Módulo de Clientes (Alta Usuario)</td>
+<td>En desarrollo</td>
+<td>Bloqueante — las OI deben asociarse a un cliente existente</td>
+</tr>
+<tr>
+<td>Módulo de Audit Log</td>
+<td>Desarrollado (parcial)</td>
+<td>Bloqueante — registro de historial es requerimiento regulatorio</td>
+</tr>
+<tr>
+<td>Integración con sistema externo (API/JSON)</td>
+<td>Pendiente de definición técnica</td>
+<td>Bloqueante — sin integración no se pueden levantar OI</td>
+</tr>
+<tr>
+<td>Migración a PostgreSQL</td>
+<td>Pendiente</td>
+<td>Necesaria antes de salida a producción</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Tracking / Eventos</h2>
+<table>
+<thead>
+<tr>
+<th>Evento</th>
+<th>Dónde</th>
+<th>Event Category</th>
+<th>Event Action</th>
+<th>Event Name</th>
+<th>Negocio</th>
+<th>Producto</th>
+<th>Placement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OI generada automáticamente</td>
+<td>Sistema / Dashboard</td>
+<td>Sistema</td>
+<td>OIGenerada</td>
+<td>OI generada automáticamente</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Ver detalle de OI</td>
+<td>Listado OI</td>
+<td>Navegación</td>
+<td>VerDetalleOI</td>
+<td>Ver detalle OI</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Cerrar OI como Justificada</td>
+<td>Detalle OI</td>
+<td>Interacción</td>
+<td>CerrarOIJustificada</td>
+<td>Cerrar OI justificada</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Cerrar OI como OS</td>
+<td>Detalle OI</td>
+<td>Interacción</td>
+<td>CerrarOIOS</td>
+<td>Cerrar OI como OS</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Adjuntar evidencia</td>
+<td>Detalle OI</td>
+<td>Interacción</td>
+<td>AdjuntarEvidenciaOI</td>
+<td>Adjuntar evidencia OI</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA Particular</td>
+</tr>
+<tr>
+<td>Agregar comentario de análisis</td>
+<td>Detalle OI</td>
+<td>Interacción</td>
+<td>AgregarComentarioOI</td>
+<td>Agregar comentario OI</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA Particular</td>
+</tr>
+<tr>
+<td>Exportar listado a .txt (CSV)</td>
+<td>Listado OI</td>
+<td>Interacción</td>
+<td>ExportarTXTOI</td>
+<td>Exportar OI .txt</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Agenda / Plan de Desarrollo</h2>
+<table>
+<thead>
+<tr>
+<th>Instancia</th>
+<th>Status</th>
+<th>Fecha</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Kickoff</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Desarrollo experiencia (UX)</td>
+<td></td>
+<td></td>
+<td>Pendiente diseño en Figma</td>
+</tr>
+<tr>
+<td>Iteración experiencia</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Alineación con negocio</td>
+<td></td>
+<td></td>
+<td>Definir umbrales iniciales con Compliance</td>
+</tr>
+<tr>
+<td>Desarrollo</td>
+<td></td>
+<td></td>
+<td>Depende del módulo Alta Usuario</td>
+</tr>
+<tr>
+<td>Salida a PROD</td>
+<td></td>
+<td></td>
+<td>Bloqueado por migración a PostgreSQL</td>
+</tr>
+</tbody></table>
+
+</body>
+</html>

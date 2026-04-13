@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRD-Reportes</title>
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 48px 64px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f3460;
+    border-bottom: 3px solid #0f3460;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+    margin-top: 0;
+  }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f3460;
+    background: #eef2ff;
+    padding: 8px 14px;
+    border-left: 4px solid #0f3460;
+    margin-top: 36px;
+    margin-bottom: 16px;
+    border-radius: 0 6px 6px 0;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #16213e;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin-bottom: 12px;
+    color: #334155;
+  }
+
+  ul, ol {
+    padding-left: 22px;
+    margin-bottom: 12px;
+  }
+
+  li {
+    margin-bottom: 5px;
+    color: #334155;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 12.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  thead tr {
+    background: #0f3460;
+    color: #fff;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  tbody tr:hover {
+    background: #eef2ff;
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+
+  code {
+    background: #f1f5f9;
+    color: #0f3460;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 18px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 1.6;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  blockquote {
+    border-left: 4px solid #0f3460;
+    background: #eef2ff;
+    padding: 10px 16px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+    color: #334155;
+    font-style: italic;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 28px 0;
+  }
+
+  strong {
+    color: #0f3460;
+    font-weight: 600;
+  }
+
+  a { color: #0f3460; }
+
+  @media print {
+    body { padding: 20px 32px; }
+    h2 { page-break-before: auto; }
+    pre, table, blockquote { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>PRD - Reportes de Gestión Interna</h1>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Status</strong></td>
+<td>En curso</td>
+</tr>
+<tr>
+<td><strong>Author(s)</strong></td>
+<td>Chiara Giralt</td>
+</tr>
+<tr>
+<td><strong>Stakeholders</strong></td>
+<td>Compliance, Operaciones, Dirección, Tecnología</td>
+</tr>
+<tr>
+<td><strong>Team</strong></td>
+<td>Dev: Lanfranco Bortolin, Jero Rech</td>
+</tr>
+<tr>
+<td><strong>Last Updated</strong></td>
+<td>Abril 2026</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Resumen Ejecutivo</h2>
+<p>Este PRD documenta el módulo de Reportes de Gestión Interna del sistema de Compliance KYC/AML de deCampoPagos. El módulo provee al equipo de Compliance y a Dirección visibilidad en tiempo real del estado del proceso mediante un dashboard centralizado y la posibilidad de exportar listados operativos en formato <code>.txt (CSV)</code>.</p>
+<blockquote>
+<p><strong>Nota:</strong> El Reporte de Operaciones Sospechosas (ROS) ante la UIF se gestiona por fuera de esta herramienta. Los reportes regulatorios (ARCA F.8126, BCRA Base Padrón, UIF Apartados A/B/C) están documentados en <code>PRD-Reportes-Regulatorios.md</code>.</p>
+</blockquote>
+<hr>
+<h2>Definición del Problema</h2>
+<h3>¿Por qué?</h3>
+<p><strong>Problema del usuario (equipo de Compliance y Dirección):</strong>
+El Oficial de Cumplimiento y los analistas no tienen visibilidad en tiempo real del estado del proceso. Para conocer cuántos clientes están pendientes de revisión, cuántas alertas están abiertas o cuántos casos de operaciones inusuales están activos, deben consultar manualmente la base de datos o armar reportes ad-hoc en planillas. Esto genera:</p>
+<ul>
+<li>Demora en la detección de situaciones críticas (alertas vencidas, legajos trabados).</li>
+<li>Dificultad para presentar métricas ante Dirección o ante auditorías.</li>
+<li>Falta de trazabilidad sobre qué datos fueron exportados y por quién.</li>
+</ul>
+<p><strong>Problema del negocio:</strong>
+Sin visibilidad consolidada del proceso, el equipo de Compliance no puede demostrar ante un auditor regulatorio que el proceso opera correctamente ni identificar cuellos de botella a tiempo.</p>
+<h3>¿Para qué?</h3>
+<ul>
+<li><strong>Para el equipo de Compliance</strong>: Contar con un dashboard que muestre el estado del proceso en tiempo real y permita exportar listados operativos sin intervención técnica.</li>
+<li><strong>Para Dirección</strong>: Tener métricas del proceso disponibles en cualquier momento para la toma de decisiones.</li>
+<li><strong>Para el negocio</strong>: Poder responder ante consultas de auditoría con información exportable en menos de 2 horas.</li>
+</ul>
+<hr>
+<h2>Medición - KPIs y Resultados Esperados</h2>
+<h3>Métricas de Adopción</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>% de analistas que consultan el dashboard al menos 1 vez por semana</td>
+<td>0%</td>
+<td>80%</td>
+<td>Eventos en Matomo</td>
+</tr>
+<tr>
+<td>% de exportaciones de listados realizadas desde el sistema vs. solicitudes manuales al equipo técnico</td>
+<td>0%</td>
+<td>100%</td>
+<td>Eventos en Matomo</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Uso</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tiempo promedio para obtener un reporte de clientes exportable</td>
+<td>No medido</td>
+<td>&lt; 5 min</td>
+<td>Timestamps en BD</td>
+</tr>
+<tr>
+<td>Alertas no gestionadas visibles en el dashboard (&gt; 48 hs)</td>
+<td>No medido</td>
+<td>0 en todo momento</td>
+<td>Conteo en dashboard</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Negocio / Compliance</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tiempo de respuesta ante consulta de auditoría (legajos, OI)</td>
+<td>No medido</td>
+<td>&lt; 2 hs</td>
+<td>Manual</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Discovery</h2>
+<h3>Diagrama de Flujo — Dashboard y Reportes de Gestión</h3>
+<pre><code>[Analista / Oficial de Cumplimiento ingresa al Dashboard]
+           |
+           v
+[Vista en tiempo real:]
+  - Clientes por estado
+  - Distribución por nivel de riesgo
+  - Alertas activas no gestionadas
+  - Casos de operaciones inusuales abiertos
+           |
+     ¿Necesita exportar?
+     /              \
+   [No]            [Sí]
+    |                |
+    v                v
+[Solo visualiza] [Selecciona tipo de reporte y filtros]
+                         |
+                         v
+               [Exporta a .txt (CSV)]
+</code></pre>
+<h3>Diseño</h3>
+<ul>
+<li><strong>Web</strong>: [Link a Figma — pendiente]</li>
+</ul>
+<h3>Documentación Técnica</h3>
+<ul>
+<li>PRD padre: <code>PRD-Sistema-Compliance.md</code></li>
+<li>Sub-PRD Alta Usuario: <code>agents/PRD-Alta-Usuario.md</code></li>
+<li>Sub-PRD Operaciones Inusuales: <code>agents/PRD-Operaciones-Inusuales.md</code></li>
+<li>Sub-PRD Reportes Regulatorios: <code>agents/PRD-Reportes-Regulatorios.md</code></li>
+<li>Diagrama ER: <code>diagrama-er.html</code></li>
+</ul>
+<hr>
+<h2>Requerimientos</h2>
+<hr>
+<h4>CU-01 — Ver dashboard de gestión del proceso de Compliance</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Oficial de Cumplimiento (Nivel 1) / Analista (Nivel 2)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Sesión iniciada. Datos de clientes, alertas y casos disponibles en BD.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>Consulta diaria / en cualquier momento.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista ingresa al sistema y accede al Dashboard desde el menú principal.</li>
+<li>El sistema muestra todos los indicadores actualizados en tiempo real.</li>
+<li>El analista hace click en un indicador para navegar al listado correspondiente con los filtros aplicados.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><p><strong>RF-01.1</strong> El dashboard debe mostrar los siguientes indicadores en tiempo real:</p>
+<ul>
+<li>Clientes por estado: <code>Pendiente</code> / <code>En Revisión</code> / <code>Pendiente de Documentación</code> / <code>Aprobado</code> / <code>Rechazado</code> (gráfico + conteo).</li>
+<li>Distribución por nivel de riesgo: <code>Bajo</code> / <code>Medio</code> / <code>Alto</code> (gráfico + conteo).</li>
+<li>Alertas activas no gestionadas: conteo total; destacadas en rojo las que superan 48 hs sin gestión.</li>
+<li>Casos de operaciones inusuales abiertos: conteo por estado (<code>Nuevo</code> / <code>En Análisis</code> / <code>Escalado</code>).</li>
+</ul>
+</li>
+<li><p><strong>RF-01.2</strong> El dashboard debe ser visible para Nivel 1 y Nivel 2. Nivel 3 no tiene acceso.</p>
+</li>
+<li><p><strong>RF-01.3</strong> Cada indicador debe ser clickeable y navegar al listado correspondiente con los filtros ya aplicados.</p>
+</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-01.1</strong> Los conteos del dashboard reflejan el estado actual de la BD sin necesidad de recargar la página manualmente (actualización en tiempo real o con refresh máximo de 1 minuto).</li>
+<li><strong>CA-01.2</strong> Las alertas con más de 48 hs sin gestión aparecen con indicador visual rojo diferenciado.</li>
+<li><strong>CA-01.3</strong> Al hacer click en &quot;Clientes por estado — Pendiente&quot;, el sistema navega al listado de clientes filtrado por estado = <code>Pendiente</code>.</li>
+<li><strong>CA-01.4</strong> El dashboard no es accesible para usuarios Nivel 3; al intentar ingresar se muestra mensaje de acceso restringido.</li>
+</ul>
+<hr>
+<h4>CU-02 — Exportar reporte de clientes</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Oficial de Cumplimiento (Nivel 1) / Analista (Nivel 2)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Sesión iniciada.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>A demanda (para auditorías, revisiones de gestión, etc.)</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista navega a <code>Reportes &gt; Clientes</code>.</li>
+<li>Aplica los filtros deseados (estado, tipo, riesgo, rango de fechas).</li>
+<li>Presiona &quot;Exportar .txt&quot;.</li>
+<li>El sistema genera el archivo y lo descarga automáticamente.</li>
+<li>El sistema registra la exportación en el audit log.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><p><strong>RF-02.1</strong> El reporte de clientes debe incluir las siguientes columnas: ID legajo, Nombre / Razón social, CUIT, Tipo (PH/PJ), Estado, Nivel de riesgo, Fecha de alta, Fecha de aprobación/rechazo, Analista responsable.</p>
+</li>
+<li><p><strong>RF-02.2</strong> Filtros disponibles: Estado (multiselect), Tipo de cliente (PH/PJ), Nivel de riesgo, Rango de fechas de creación, Analista responsable.</p>
+</li>
+<li><p><strong>RF-02.3</strong> El archivo exportado debe estar en formato <code>.txt</code> con separador de campos compatible con CSV.</p>
+</li>
+<li><p><strong>RF-02.4</strong> La exportación debe registrarse en el audit log: usuario, timestamp, filtros aplicados, cantidad de registros exportados.</p>
+</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-02.1</strong> El archivo <code>.txt</code> exportado puede abrirse correctamente en Excel o cualquier editor de texto.</li>
+<li><strong>CA-02.2</strong> Los datos del archivo coinciden exactamente con los registros visibles en el listado con los mismos filtros aplicados.</li>
+<li><strong>CA-02.3</strong> La exportación queda registrada en el audit log con todos los metadatos requeridos.</li>
+<li><strong>CA-02.4</strong> Si no hay registros que coincidan con los filtros, el sistema informa al analista antes de generar el archivo vacío.</li>
+</ul>
+<hr>
+<h4>CU-03 — Exportar reporte de operaciones inusuales</h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Actor principal</strong></td>
+<td>Oficial de Cumplimiento (Nivel 1) / Analista (Nivel 2)</td>
+</tr>
+<tr>
+<td><strong>Precondiciones</strong></td>
+<td>Sesión iniciada.</td>
+</tr>
+<tr>
+<td><strong>Frecuencia</strong></td>
+<td>A demanda.</td>
+</tr>
+</tbody></table>
+<p><strong>Flujo principal:</strong></p>
+<ol>
+<li>El analista navega a <code>Reportes &gt; Operaciones Inusuales</code>.</li>
+<li>Aplica filtros (estado, rango de fechas, analista).</li>
+<li>Presiona &quot;Exportar .txt&quot;.</li>
+<li>El sistema genera y descarga el archivo.</li>
+<li>Registra la exportación en el audit log.</li>
+</ol>
+<hr>
+<p><strong>Requerimientos:</strong></p>
+<ul>
+<li><p><strong>RF-03.1</strong> El reporte de operaciones inusuales debe incluir: ID caso, Cliente asociado, Tipo de operación, Monto, Fecha de operación, Estado, Analista asignado, Fecha de apertura, Fecha de cierre (si aplica).</p>
+</li>
+<li><p><strong>RF-03.2</strong> Filtros disponibles: Estado (multiselect), Rango de fechas de apertura, Analista asignado.</p>
+</li>
+<li><p><strong>RF-03.3</strong> El archivo exportado en formato <code>.txt</code> con separador compatible con CSV.</p>
+</li>
+<li><p><strong>RF-03.4</strong> Registrar la exportación en el audit log.</p>
+</li>
+</ul>
+<p><strong>Criterios de Aceptación:</strong></p>
+<ul>
+<li><strong>CA-03.1</strong> El archivo <code>.txt</code> refleja exactamente los casos visibles con los filtros aplicados.</li>
+<li><strong>CA-03.2</strong> La exportación queda registrada en el audit log con usuario, timestamp y filtros.</li>
+<li><strong>CA-03.3</strong> Los campos de fecha están en formato legible (YYYY-MM-DD).</li>
+</ul>
+<hr>
+<h2>Fuera de Alcance (Out of Scope)</h2>
+<ul>
+<li><strong>ROS (Reporte de Operaciones Sospechosas)</strong> — Se gestiona por fuera de la herramienta de Compliance.</li>
+<li><strong>Reportes regulatorios (ARCA, BCRA, UIF)</strong> — Documentados en <code>PRD-Reportes-Regulatorios.md</code>.</li>
+<li><strong>Análisis comparativo histórico en el dashboard (tendencias mes a mes)</strong> — Fuera de alcance en V1; el dashboard muestra estado actual.</li>
+<li><strong>Envío automático de reportes por email a Dirección</strong> — Se evaluará en V2.</li>
+<li><strong>Reportes en formato Excel (.xlsx)</strong> — En V1 solo <code>.txt (CSV)</code>.</li>
+</ul>
+<hr>
+<h2>Riesgos</h2>
+<h3>Técnicos</h3>
+<ul>
+<li><strong>Los reportes de exportación con filtros sobre grandes volúmenes de datos pueden ser lentos.</strong><ul>
+<li>Mitigación: Implementar generación en background con descarga asíncrona para no bloquear la UI.</li>
+</ul>
+</li>
+</ul>
+<h3>De Adopción</h3>
+<ul>
+<li><strong>El Oficial de Cumplimiento puede no consultar el dashboard diariamente si no hay un disparador visual.</strong><ul>
+<li>Mitigación: Mostrar el conteo de alertas no gestionadas y casos vencidos en el header del sistema, visible en todas las pantallas.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Dependencias</h2>
+<table>
+<thead>
+<tr>
+<th>Dependencia</th>
+<th>Estado</th>
+<th>Impacto si no está lista</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Módulo de Clientes (Alta Usuario)</td>
+<td>En desarrollo</td>
+<td>Bloqueante — el dashboard y el reporte de clientes dependen de los datos de legajos</td>
+</tr>
+<tr>
+<td>Módulo de Operaciones Inusuales</td>
+<td>Pendiente</td>
+<td>Bloqueante — el dashboard y el reporte de OI dependen de los casos registrados</td>
+</tr>
+<tr>
+<td>Módulo de Audit Log</td>
+<td>Desarrollado (parcial)</td>
+<td>Bloqueante — el registro de exportaciones es requerimiento de trazabilidad</td>
+</tr>
+<tr>
+<td>Migración a PostgreSQL</td>
+<td>Pendiente</td>
+<td>Necesaria antes de salida a producción</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Tracking / Eventos</h2>
+<table>
+<thead>
+<tr>
+<th>Evento</th>
+<th>Dónde</th>
+<th>Event Category</th>
+<th>Event Action</th>
+<th>Event Name</th>
+<th>Negocio</th>
+<th>Producto</th>
+<th>Placement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Vista del dashboard</td>
+<td><code>/dashboard</code></td>
+<td>Navegación</td>
+<td>VerDashboard</td>
+<td>Ver dashboard Compliance</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Click en indicador del dashboard</td>
+<td>Dashboard</td>
+<td>Interacción</td>
+<td>ClickIndicadorDashboard</td>
+<td>Click indicador dashboard</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA Particular</td>
+</tr>
+<tr>
+<td>Exportar reporte de clientes</td>
+<td>Sección reportes</td>
+<td>Interacción</td>
+<td>ExportarReporteClientes</td>
+<td>Exportar reporte clientes .txt</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+<tr>
+<td>Exportar reporte de OI</td>
+<td>Sección reportes</td>
+<td>Interacción</td>
+<td>ExportarReporteOI</td>
+<td>Exportar reporte OI .txt</td>
+<td>dCP</td>
+<td>Compliance</td>
+<td>CTA General</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Agenda / Plan de Desarrollo</h2>
+<table>
+<thead>
+<tr>
+<th>Instancia</th>
+<th>Status</th>
+<th>Fecha</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Kickoff</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Desarrollo experiencia (UX)</td>
+<td></td>
+<td></td>
+<td>Pendiente diseño dashboard en Figma</td>
+</tr>
+<tr>
+<td>Iteración experiencia</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Alineación con negocio</td>
+<td></td>
+<td></td>
+<td>Confirmar indicadores clave con Compliance y Dirección</td>
+</tr>
+<tr>
+<td>Desarrollo — Dashboard</td>
+<td></td>
+<td></td>
+<td>Depende de módulos Alta Usuario y OI</td>
+</tr>
+<tr>
+<td>Desarrollo — Exportaciones .txt</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Salida a PROD</td>
+<td></td>
+<td></td>
+<td>Bloqueado por migración a PostgreSQL</td>
+</tr>
+</tbody></table>
+
+</body>
+</html>

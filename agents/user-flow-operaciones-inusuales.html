@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Flow — Operaciones Inusuales (AML)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand:       #0f3460;
+      --brand-50:    #eef2ff;
+      --brand-100:   #c7d2f0;
+      --brand-700:   #0a2346;
+      --positive:    #198754;
+      --pos-subtle:  #d1f0e0;
+      --negative:    #dc3545;
+      --neg-subtle:  #fde8ea;
+      --warning:     #d97706;
+      --warn-subtle: #fef3c7;
+      --neutral:     #f8f8f8;
+      --border:      #e2e8f0;
+      --border-mid:  #b0bec5;
+      --text:        #334155;
+      --text-sec:    #64748b;
+      --system-bg:   #eef2ff;
+      --system-bd:   #c7d2f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #f1f5f9;
+      color: var(--text);
+      padding: 32px 24px 64px;
+      font-size: 13px;
+    }
+
+    .page-header {
+      max-width: 1200px;
+      margin: 0 auto 32px;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-sec);
+    }
+
+    /* ===== LAYOUT ===== */
+    .flows {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto 20px;
+    }
+
+    .flows-bottom {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+    }
+
+    @media (max-width: 900px) {
+      .flows { grid-template-columns: 1fr; }
+    }
+
+    .flow-col {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .flow-col-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--brand-700);
+      margin-bottom: 4px;
+    }
+
+    .flow-col-subtitle {
+      font-size: 12px;
+      color: var(--text-sec);
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    /* ===== NODE STYLES ===== */
+    .node {
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .node-step {
+      background: #fff;
+      border: 1.5px solid var(--border-mid);
+      color: var(--text);
+    }
+
+    .node-terminal {
+      background: var(--brand-700);
+      color: #fff;
+      border-radius: 999px;
+      text-align: center;
+      font-weight: 600;
+      padding: 8px 20px;
+    }
+
+    .node-decision {
+      background: #fff;
+      border: 2px dashed var(--brand);
+      color: var(--brand);
+      font-weight: 600;
+      text-align: center;
+      border-radius: 8px;
+    }
+
+    .node-system {
+      background: var(--system-bg);
+      border: 1.5px solid var(--system-bd);
+      color: var(--brand-700);
+    }
+
+    .node-success {
+      background: var(--pos-subtle);
+      border: 1.5px solid #86efac;
+      color: var(--positive);
+      font-weight: 600;
+    }
+
+    .node-error {
+      background: var(--neg-subtle);
+      border: 1.5px solid #fca5a5;
+      color: var(--negative);
+      font-weight: 500;
+    }
+
+    .node-warning {
+      background: var(--warn-subtle);
+      border: 1.5px solid #fcd34d;
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    /* ===== ARROWS ===== */
+    .arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 2px 0;
+    }
+
+    .arrow-line {
+      width: 2px;
+      height: 16px;
+      background: var(--border-mid);
+    }
+
+    .arrow-head {
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 7px solid var(--border-mid);
+    }
+
+    .arrow-label {
+      font-size: 10px;
+      color: var(--text-sec);
+      font-weight: 600;
+      background: #f1f5f9;
+      padding: 1px 7px;
+      border-radius: 4px;
+      margin: 1px 0;
+      text-align: center;
+    }
+
+    /* ===== BRANCH ===== */
+    .branch {
+      display: grid;
+      gap: 10px;
+      margin: 2px 0;
+    }
+
+    .branch-2 { grid-template-columns: 1fr 1fr; }
+    .branch-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .branch-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .branch-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-sec);
+      text-align: center;
+    }
+    .branch-label.yes  { color: var(--positive); }
+    .branch-label.no   { color: var(--negative); }
+    .branch-label.just { color: var(--positive); }
+    .branch-label.os   { color: var(--warning); }
+
+    /* ===== NOTE ===== */
+    .note {
+      background: var(--warn-subtle);
+      border: 1px solid #fcd34d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: var(--warning);
+      margin-top: 16px;
+      font-weight: 500;
+    }
+
+    /* ===== TRACKING TABLE ===== */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--brand-700);
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--brand-100);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead tr { background: var(--brand); }
+    thead th {
+      padding: 9px 12px;
+      color: #fff;
+      font-weight: 600;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr:hover { background: var(--brand-50); }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    code {
+      background: var(--brand-50);
+      color: var(--brand);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .badge-where {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-app    { background: #e0e7ff; color: #3730a3; }
+    .badge-back   { background: var(--system-bg); color: var(--brand); }
+    .badge-admin  { background: #fef3c7; color: #92400e; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>User Flow — Operaciones Inusuales (AML)</h1>
+    <p class="subtitle">deCampoPagos · Módulo Compliance KYC/AML · Abril 2026</p>
+  </div>
+
+  <!-- ===== FLOWS GRID ===== -->
+  <div class="flows">
+
+    <!-- COLUMNA IZQUIERDA: Flujo Sistema -->
+    <div class="flow-col">
+      <div class="flow-col-title">Flujo Sistema</div>
+      <div class="flow-col-subtitle">Levantamiento automático de OI desde sistema externo</div>
+
+      <div class="node node-terminal">Sistema externo detecta OI</div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-label">API / JSON</div><div class="arrow-head"></div></div>
+
+      <div class="node node-system">⚙️ Herramienta recibe OI<br><span style="color:var(--text-sec);font-weight:400">Asigna ID único (OI-0001, OI-0002…)</span></div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-system">⚙️ OI registrada en BD<br><span style="color:var(--text-sec);font-weight:400">Estado: <strong>Nueva</strong> · Vinculada al cliente</span></div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-step">OI aparece en dashboard + listado<br><span style="color:var(--text-sec);font-weight:400">Tiempo máximo: 5 minutos</span></div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-terminal" style="background:#1a5276">OI disponible para análisis</div>
+
+      <div class="note">⚠️ El analista NO puede crear una OI de forma manual. Solo el sistema externo puede generarlas.</div>
+    </div>
+
+    <!-- COLUMNA DERECHA: Flujo Analista -->
+    <div class="flow-col">
+      <div class="flow-col-title">Flujo Analista</div>
+      <div class="flow-col-subtitle">Gestión, análisis y cierre de OI · Nivel 1 (Oficial) y Nivel 2 (Analista)</div>
+
+      <div class="node node-terminal">Analista accede a Operaciones Inusuales</div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-step">Aplica filtros en el listado<br><span style="color:var(--text-sec);font-weight:400">Estado (multiselect) · Rango de fechas · Analista asignado<br>Búsqueda por nombre / CUIT / ID OI</span></div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-step">Selecciona una OI (estado: <strong>Nueva</strong>)<br><span style="color:var(--text-sec);font-weight:400">Ordenado por días abierto (desc)</span></div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-step">Revisa detalle de la OI<br><span style="color:var(--text-sec);font-weight:400">Info de la transacción + historial del cliente</span></div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <!-- Adjuntar evidencia con branching -->
+      <div class="node node-step">Adjunta evidencia (opcional)<br><span style="color:var(--text-sec);font-weight:400">PDF, JPG, PNG, XLSX, DOCX · Máx. 20 MB por archivo</span></div>
+
+      <div style="margin:4px 0">
+        <div class="branch branch-2">
+          <div class="branch-item">
+            <div class="arrow-label no">Formato/tamaño inválido</div>
+            <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+            <div class="node node-error" style="width:100%;font-size:11px">⚠️ Archivo rechazado<br>Mensaje de error</div>
+          </div>
+          <div class="branch-item">
+            <div class="arrow-label yes">Válido</div>
+            <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+            <div class="node node-system" style="width:100%;font-size:11px">⚙️ Adjunto guardado<br>Registra: usuario + timestamp</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-step">Agrega comentarios de análisis (opcional)<br><span style="color:var(--text-sec);font-weight:400">Hilo inmutable · Registra usuario + timestamp</span></div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-decision">¿Cómo cierra la OI?</div>
+
+      <div style="margin:4px 0">
+        <div class="branch branch-2">
+
+          <!-- RAMA JUSTIFICADA -->
+          <div class="branch-item">
+            <div class="arrow-label just">Justificada</div>
+            <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+            <div class="node node-step" style="width:100%;font-size:11px">Ingresa comentario obligatorio</div>
+            <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+            <div class="node node-decision" style="width:100%;font-size:11px">¿Comentario vacío?</div>
+            <div class="branch branch-2" style="width:100%;margin-top:4px">
+              <div class="branch-item">
+                <div class="arrow-label no" style="font-size:9px">Sí (vacío)</div>
+                <div class="arrow"><div class="arrow-line" style="height:8px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+                <div class="node node-error" style="width:100%;font-size:10px;padding:6px 8px">Error: comentario requerido</div>
+              </div>
+              <div class="branch-item">
+                <div class="arrow-label yes" style="font-size:9px">No</div>
+                <div class="arrow"><div class="arrow-line" style="height:8px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+                <div class="node node-success" style="width:100%;font-size:10px;padding:6px 8px">✅ OI cerrada<br>Estado: Justificada</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RAMA OS -->
+          <div class="branch-item">
+            <div class="arrow-label os">OS — Operación Sospechosa</div>
+            <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+            <div class="node node-step" style="width:100%;font-size:11px">Ingresa comentario obligatorio</div>
+            <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+            <div class="node node-decision" style="width:100%;font-size:11px">¿Comentario vacío?</div>
+            <div class="branch branch-2" style="width:100%;margin-top:4px">
+              <div class="branch-item">
+                <div class="arrow-label no" style="font-size:9px">Sí (vacío)</div>
+                <div class="arrow"><div class="arrow-line" style="height:8px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+                <div class="node node-error" style="width:100%;font-size:10px;padding:6px 8px">Error: comentario requerido</div>
+              </div>
+              <div class="branch-item">
+                <div class="arrow-label yes" style="font-size:9px">No</div>
+                <div class="arrow"><div class="arrow-line" style="height:8px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+                <div class="node node-warning" style="width:100%;font-size:10px;padding:6px 8px">⚠️ OI cerrada como OS<br>ROS: fuera de herramienta</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-system">⚙️ Audit log registra cierre<br><span style="color:var(--text-sec);font-weight:400">Usuario · Timestamp · Estado anterior → nuevo · Comentario</span></div>
+
+      <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+      <div class="node node-terminal" style="background:#1a5276">OI cerrada — no modificable ni reaprirable</div>
+    </div>
+
+  </div>
+
+  <!-- ===== FLUJO LISTADO Y EXPORTACIÓN ===== -->
+  <div class="flows-bottom">
+    <div class="flow-col">
+      <div class="flow-col-title">Flujo Listado y Exportación</div>
+      <div class="flow-col-subtitle">Consulta del listado de OI y exportación a .txt (CSV)</div>
+
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:180px;">
+          <div class="node node-terminal" style="width:100%;text-align:center">Analista accede al listado</div>
+          <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+          <div class="node node-step" style="width:100%">Aplica filtros<br><span style="color:var(--text-sec);font-weight:400">Estado · Rango de fechas · Analista</span></div>
+          <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+          <div class="node node-step" style="width:100%">Búsqueda libre<br><span style="color:var(--text-sec);font-weight:400">Nombre / CUIT del cliente · ID OI</span></div>
+          <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+          <div class="node node-step" style="width:100%">Ve listado filtrado<br><span style="color:var(--text-sec);font-weight:400">Columnas: ID OI · Cliente · Monto · Fecha · Estado · Analista · Días abierto</span></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:180px;">
+          <div class="node node-decision" style="width:100%;text-align:center">¿Exporta?</div>
+          <div style="width:100%;margin-top:4px">
+            <div class="branch branch-2">
+              <div class="branch-item">
+                <div class="arrow-label no">No</div>
+                <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+                <div class="node node-terminal" style="width:100%;text-align:center;font-size:11px;padding:6px 10px">Fin — solo visualización</div>
+              </div>
+              <div class="branch-item">
+                <div class="arrow-label yes">Sí</div>
+                <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+                <div class="node node-system" style="width:100%;font-size:11px">⚙️ Genera .txt (CSV)<br>Solo registros con filtros activos</div>
+                <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+                <div class="node node-system" style="width:100%;font-size:11px">⚙️ Audit log registra exportación<br>Usuario · Timestamp · Filtros aplicados</div>
+                <div class="arrow"><div class="arrow-line" style="height:10px;background:var(--border-mid)"></div><div class="arrow-head"></div></div>
+                <div class="node node-success" style="width:100%;font-size:11px">✅ Archivo descargado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TRACKING EVENTS TABLE ===== -->
+  <div class="flows-bottom">
+    <div class="flow-col">
+      <div class="section-title">Tracking / Eventos</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Evento</th>
+            <th>Event Action</th>
+            <th>Dónde</th>
+            <th>CTA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>OI generada automáticamente por sistema externo</td>
+            <td><code>OIGenerada</code></td>
+            <td><span class="badge-where badge-back">Backend</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Analista accede al listado de OI</td>
+            <td><code>VerListadoOI</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Analista aplica filtro en listado</td>
+            <td><code>AplicarFiltroOI</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>Particular</td>
+          </tr>
+          <tr>
+            <td>Analista abre detalle de una OI</td>
+            <td><code>VerDetalleOI</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>Particular</td>
+          </tr>
+          <tr>
+            <td>Analista adjunta evidencia</td>
+            <td><code>AdjuntarEvidenciaOI</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>Particular</td>
+          </tr>
+          <tr>
+            <td>Archivo de evidencia rechazado (formato/tamaño)</td>
+            <td><code>ErrorAdjuntoOI</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Analista agrega comentario de análisis</td>
+            <td><code>AgregarComentarioOI</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>Particular</td>
+          </tr>
+          <tr>
+            <td>Analista cierra OI como Justificada</td>
+            <td><code>CerrarOIJustificada</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>General</td>
+          </tr>
+          <tr>
+            <td>Intento de cierre sin comentario (error de validación)</td>
+            <td><code>ErrorCierreOISinComentario</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Analista cierra OI como OS</td>
+            <td><code>CerrarOIOS</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>General</td>
+          </tr>
+          <tr>
+            <td>Sistema registra cambio en audit log</td>
+            <td><code>AuditLogCierreOI</code></td>
+            <td><span class="badge-where badge-back">Backend</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Analista exporta listado a .txt (CSV)</td>
+            <td><code>ExportarTXTOI</code></td>
+            <td><span class="badge-where badge-app">App</span></td>
+            <td>General</td>
+          </tr>
+          <tr>
+            <td>Sistema registra exportación en audit log</td>
+            <td><code>AuditLogExportOI</code></td>
+            <td><span class="badge-where badge-back">Backend</span></td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>

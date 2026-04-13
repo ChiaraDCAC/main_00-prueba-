@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>DER — Operaciones Inusuales — HC DCAC Compliance</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #EAF4FB; padding: 30px; color: #222; }
+.mermaid svg { color: #333; font-family: inherit; }
+.mermaid svg text { font-weight: bold; }
+
+.header-dcac {
+  background: linear-gradient(135deg, #0077B6 0%, #00B4D8 100%);
+  border-radius: 14px; padding: 28px 36px; margin-bottom: 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0,119,182,0.25);
+}
+.header-dcac .brand { color: #fff; }
+.header-dcac .brand h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+.header-dcac .brand p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+.header-dcac .badge {
+  background: rgba(255,255,255,0.2); color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4); border-radius: 20px;
+  padding: 6px 16px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+}
+
+.card {
+  background: #fff; border-radius: 12px; padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,119,182,0.08); margin-bottom: 24px;
+  overflow-x: auto; border-top: 3px solid #00B4D8;
+}
+.card h2 {
+  color: #0077B6; font-size: 15px; margin-bottom: 16px;
+  border-bottom: 1.5px solid #E0F0FA; padding-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card h2::before {
+  content: ''; display: inline-block; width: 4px; height: 16px;
+  background: #00B4D8; border-radius: 2px;
+}
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 8px; background: #fff;
+  border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+.dot-existing { background: #ADB5BD; }
+.dot-oi      { background: #D62828; }
+.dot-support { background: #7B2D8B; }
+.dot-alert   { background: #E07A00; }
+
+.table-spec { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+.table-spec th { background: #E8F4FD; color: #0077B6; padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+.table-spec td { padding: 7px 12px; border-bottom: 1px solid #F0F4F8; vertical-align: top; }
+.table-spec tr:last-child td { border-bottom: none; }
+.table-spec tr:nth-child(even) td { background: #FAFCFF; }
+
+.tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
+.tag-pk  { background: #FFF0F0; color: #D62828; border: 1px solid #FCCACA; }
+.tag-fk  { background: #E8F4FD; color: #0077B6; border: 1px solid #BDE0F5; }
+.tag-idx { background: #F0FFF4; color: #2D6A4F; border: 1px solid #B2DFCA; }
+.tag-chk { background: #FFF8E7; color: #E07A00; border: 1px solid #F5D990; }
+.tag-new { background: #F3E8FF; color: #7B2D8B; border: 1px solid #D8B4FE; }
+.type    { color: #888; font-size: 11px; font-style: italic; }
+
+.note {
+  background: #FFF8E7; border-left: 4px solid #E07A00;
+  padding: 10px 14px; border-radius: 0 8px 8px 0;
+  font-size: 12px; color: #7A5000; margin-bottom: 16px;
+}
+.note-ext {
+  background: #FFF0F0; border-left: 4px solid #D62828;
+  padding: 10px 14px; border-radius: 0 8px 8px 0;
+  font-size: 12px; color: #7A0000; margin-bottom: 16px;
+}
+.note-ok {
+  background: #F0FFF4; border-left: 4px solid #2D6A4F;
+  padding: 10px 14px; border-radius: 0 8px 8px 0;
+  font-size: 12px; color: #1B4332; margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 13px; font-weight: 700; color: #555;
+  background: #F8FAFC; padding: 6px 12px; border-radius: 6px;
+  margin: 16px 0 8px; border-left: 3px solid #00B4D8;
+}
+
+.flow-box {
+  background: #F8FAFC; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  border: 1px solid #E0F0FA;
+}
+.flow-box h4 { color: #0077B6; font-size: 12px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.flow-step { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+.flow-num { background: #0077B6; color: #fff; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.estado-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+.e-nueva    { background: #DBEAFE; color: #1E40AF; }
+.e-just     { background: #D1FAE5; color: #065F46; }
+.e-os       { background: #FEE2E2; color: #991B1B; }
+
+.mermaid { min-width: 900px; }
+
+.leyenda-card {
+  background: #fff; border-radius: 12px; padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(0,119,182,0.08); margin-bottom: 24px;
+  border-top: 3px solid #0077B6;
+}
+.leyenda-card h3 { color: #0077B6; font-size: 13px; margin-bottom: 12px; }
+.leyenda-card table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.leyenda-card th { background: #0077B6; color: white; padding: 8px 12px; text-align: left; }
+.leyenda-card td { padding: 7px 12px; border-bottom: 1px solid #E0F0FA; }
+.leyenda-card tr:nth-child(even) td { background: #F0F8FF; }
+
+.nota { background: #FFF8E1; border-left: 4px solid #FFC107; padding: 12px 16px; border-radius: 6px; font-size: 12px; color: #6D4C00; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<div class="header-dcac">
+  <div class="brand">
+    <h1>DER — Módulo Operaciones Inusuales</h1>
+    <p>HC DCAC · deCampoPagos Compliance · Monitoreo AML/PLA · Versión 1.0 · Abril 2026</p>
+  </div>
+  <div class="badge">INTERNO · USO TÉCNICO</div>
+</div>
+
+<!-- LEYENDA -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot dot-existing"></div> Tablas existentes (referencia)</div>
+  <div class="legend-item"><div class="legend-dot dot-oi"></div> Módulo OI — tablas nuevas</div>
+  <div class="legend-item"><div class="legend-dot dot-support"></div> Soporte OI (adjuntos, comentarios)</div>
+  <div class="legend-item"><div class="legend-dot dot-alert"></div> Alertas (tabla compartida — actualizada)</div>
+</div>
+
+<!-- NOTA CONTEXTO -->
+<div class="note-ext">
+  🔴 <strong>Origen externo:</strong> Las OI <strong>no las crea el analista</strong> — las genera un <strong>sistema externo de monitoreo</strong> que las expone vía API/JSON. La herramienta levanta la OI automáticamente con estado <span class="estado-badge e-nueva">Nueva</span>. El analista solo puede resolverlas: <span class="estado-badge e-just">Justificada</span> o <span class="estado-badge e-os">OS — Operación Sospechosa</span>. El ROS se emite <strong>fuera de la herramienta</strong>.
+</div>
+
+<div class="note">
+  ⚠️ Las tablas en gris (<strong>sociedades_tag</strong>, <strong>usuarios</strong>, <strong>alertas</strong>) ya existen en el DER principal. Se muestran aquí solo para mostrar las relaciones con el módulo OI. La tabla <strong>alertas</strong> se actualiza con el campo <code>id_oi</code>.
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- DIAGRAMA GENERAL                              -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Diagrama General — Módulo Operaciones Inusuales</h2>
+  <div class="mermaid">
+erDiagram
+
+    %% ── TABLAS EXISTENTES ──────────────────────────────────────
+    SOCIEDADES_TAG {
+      int    id_sociedad    PK
+      string razon_social
+      string cuit_cuil
+      string tipo_sociedad
+      string estado
+    }
+
+    USUARIOS {
+      int    id    PK
+      string nombre
+      string apellido
+      string nivel
+      bool   activo
+    }
+
+    ALERTAS {
+      int    id           PK
+      int    id_sociedad  FK
+      int    id_oi        FK
+      string tipo_alerta
+      string estado
+      date   fecha_vencimiento
+    }
+
+    %% ── MÓDULO OI ───────────────────────────────────────────────
+    OPERACIONES_INUSUALES {
+      uuid   uuid              PK
+      string id_externo
+      int    id_sociedad       FK
+      int    id_analista_asignado FK
+      string tipo_operacion
+      string tipo_movimiento
+      decimal monto
+      string moneda
+      date   fecha_operacion
+      text   descripcion_externa
+      string estado
+      bool   cuenta_bloqueada
+      date   fecha_bloqueo
+      date   fecha_desbloqueo
+      int    id_usuario_desbloqueo FK
+      text   comentario_cierre
+      timestamp created_at
+      timestamp updated_at
+      timestamp closed_at
+    }
+
+    OI_COMENTARIOS {
+      uuid   uuid             PK
+      uuid   id_oi            FK
+      int    id_usuario       FK
+      string rol_usuario
+      text   texto
+      timestamp created_at
+    }
+
+    OI_ADJUNTOS {
+      uuid   uuid          PK
+      uuid   id_oi         FK
+      int    id_usuario    FK
+      string nombre_archivo
+      string url_archivo
+      string formato
+      int    tamano_bytes
+      timestamp subido_en
+    }
+
+    OI_LOG_ESTADOS {
+      uuid   uuid              PK
+      uuid   id_oi             FK
+      int    id_usuario        FK
+      string estado_anterior
+      string estado_nuevo
+      text   comentario
+      timestamp created_at
+    }
+
+    %% ── RELACIONES ──────────────────────────────────────────────
+    SOCIEDADES_TAG          ||--o{  OPERACIONES_INUSUALES  : "tiene OI"
+    USUARIOS                ||--o{  OPERACIONES_INUSUALES  : "asignado / desbloquea"
+    OPERACIONES_INUSUALES   ||--o{  OI_COMENTARIOS         : "tiene comentarios"
+    OPERACIONES_INUSUALES   ||--o{  OI_ADJUNTOS            : "tiene adjuntos"
+    OPERACIONES_INUSUALES   ||--|{  OI_LOG_ESTADOS          : "registra cambios"
+    USUARIOS                ||--o{  OI_COMENTARIOS         : "escribe comentario"
+    USUARIOS                ||--o{  OI_ADJUNTOS            : "sube adjunto"
+    USUARIOS                ||--o{  OI_LOG_ESTADOS         : "genera log"
+    SOCIEDADES_TAG          ||--o{  ALERTAS                : "tiene alertas"
+    OPERACIONES_INUSUALES   ||--o{  ALERTAS                : "genera alertas"
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- ESPECIFICACIÓN DETALLADA                      -->
+<!-- ══════════════════════════════════════════════ -->
+
+<!-- OPERACIONES_INUSUALES -->
+<div class="card">
+  <h2>Tabla: OPERACIONES_INUSUALES</h2>
+  <div class="note-ext" style="margin-bottom:12px;">
+    🔴 Los campos marcados <strong>EXT</strong> vienen del sistema externo de monitoreo. No son editables por el analista.
+  </div>
+  <table class="table-spec">
+    <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td><strong>uuid</strong> <span class="tag tag-pk">PK</span></td><td class="type">UUID</td><td>Identificador único interno de la OI</td></tr>
+    <tr><td>id_externo</td><td class="type">VARCHAR(50)</td><td>ID asignado por el sistema externo de monitoreo. Ej: <code>OI-2026-042</code> <span class="tag tag-idx">IDX</span></td></tr>
+    <tr><td>id_sociedad <span class="tag tag-fk">FK</span></td><td class="type">INTEGER</td><td>Sociedad/cliente a la que pertenece la operación → <code>sociedades_tag.id_sociedad</code></td></tr>
+    <tr><td>id_analista_asignado <span class="tag tag-fk">FK</span></td><td class="type">INTEGER</td><td>Analista de Compliance asignado al caso → <code>usuarios.id</code>. Puede quedar NULL hasta asignación</td></tr>
+    <tr><td>tipo_operacion <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(30)</td><td>Tipo de operación detectada: <code>transferencia_bancaria</code> / <code>transferencia_virtual</code> / <code>efectivo</code> / <code>tarjeta</code> / <code>otro</code> — viene del EXT</td></tr>
+    <tr><td>tipo_movimiento <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(20)</td><td><code>ingreso</code> / <code>egreso</code> — viene del EXT</td></tr>
+    <tr><td>monto</td><td class="type">DECIMAL(15,2)</td><td>Monto de la operación detectada — viene del EXT</td></tr>
+    <tr><td>moneda <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(10)</td><td><code>ARS</code> / <code>USD</code> / <code>digital</code> — viene del EXT</td></tr>
+    <tr><td>fecha_operacion</td><td class="type">DATE</td><td>Fecha en que ocurrió la operación — viene del EXT</td></tr>
+    <tr><td>descripcion_externa</td><td class="type">TEXT</td><td>Descripción/alerta generada por el sistema externo. Ej: "Monto 8x mayor al perfil transaccional"</td></tr>
+    <tr><td>estado <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(20)</td><td><code>nueva</code> / <code>justificada</code> / <code>os</code> (Operación Sospechosa). Una vez en <code>justificada</code> u <code>os</code> no puede modificarse</td></tr>
+    <tr><td>cuenta_bloqueada</td><td class="type">BOOLEAN</td><td>Si la cuenta del cliente está bloqueada preventivamente por esta OI</td></tr>
+    <tr><td>fecha_bloqueo</td><td class="type">TIMESTAMP</td><td>Cuándo se bloqueó la cuenta. NULL si no fue bloqueada</td></tr>
+    <tr><td>fecha_desbloqueo</td><td class="type">TIMESTAMP</td><td>Cuándo se desbloqueó. NULL si sigue bloqueada</td></tr>
+    <tr><td>id_usuario_desbloqueo <span class="tag tag-fk">FK</span></td><td class="type">INTEGER</td><td>Analista que ejecutó el desbloqueo → <code>usuarios.id</code></td></tr>
+    <tr><td>comentario_cierre</td><td class="type">TEXT</td><td>Comentario obligatorio al cerrar la OI (justificación o motivo OS). No puede estar vacío si estado ≠ <code>nueva</code></td></tr>
+    <tr><td>created_at</td><td class="type">TIMESTAMP</td><td>Cuándo fue levantada por la herramienta (≠ fecha_operacion)</td></tr>
+    <tr><td>updated_at</td><td class="type">TIMESTAMP</td><td>Última modificación</td></tr>
+    <tr><td>closed_at</td><td class="type">TIMESTAMP</td><td>Cuándo fue cerrada (justificada u OS). NULL si sigue abierta</td></tr>
+  </table>
+
+  <div class="section-title">Reglas de negocio clave</div>
+  <ul style="font-size:12px;padding-left:18px;line-height:1.9;">
+    <li><strong>El analista no puede crear una OI manualmente</strong> — solo se insertan via integración con el sistema externo</li>
+    <li><strong>Transición de estados</strong>: <code>nueva</code> → <code>justificada</code> | <code>nueva</code> → <code>os</code>. No hay vuelta atrás</li>
+    <li><strong>comentario_cierre obligatorio</strong>: la BD debe tener un check constraint — NOT NULL cuando estado ≠ <code>nueva</code></li>
+    <li><strong>id_externo único</strong>: unique constraint en la BD para evitar duplicados de la integración</li>
+  </ul>
+</div>
+
+<!-- OI_COMENTARIOS -->
+<div class="card">
+  <h2>Tabla: OI_COMENTARIOS</h2>
+  <div class="note-ok" style="margin-bottom:12px;">
+    ✅ Los comentarios son de solo lectura una vez guardados. No se pueden editar ni eliminar (trazabilidad regulatoria).
+  </div>
+  <table class="table-spec">
+    <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td><strong>uuid</strong> <span class="tag tag-pk">PK</span></td><td class="type">UUID</td><td>Identificador del comentario</td></tr>
+    <tr><td>id_oi <span class="tag tag-fk">FK</span></td><td class="type">UUID</td><td>OI a la que pertenece el comentario → <code>operaciones_inusuales.uuid</code></td></tr>
+    <tr><td>id_usuario <span class="tag tag-fk">FK</span></td><td class="type">INTEGER</td><td>Usuario que escribió el comentario → <code>usuarios.id</code>. Aplica tanto a Compliance como a ATC (ambos son usuarios internos del sistema)</td></tr>
+    <tr><td>rol_usuario <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(20)</td><td><code>compliance</code> / <code>atencion_cliente</code> — para diferenciar visualmente quién escribió</td></tr>
+    <tr><td>texto</td><td class="type">TEXT NOT NULL</td><td>Contenido del comentario. No puede estar vacío</td></tr>
+    <tr><td>created_at</td><td class="type">TIMESTAMP</td><td>Fecha y hora exacta del comentario</td></tr>
+  </table>
+  <div class="section-title">Reglas de negocio</div>
+  <ul style="font-size:12px;padding-left:18px;line-height:1.9;">
+    <li>Solo se pueden agregar comentarios a OI en estado <code>nueva</code> (abierta)</li>
+    <li>Una vez guardado, el comentario es <strong>inmutable</strong> — no existe UPDATE ni DELETE</li>
+    <li>Visible para todos los usuarios con acceso a la OI, independientemente del rol</li>
+  </ul>
+</div>
+
+<!-- OI_ADJUNTOS -->
+<div class="card">
+  <h2>Tabla: OI_ADJUNTOS</h2>
+  <table class="table-spec">
+    <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td><strong>uuid</strong> <span class="tag tag-pk">PK</span></td><td class="type">UUID</td><td>Identificador del adjunto</td></tr>
+    <tr><td>id_oi <span class="tag tag-fk">FK</span></td><td class="type">UUID</td><td>OI a la que pertenece → <code>operaciones_inusuales.uuid</code></td></tr>
+    <tr><td>id_usuario <span class="tag tag-fk">FK</span></td><td class="type">INTEGER</td><td>Usuario que subió el archivo → <code>usuarios.id</code></td></tr>
+    <tr><td>nombre_archivo</td><td class="type">VARCHAR(255)</td><td>Nombre original del archivo. Ej: <code>extracto_bancario_marzo.pdf</code></td></tr>
+    <tr><td>url_archivo</td><td class="type">TEXT</td><td>URL de almacenamiento interno del archivo</td></tr>
+    <tr><td>formato <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(10)</td><td>Formato validado: <code>pdf</code> / <code>jpg</code> / <code>png</code> / <code>xlsx</code> / <code>docx</code></td></tr>
+    <tr><td>tamano_bytes</td><td class="type">INTEGER</td><td>Tamaño del archivo en bytes. Máximo permitido: 20 MB (20.971.520 bytes)</td></tr>
+    <tr><td>subido_en</td><td class="type">TIMESTAMP</td><td>Fecha y hora de la carga</td></tr>
+  </table>
+  <div class="section-title">Reglas de negocio</div>
+  <ul style="font-size:12px;padding-left:18px;line-height:1.9;">
+    <li>Se puede adjuntar N archivos por OI</li>
+    <li>Solo se puede eliminar un adjunto mientras la OI está en estado <code>nueva</code></li>
+    <li>Una vez cerrada la OI, los adjuntos son <strong>inmutables</strong> (no se pueden borrar ni reemplazar)</li>
+    <li>Formatos aceptados: PDF, JPG, PNG, XLSX, DOCX. Máximo 20 MB por archivo</li>
+  </ul>
+</div>
+
+<!-- OI_LOG_ESTADOS -->
+<div class="card">
+  <h2>Tabla: OI_LOG_ESTADOS</h2>
+  <div class="note-ok" style="margin-bottom:12px;">
+    ✅ Audit log inmutable. Registra cada cambio de estado de la OI. Exigido por UIF para demostrar proceso de análisis.
+  </div>
+  <table class="table-spec">
+    <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td><strong>uuid</strong> <span class="tag tag-pk">PK</span></td><td class="type">UUID</td><td>Identificador del registro de log</td></tr>
+    <tr><td>id_oi <span class="tag tag-fk">FK</span></td><td class="type">UUID</td><td>OI a la que pertenece → <code>operaciones_inusuales.uuid</code></td></tr>
+    <tr><td>id_usuario <span class="tag tag-fk">FK</span></td><td class="type">INTEGER</td><td>Usuario que realizó el cambio → <code>usuarios.id</code></td></tr>
+    <tr><td>estado_anterior <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(20)</td><td>Estado antes del cambio: <code>nueva</code> / <code>justificada</code> / <code>os</code>. NULL en el primer registro (alta)</td></tr>
+    <tr><td>estado_nuevo <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(20)</td><td>Estado después del cambio: <code>nueva</code> / <code>justificada</code> / <code>os</code></td></tr>
+    <tr><td>comentario</td><td class="type">TEXT</td><td>Comentario obligatorio cuando el cambio es a <code>justificada</code> u <code>os</code>. Puede ser NULL solo en el primer registro de alta</td></tr>
+    <tr><td>created_at</td><td class="type">TIMESTAMP</td><td>Fecha y hora exacta del cambio</td></tr>
+  </table>
+  <div class="section-title">Registros típicos por OI</div>
+  <table class="table-spec" style="margin-top:8px;">
+    <tr><th>#</th><th>estado_anterior</th><th>estado_nuevo</th><th>Cuándo</th></tr>
+    <tr><td>1</td><td><em>NULL</em></td><td><span style="background:#DBEAFE;color:#1E40AF;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">nueva</span></td><td>Al levantarla del sistema externo</td></tr>
+    <tr><td>2 (opción A)</td><td><span style="background:#DBEAFE;color:#1E40AF;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">nueva</span></td><td><span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">justificada</span></td><td>Al resolver como justificada</td></tr>
+    <tr><td>2 (opción B)</td><td><span style="background:#DBEAFE;color:#1E40AF;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">nueva</span></td><td><span style="background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">os</span></td><td>Al escalar a Operación Sospechosa</td></tr>
+  </table>
+</div>
+
+<!-- ACTUALIZACIÓN ALERTAS -->
+<div class="card">
+  <h2>Tabla: ALERTAS — Actualización por módulo OI <span class="tag tag-new">ACTUALIZADA</span></h2>
+  <div class="note" style="margin-bottom:12px;">
+    ⚠️ La tabla <strong>alertas</strong> ya existe en el DER principal. Se agrega el campo <code>id_oi</code> para que las alertas puedan estar vinculadas a una OI específica además de a una sociedad.
+  </div>
+  <table class="table-spec">
+    <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td><strong>id</strong> <span class="tag tag-pk">PK</span></td><td class="type">INTEGER</td><td>Ya existente</td></tr>
+    <tr><td>id_sociedad <span class="tag tag-fk">FK</span></td><td class="type">INTEGER</td><td>Ya existente → <code>sociedades_tag.id_sociedad</code></td></tr>
+    <tr><td>id_oi <span class="tag tag-fk">FK</span> <span class="tag tag-new">NUEVO</span></td><td class="type">UUID</td><td>OI que generó la alerta → <code>operaciones_inusuales.uuid</code>. Puede ser NULL si la alerta no está vinculada a una OI</td></tr>
+    <tr><td>tipo_alerta <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(60)</td><td>Ya existente + nuevos valores OI: <code>oi_sin_resolver_48hs</code> / <code>oi_nueva</code> / <code>cuenta_bloqueada_sin_resolver</code></td></tr>
+    <tr><td>mensaje</td><td class="type">TEXT</td><td>Ya existente</td></tr>
+    <tr><td>fecha_vencimiento</td><td class="type">TIMESTAMP</td><td>Ya existente</td></tr>
+    <tr><td>estado <span class="tag tag-chk">ENUM</span></td><td class="type">VARCHAR(20)</td><td>Ya existente: <code>pendiente</code> / <code>enviada</code> / <code>resuelta</code> / <code>ignorada</code></td></tr>
+    <tr><td>created_at</td><td class="type">TIMESTAMP</td><td>Ya existente</td></tr>
+    <tr><td>updated_at</td><td class="type">TIMESTAMP</td><td>Ya existente</td></tr>
+  </table>
+  <div class="section-title">Alertas automáticas que genera el módulo OI</div>
+  <table class="table-spec" style="margin-top:8px;">
+    <tr><th>tipo_alerta</th><th>Cuándo se genera</th><th>Quién la ve</th></tr>
+    <tr><td><code>oi_nueva</code></td><td>Al levantar una nueva OI desde el sistema externo</td><td>Compliance</td></tr>
+    <tr><td><code>oi_sin_resolver_48hs</code></td><td>Si una OI lleva más de 48hs en estado <code>nueva</code> sin resolución</td><td>Compliance + Oficial de Cumplimiento</td></tr>
+    <tr><td><code>cuenta_bloqueada_sin_resolver</code></td><td>Si la cuenta está bloqueada y la OI lleva más de 48hs sin resolución</td><td>Compliance + Atención al Cliente</td></tr>
+  </table>
+</div>
+
+<!-- FLUJO DE ESTADOS -->
+<div class="card">
+  <h2>Flujo de Estados y Trazabilidad</h2>
+
+  <div class="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <div class="flow-box">
+      <h4>Flujo de una OI — paso a paso</h4>
+      <div class="flow-step"><div class="flow-num">1</div><div>Sistema externo detecta operación → expone via API</div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div>Herramienta levanta la OI: estado = <span class="estado-badge e-nueva">nueva</span> · Primer registro en <code>oi_log_estados</code></div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div>Se genera alerta <code>oi_nueva</code> en <code>alertas</code></div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div>Analista revisa, adjunta evidencia (<code>oi_adjuntos</code>) y deja comentarios (<code>oi_comentarios</code>)</div></div>
+      <div class="flow-step"><div class="flow-num">5</div><div>Analista decide cierre con comentario_cierre obligatorio</div></div>
+      <div class="flow-step"><div class="flow-num">6</div><div>Estado cambia a <span class="estado-badge e-just">justificada</span> o <span class="estado-badge e-os">os</span> · Registro en <code>oi_log_estados</code></div></div>
+      <div class="flow-step"><div class="flow-num">7</div><div>Si es OS: ROS se emite fuera de la herramienta. OI queda cerrada con trazabilidad completa</div></div>
+    </div>
+    <div class="flow-box">
+      <h4>Entidades que alimentan cada acción</h4>
+      <table style="width:100%;font-size:12px;border-collapse:collapse;">
+        <tr style="background:#E8F4FD;"><th style="padding:6px 10px;text-align:left;color:#0077B6;">Acción</th><th style="padding:6px 10px;text-align:left;color:#0077B6;">Tabla afectada</th></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;">OI levantada</td><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;"><code>operaciones_inusuales</code> + <code>oi_log_estados</code> + <code>alertas</code></td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;">Bloqueo de cuenta</td><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;"><code>operaciones_inusuales</code> (update) + <code>alertas</code></td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;">Comentario</td><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;"><code>oi_comentarios</code> (INSERT)</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;">Adjunto</td><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;"><code>oi_adjuntos</code> (INSERT)</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;">Cierre (just./OS)</td><td style="padding:6px 10px;border-bottom:1px solid #F0F4F8;"><code>operaciones_inusuales</code> (update) + <code>oi_log_estados</code> (INSERT)</td></tr>
+        <tr><td style="padding:6px 10px;">Desbloqueo</td><td style="padding:6px 10px;"><code>operaciones_inusuales</code> (update campos desbloqueo)</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- INTEGRACIÓN CON DER PRINCIPAL -->
+<div class="card">
+  <h2>Relación con DER Principal</h2>
+  <table class="table-spec">
+    <tr><th>Tabla OI</th><th>Se vincula con</th><th>Via campo</th><th>Descripción</th></tr>
+    <tr><td><code>operaciones_inusuales</code></td><td><code>sociedades_tag</code></td><td><code>id_sociedad</code></td><td>Cliente al que pertenece la operación inusual</td></tr>
+    <tr><td><code>operaciones_inusuales</code></td><td><code>usuarios</code></td><td><code>id_analista_asignado</code></td><td>Analista de Compliance asignado al caso</td></tr>
+    <tr><td><code>operaciones_inusuales</code></td><td><code>usuarios</code></td><td><code>id_usuario_desbloqueo</code></td><td>Quién autorizó el desbloqueo de la cuenta</td></tr>
+    <tr><td><code>oi_comentarios</code></td><td><code>usuarios</code></td><td><code>id_usuario</code></td><td>Compliance o ATC que escribió el comentario</td></tr>
+    <tr><td><code>oi_adjuntos</code></td><td><code>usuarios</code></td><td><code>id_usuario</code></td><td>Usuario que subió el adjunto</td></tr>
+    <tr><td><code>oi_log_estados</code></td><td><code>usuarios</code></td><td><code>id_usuario</code></td><td>Usuario que ejecutó el cambio de estado</td></tr>
+    <tr><td><code>alertas</code></td><td><code>operaciones_inusuales</code></td><td><code>id_oi</code></td><td>Alerta vinculada a una OI específica (campo nuevo)</td></tr>
+  </table>
+</div>
+
+<!-- LEYENDA -->
+<div class="leyenda-card">
+  <h3>Referencia de tipos y claves</h3>
+  <table>
+    <tr><th>Abreviatura</th><th>Significado</th></tr>
+    <tr><td><strong>PK</strong></td><td>Clave Primaria</td></tr>
+    <tr><td><strong>FK</strong></td><td>Clave Externa — referencia a otra tabla</td></tr>
+    <tr><td><strong>UUID</strong></td><td>Identificador único universal</td></tr>
+    <tr><td><strong>ENUM</strong></td><td>Lista de valores fijos permitidos (check constraint en BD)</td></tr>
+    <tr><td><strong>IDX</strong></td><td>Campo indexado para búsqueda rápida</td></tr>
+    <tr><td><span style="background:#F3E8FF;color:#7B2D8B;border:1px solid #D8B4FE;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">NUEVO</span></td><td>Campo o tabla nueva (no existía en el DER principal)</td></tr>
+    <tr><td><strong>EXT</strong></td><td>Dato que viene del sistema externo de monitoreo — no editable por el analista</td></tr>
+  </table>
+</div>
+
+<div class="nota">
+  💡 <strong>Tip:</strong> Para exportar como PDF usá <strong>Ctrl + P → Guardar como PDF</strong>. Para editar online copiá el bloque <em>erDiagram</em> en <a href="https://mermaid.live" target="_blank">mermaid.live</a>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true, theme: 'default',
+    er: { diagramPadding: 40, layoutDirection: 'TB', minEntityWidth: 120, minEntityHeight: 75, entityPadding: 15 }
+  });
+  document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-AR');
+  });
+</script>
+</body>
+</html>
