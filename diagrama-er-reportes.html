@@ -172,189 +172,233 @@ body { font-family: 'Segoe UI', sans-serif; background: #EAF4FB; padding: 30px; 
   <div class="mermaid">
 erDiagram
 
-    %% ── TABLAS EXISTENTES (referencia) ───────────────────────────
-    sociedades_tag {
-      int id_sociedad PK
-      string razon_social
-      string cuit_cuil
-      string tipo_sociedad
-      string estado
+    %% ============================================
+    %% DER - MODULO DE REPORTES REGULATORIOS
+    %% ARCA F.8126 / BCRA Base Padron / UIF A-B
+    %% ============================================
+
+    %% --- ENTIDAD MAESTRA ---
+    REPORTE {
+        int id_reporte PK
+        varchar tipo_reporte "ARCA | BCRA | UIF"
+        varchar subtipo "F8126 | BASE_PADRON | APT_A | APT_B"
+        varchar periodo "AAAAMM"
+        varchar secuencia "00 original, 01+ rectificativa"
+        varchar estado "BORRADOR | VALIDADO | ENVIADO | ERROR | RECTIFICADO"
+        timestamp fecha_generacion
+        int id_usuario_generador FK
+        timestamp fecha_envio
+        varchar metodo_envio "WSM | RUNOR | MANUAL"
+        text respuesta_organismo
+        text observaciones
     }
 
-    usuarios {
-      int id PK
-      string nombre
-      string apellido
-      string email
-      string nivel
+    HISTORIAL_ENVIO {
+        int id_historial PK
+        int id_reporte FK
+        varchar periodo
+        varchar secuencia
+        timestamp fecha_envio
+        int id_usuario FK
+        varchar estado "ENVIADO | ACEPTADO | RECHAZADO | ERROR"
+        text respuesta_organismo
+        varchar codigo_error
+        int intentos
     }
 
-    logs_acciones {
-      int id PK
-      int id_sociedad FK
-      int id_usuario_interno FK
-      string tipo_accion
-      timestamp created_at
+    CALENDARIO_VENCIMIENTO {
+        int id_calendario PK
+        varchar tipo_reporte "ARCA | BCRA | UIF_AB"
+        varchar periodo "AAAAMM"
+        date fecha_vencimiento
+        varchar frecuencia "MENSUAL"
+        varchar indicador_estado "VERDE | AMARILLO | ROJO"
+        varchar estado_presentacion "PENDIENTE | PRESENTADO | VENCIDO"
     }
 
-    %% ── GESTIÓN INTERNA ──────────────────────────────────────────
-    operaciones_inusuales {
-      int id PK
-      int id_sociedad FK
-      int id_analista_asignado FK
-      string tipo_operacion
-      decimal monto
-      string moneda
-      date fecha_operacion
-      string estado
-      text descripcion
-      text observaciones
-      timestamp fecha_apertura
-      timestamp fecha_cierre
-      timestamp created_at
-      timestamp updated_at
+    TRACKING_EVENTO {
+        int id_evento PK
+        int id_reporte FK
+        varchar tipo_evento "GENERAR | VALIDAR | ENVIAR | EXPORTAR | CONTROL_RAZONABILIDAD"
+        timestamp fecha_evento
+        int id_usuario FK
+        varchar resultado "OK | ERROR"
+        text detalle
     }
 
-    exportaciones_log {
-      int id PK
-      int id_usuario FK
-      string tipo_reporte
-      string periodo
-      jsonb filtros_aplicados
-      int cantidad_registros
-      timestamp created_at
+    %% --- ARCA F.8126 ---
+    ARCA_CABECERA {
+        int id_cabecera PK
+        int id_reporte FK
+        varchar tipo_registro "01"
+        varchar cuit_informante "11 digitos"
+        varchar periodo_informado "AAAAMM"
+        varchar secuencia "00 original"
+        varchar denominacion "Razon social"
+        varchar hora "HHMMSS"
+        varchar codigo_impuesto "0103"
+        varchar codigo_concepto "812"
+        varchar numero_verificador
+        varchar numero_formulario "8126"
+        varchar version_aplicativo "00200"
+        varchar establecimiento "00"
+        int cantidad_total_lineas
+        int cantidad_registros_detalle
     }
 
-    %% ── REGULATORIOS ─────────────────────────────────────────────
-    presentaciones_regulatorias {
-      int id PK
-      int id_usuario_generador FK
-      int id_usuario_enviador FK
-      string tipo
-      string periodo
-      int secuencia
-      string estado
-      string url_archivo
-      date fecha_limite
-      timestamp fecha_generacion
-      timestamp fecha_envio
-      jsonb respuesta_organismo
-      timestamp created_at
-      timestamp updated_at
+    ARCA_CUENTA {
+        int id_cuenta PK
+        int id_cabecera FK
+        varchar tipo_registro "02"
+        varchar tipo_cuenta "01 billetera | 02 otra"
+        varchar identificador_cuenta "CVU o ID interno"
+        int cantidad_integrantes
+        varchar fecha_alta_cuenta "AAAAMMDD"
+        varchar tipo_operacion "01 apertura | 02 cierre | 03 modif | 04 sin modif"
+        varchar fecha_operacion "AAAAMMDD"
+        varchar signo_saldo_pesos "0 positivo | 1 negativo"
+        bigint saldo_pesos "sin decimales"
+        varchar signo_saldo_me "0 positivo | 1 negativo"
+        bigint saldo_moneda_extranjera "sin decimales"
+        varchar signo_saldo_md "0 positivo | 1 negativo"
+        bigint saldo_moneda_digital "sin decimales"
+        varchar cvu "22 digitos - obligatorio si tipo_cuenta=01"
     }
 
-    %% ── ARCA F.8126 ──────────────────────────────────────────────
-    arca_cuentas {
-      int id PK
-      int id_presentacion FK
-      string tipo_cuenta
-      string identificador_cuenta
-      int cantidad_integrantes
-      date fecha_alta
-      string tipo_operacion_cuenta
-      date fecha_evento
-      int signo_saldo_ars
-      bigint saldo_pesos
-      bigint saldo_moneda_extranjera
-      bigint saldo_moneda_digital
-      string cvu
+    ARCA_INTEGRANTE {
+        int id_integrante PK
+        int id_cuenta FK
+        varchar tipo_registro "03"
+        varchar tipo_documento "80 CUIT | 86 CUIL | 96 DNI"
+        varchar numero_documento
+        varchar nif "Numero identificacion financiera"
+        varchar apellido_nombre_denominacion
+        varchar tipo_persona "1 Humana | 2 Juridica"
+        varchar residencia "0 Residente | 1 No residente"
+        varchar pais_residencia "Codigo segun tabla"
+        varchar caracter "1 Titular | 2 Cotitular | 3 Apoderado | 4 Rep Legal | 5 Firmante"
     }
 
-    arca_integrantes {
-      int id PK
-      int id_cuenta FK
-      int id_presentacion FK
-      string tipo_documento
-      string nro_documento
-      string nif
-      string nombre_denominacion
-      int tipo_persona
-      int residencia
-      string pais_residencia
-      int caracter
+    ARCA_MOVIMIENTO {
+        int id_movimiento PK
+        int id_cuenta FK
+        varchar tipo_registro "04"
+        varchar tipo_operacion "01 Ingreso | 02 Egreso"
+        varchar tipo_movimiento "01 Efectivo | 02 Transf bancaria | 03 Transf virtual"
+        varchar moneda_original "1 pesos | 2 dolares | 14 bitcoin"
+        bigint monto_mensual_moneda_original "sin decimales"
+        bigint monto_mensual_pesos "sin decimales"
     }
 
-    arca_movimientos {
-      int id PK
-      int id_presentacion FK
-      string tipo_operacion
-      string tipo_movimiento
-      string moneda_original
-      decimal monto_mensual_moneda_original
-      decimal monto_mensual_pesos
+    ARCA_TRANSFERENCIA {
+        int id_transferencia PK
+        int id_movimiento FK
+        varchar tipo_registro "05"
+        varchar cbu_cvu_destino "22 digitos"
+        bigint monto_pesos "sin decimales"
     }
 
-    arca_detalle_transferencias {
-      int id PK
-      int id_movimiento FK
-      int id_presentacion FK
-      string cbu_cvu_destino
-      decimal monto_pesos
+    %% --- BCRA BASE PADRON ---
+    BCRA_NOVEDAD {
+        int id_novedad PK
+        int id_reporte FK
+        varchar tipo_persona "Humana | Juridica"
+        varchar nacionalidad "Nacional | Extranjera"
+        varchar tipo_id_tributaria "11 | 97 | 98 | 99 - 2 char num"
+        varchar numero_id_tributaria "11 char num"
+        varchar tipo_id_personal "00 DNI | 01 LE | 02 LC | 03 Cedula | 04 Pasaporte | 05 Doc ext"
+        varchar numero_id_personal "16 char num con ceros"
+        varchar denominacion "80 char sin puntos ni comas ni acentos"
+        varchar condicion_pep "0 - no obligatorio para PSP"
+        varchar codigo_postal "8 char alfanum ej B6344AAA"
+        varchar tipo_movimiento "10 Alta | 20 Baja"
     }
 
-    %% ── BCRA BASE PADRÓN ─────────────────────────────────────────
-    bcra_padron_novedades {
-      int id PK
-      int id_sociedad FK
-      int id_presentacion FK
-      string tipo_novedad
-      jsonb campos_modificados
-      string periodo
-      string estado
-      timestamp created_at
+    BCRA_DETALLE_XML {
+        int id_detalle PK
+        int id_reporte FK
+        boolean opera "TRUE si hay novedades, FALSE si no"
+        varchar nombre_archivo "PADRON.TXT"
+        varchar nombre_detalle "Detalle.xml"
     }
 
-    %% ── UIF APARTADOS ────────────────────────────────────────────
-    uif_apartado_a {
-      int id PK
-      int id_presentacion FK
-      string cuit_cliente
-      string tipo_cuenta
-      decimal saldo_al_cierre
-      decimal saldo_promedio
-      string moneda
+    %% --- UIF APARTADOS ---
+    UIF_APARTADO_A {
+        int id_apartado_a PK
+        int id_reporte FK
+        varchar codigo_partida "7 char num segun tabla BCRA"
+        bigint saldo "11 char num - miles de pesos sin decimales"
+        bigint cantidad "11 char num - cantidad de cuentas"
+        varchar cbu_nro_fondo "22 char num"
     }
 
-    uif_apartado_b {
-      int id PK
-      int id_presentacion FK
-      string cuit_cliente
-      string tipo_operacion
-      decimal monto_total
-      int cantidad_operaciones
-      decimal debitos
-      decimal creditos
-      boolean control_razonabilidad_ok
+    UIF_FONDO_INVERSION {
+        int id_fondo PK
+        int id_apartado_a FK
+        int nro_fondo "5 char num"
+        varchar denominacion_fondo "50 char"
+        varchar agente_involucrado "1 char num - 1 Admin | 2 Custodia | 3 Colocacion"
+        varchar denominacion_agente "50 char"
+        varchar cuit_agente "11 char num sin guiones"
     }
 
-    uif_apartado_c {
-      int id PK
-      int id_presentacion FK
-      string cuit_cliente
-      string motivo_inclusion
-      jsonb detalle
+    UIF_APARTADO_B {
+        int id_apartado_b PK
+        int id_reporte FK
+        varchar codigo_partida "7 char num"
+        varchar medio_pago "3 char num segun Tabla 1"
+        varchar esquema_pago "5 char num segun Tabla 2"
+        bigint cantidad "11 char num"
+        bigint monto_total "11 char num - miles de pesos"
     }
 
-    %% ── RELACIONES ────────────────────────────────────────────────
-    sociedades_tag         ||--o{ operaciones_inusuales         : "tiene"
-    usuarios               ||--o{ operaciones_inusuales         : "asignado_a"
-    usuarios               ||--o{ exportaciones_log             : "realiza"
-    usuarios               ||--o{ presentaciones_regulatorias   : "genera"
-    usuarios               ||--o{ presentaciones_regulatorias   : "envía"
+    %% --- TABLAS DE REFERENCIA ---
+    MEDIO_PAGO {
+        int codigo PK
+        varchar descripcion "Tarjeta credito | debito | prepaga | efectivo | etc"
+    }
 
-    presentaciones_regulatorias ||--o{ arca_cuentas                    : "contiene"
-    presentaciones_regulatorias ||--o{ arca_integrantes               : "contiene"
-    presentaciones_regulatorias ||--o{ arca_movimientos               : "contiene"
-    arca_cuentas           ||--o{ arca_integrantes                    : "tiene"
-    arca_movimientos       ||--o{ arca_detalle_transferencias         : "detalla"
-    presentaciones_regulatorias ||--o{ arca_detalle_transferencias    : "contiene"
+    ESQUEMA_PAGO {
+        int codigo PK
+        varchar descripcion "Marca tarjeta | Transf CBU | Transf CVU | Propio"
+    }
 
-    presentaciones_regulatorias ||--o{ bcra_padron_novedades    : "agrupa"
-    sociedades_tag         ||--o{ bcra_padron_novedades         : "genera"
+    TABLA_MONEDA {
+        int codigo PK
+        varchar descripcion "1 pesos | 2 dolares | 14 bitcoin"
+    }
 
-    presentaciones_regulatorias ||--o{ uif_apartado_a           : "contiene"
-    presentaciones_regulatorias ||--o{ uif_apartado_b           : "contiene"
-    presentaciones_regulatorias ||--o{ uif_apartado_c           : "contiene"
+    TABLA_CODIGO_PARTIDA {
+        varchar codigo PK
+        varchar descripcion
+        varchar apartado "A | B"
+    }
+
+    %% ============================================
+    %% RELACIONES
+    %% ============================================
+
+    REPORTE ||--o{ HISTORIAL_ENVIO : "tiene historial"
+    REPORTE ||--o{ TRACKING_EVENTO : "registra eventos"
+    REPORTE }o--|| CALENDARIO_VENCIMIENTO : "asociado a vencimiento"
+
+    REPORTE ||--o| ARCA_CABECERA : "genera cabecera F8126"
+    ARCA_CABECERA ||--o{ ARCA_CUENTA : "contiene cuentas"
+    ARCA_CUENTA ||--|{ ARCA_INTEGRANTE : "tiene integrantes"
+    ARCA_CUENTA ||--o{ ARCA_MOVIMIENTO : "registra movimientos"
+    ARCA_MOVIMIENTO ||--o{ ARCA_TRANSFERENCIA : "detalla transferencias"
+    ARCA_MOVIMIENTO }o--|| TABLA_MONEDA : "usa moneda"
+
+    REPORTE ||--o{ BCRA_NOVEDAD : "incluye novedades"
+    REPORTE ||--o| BCRA_DETALLE_XML : "genera detalle XML"
+
+    REPORTE ||--o{ UIF_APARTADO_A : "genera lineas Apt A"
+    UIF_APARTADO_A ||--o{ UIF_FONDO_INVERSION : "detalla fondos"
+    REPORTE ||--o{ UIF_APARTADO_B : "genera lineas Apt B"
+    UIF_APARTADO_B }o--|| MEDIO_PAGO : "usa medio pago"
+    UIF_APARTADO_B }o--|| ESQUEMA_PAGO : "usa esquema pago"
+    UIF_APARTADO_B }o--|| TABLA_CODIGO_PARTIDA : "usa codigo partida"
+    UIF_APARTADO_A }o--|| TABLA_CODIGO_PARTIDA : "usa codigo partida"
   </div>
 </div>
 
