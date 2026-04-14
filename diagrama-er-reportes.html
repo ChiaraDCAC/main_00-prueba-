@@ -180,16 +180,17 @@ erDiagram
     %% --- ENTIDAD MAESTRA ---
     REPORTE {
         int id_reporte PK
-        varchar tipo_reporte "ARCA | BCRA | UIF"
+        varchar organismo "ARCA | BCRA | UIF"
         varchar subtipo "F8126 | BASE_PADRON | APT_A | APT_B"
         varchar periodo "AAAAMM"
         varchar secuencia "00 original, 01+ rectificativa"
-        varchar estado "BORRADOR | VALIDADO | ENVIADO | ERROR | RECTIFICADO"
+        varchar estado "BORRADOR | GENERADO | ENVIADO | ERROR | RECTIFICADO"
         timestamp fecha_generacion
         int id_usuario_generador FK
-        timestamp fecha_envio
-        varchar metodo_envio "WSM | RUNOR | MANUAL"
-        text respuesta_organismo
+        timestamp fecha_presentacion
+        varchar metodo_envio "WS_ARCA | EXPORT_ZIP_UIF | EXPORT_ZIP_BCRA"
+        boolean presentado_manual "true cuando usuario marca tick - UIF y BCRA"
+        text respuesta_organismo "solo para ARCA - respuesta del WS"
         text observaciones
     }
 
@@ -219,7 +220,7 @@ erDiagram
     TRACKING_EVENTO {
         int id_evento PK
         int id_reporte FK
-        varchar tipo_evento "GENERAR | VALIDAR | ENVIAR | EXPORTAR | CONTROL_RAZONABILIDAD"
+        varchar tipo_evento "GENERAR | EXPORTAR_ZIP | ENVIAR_WS | MARCAR_PRESENTADO | RECTIFICAR"
         timestamp fecha_evento
         int id_usuario FK
         varchar resultado "OK | ERROR"
@@ -355,12 +356,12 @@ erDiagram
     %% --- TABLAS DE REFERENCIA ---
     MEDIO_PAGO {
         int codigo PK
-        varchar descripcion "Tarjeta credito | debito | prepaga | efectivo | etc"
+        varchar descripcion "001 Tarjeta credito | 002 Tarjeta debito | 003 Tarjeta prepaga | 004 Efectivo | 005 Transf inmediata push | 006 Transf inmediata pull | 007 PCT | 008 Debito inmediato SPOT | 009 Debito inmediato recurrente"
     }
 
     ESQUEMA_PAGO {
         int codigo PK
-        varchar descripcion "Marca tarjeta | Transf CBU | Transf CVU | Propio"
+        varchar descripcion "00007 Transf bancaria CBU | 00008 Transf bancaria CVU | 00009 Esquema pago propio"
     }
 
     TABLA_MONEDA {
@@ -598,6 +599,36 @@ erDiagram
     <tr><td>cuit_cliente</td><td class="type">VARCHAR(20)</td><td></td><td></td></tr>
     <tr><td>motivo_inclusion</td><td class="type">VARCHAR(100)</td><td><span class="tag tag-chk">CHECK</span></td><td><code>pep / actividad_sensible / alerta_sin_gestionar / operacion_inusual_reportada</code></td></tr>
     <tr><td>detalle</td><td class="type">JSONB</td><td></td><td>Información contextual adicional (ej: cargo PEP, descripción de la alerta)</td></tr>
+  </table>
+</div>
+
+<!-- MEDIO_PAGO -->
+<div class="card">
+  <h2>MEDIO_PAGO — Tabla 1 UIF (Apartado B)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Catálogo normativo de medios de pago según UIF para PSPs. Se usa en <code>UIF_APARTADO_B.medio_pago</code>.</p>
+  <table class="table-spec">
+    <tr><th>Código</th><th>Descripción</th></tr>
+    <tr><td><code>001</code></td><td>Tarjeta de crédito</td></tr>
+    <tr><td><code>002</code></td><td>Tarjeta de débito</td></tr>
+    <tr><td><code>003</code></td><td>Tarjeta prepaga</td></tr>
+    <tr><td><code>004</code></td><td>Efectivo</td></tr>
+    <tr><td><code>005</code></td><td>Transferencia inmediata "push"</td></tr>
+    <tr><td><code>006</code></td><td>Transferencia inmediata "pull"</td></tr>
+    <tr><td><code>007</code></td><td>Pagos con transferencia (PCT)</td></tr>
+    <tr><td><code>008</code></td><td>Débito inmediato (SPOT)</td></tr>
+    <tr><td><code>009</code></td><td>Débito inmediato recurrente</td></tr>
+  </table>
+</div>
+
+<!-- ESQUEMA_PAGO -->
+<div class="card">
+  <h2>ESQUEMA_PAGO — Tabla 2 UIF (Apartado B)</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:12px;">Catálogo normativo de esquemas de pago según UIF para PSPs. Se usa en <code>UIF_APARTADO_B.esquema_pago</code>.</p>
+  <table class="table-spec">
+    <tr><th>Código</th><th>Descripción</th></tr>
+    <tr><td><code>00007</code></td><td>Transferencias bancarias desde/hacia CBU</td></tr>
+    <tr><td><code>00008</code></td><td>Transferencias bancarias desde/hacia CVU</td></tr>
+    <tr><td><code>00009</code></td><td>Esquema de pago propio</td></tr>
   </table>
 </div>
 
