@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flujos Compliance — HC deCampo a Campo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root {
+    --blue: #0077B6; --blue-light: #E0F2FE; --blue-dark: #005f92;
+    --cyan: #00B4D8; --green: #10b981; --green-light: #D1FAE5;
+    --yellow: #f59e0b; --yellow-light: #FEF3C7; --red: #ef4444;
+    --red-light: #FEE2E2; --purple: #a855f7; --purple-light: #F3E8FF;
+    --indigo: #6366f1; --indigo-light: #E0E7FF; --orange: #f97316;
+    --orange-light: #FFF7ED; --gray: #64748b; --gray-light: #F1F5F9;
+    --bg: #f0f5fa; --card: #fff; --text: #1e293b; --border: #e2e8f0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* NAV */
+  .topnav {
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    color: #fff; padding: 16px 24px; position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.12);
+  }
+  .topnav h1 { font-size: 1.2rem; font-weight: 700; white-space: nowrap; }
+  .topnav .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .topnav .tab {
+    padding: 6px 14px; border-radius: 20px; font-size: .82rem; font-weight: 600;
+    cursor: pointer; border: 1.5px solid rgba(255,255,255,.35); background: transparent;
+    color: #fff; transition: all .2s; white-space: nowrap;
+  }
+  .topnav .tab:hover, .topnav .tab.active { background: rgba(255,255,255,.25); border-color: #fff; }
+
+  /* PAGES */
+  .page { display: none; max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.04);
+  }
+  .card-header {
+    padding: 14px 18px; display: flex; align-items: center; gap: 10px;
+    cursor: pointer; user-select: none; border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .card-header:hover { background: #f8fafc; }
+  .card-header h3 { font-size: 1rem; font-weight: 600; flex: 1; }
+  .card-header .arrow { font-size: .9rem; color: var(--gray); transition: transform .25s; }
+  .card-header.closed .arrow { transform: rotate(-90deg); }
+  .card-body { padding: 18px; }
+  .card-body.hidden { display: none; }
+
+  /* TAG */
+  .tag {
+    display: inline-block; padding: 2px 10px; border-radius: 10px;
+    font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+  }
+  .tag-blue { background: var(--blue-light); color: #1e40af; }
+  .tag-green { background: var(--green-light); color: #065f46; }
+  .tag-yellow { background: var(--yellow-light); color: #92400e; }
+  .tag-red { background: var(--red-light); color: #991b1b; }
+  .tag-purple { background: var(--purple-light); color: #6b21a8; }
+  .tag-indigo { background: var(--indigo-light); color: #3730a3; }
+  .tag-orange { background: var(--orange-light); color: #7c2d12; }
+
+  /* DESC */
+  .desc {
+    background: #f8fafc; border-left: 3px solid var(--blue); padding: 10px 14px;
+    margin-bottom: 14px; border-radius: 0 8px 8px 0; font-size: .88rem; color: #475569;
+  }
+  .desc strong { color: var(--blue-dark); }
+
+  /* NOTE */
+  .note {
+    background: var(--yellow-light); border: 1px solid #fcd34d; border-radius: 8px;
+    padding: 10px 14px; margin-top: 12px; font-size: .84rem; color: #92400e;
+  }
+
+  /* MERMAID */
+  .mermaid { display: flex; justify-content: center; overflow-x: auto; margin: 8px 0; }
+
+  /* STATS ROW */
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stat {
+    flex: 1; min-width: 130px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; text-align: center;
+  }
+  .stat .num { font-size: 1.5rem; font-weight: 700; color: var(--blue); }
+  .stat .lbl { font-size: .76rem; color: var(--gray); margin-top: 2px; }
+
+  /* FOOTER */
+  footer {
+    text-align: center; padding: 20px; color: var(--gray); font-size: .8rem;
+    border-top: 1px solid var(--border); margin-top: 24px;
+  }
+
+  @media (max-width: 700px) {
+    .topnav { flex-direction: column; align-items: flex-start; }
+    .stats { flex-direction: column; }
+  }
+  @media print {
+    .topnav { position: static; }
+    .card-body.hidden { display: block !important; }
+    .page { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <h1>Compliance HC DCAC</h1>
+  <div class="tabs">
+    <div class="tab active" onclick="showPage('menu')">Menu</div>
+    <div class="tab" onclick="showPage('alta')">Alta Usuario</div>
+    <div class="tab" onclick="showPage('gestion')">Gestion Cliente</div>
+    <div class="tab" onclick="showPage('oi')">Op. Inusuales</div>
+    <div class="tab" onclick="showPage('reportes')">Reportes</div>
+    <div class="tab" onclick="showPage('usuarios')">Usuarios</div>
+  </div>
+</nav>
+
+<!-- ============================== MENU ============================== -->
+<div class="page active" id="page-menu">
+  <div class="stats">
+    <div class="stat"><div class="num">6</div><div class="lbl">Secciones del menu</div></div>
+    <div class="stat"><div class="num">3</div><div class="lbl">Niveles de acceso</div></div>
+    <div class="stat"><div class="num">3</div><div class="lbl">Organismos regulatorios</div></div>
+    <div class="stat"><div class="num">4</div><div class="lbl">Reportes</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Menu Principal — Herramienta de uso interno</h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">El personal interno de HC deCampo a Campo ingresa a la herramienta y ve <strong>6 secciones</strong> en el menu lateral.</div>
+      <div class="mermaid">
+flowchart LR
+  LOGIN["Login\nPersonal interno"] --> MENU["Menu Principal"]
+  MENU --> D["1. Dashboard"]
+  MENU --> AU["2. Alta de Usuario"]
+  MENU --> GC["3. Gestion del Cliente"]
+  MENU --> OI["4. Operaciones Inusuales"]
+  MENU --> REP["5. Reportes"]
+  MENU --> GU["6. Gestion de Usuarios"]
+
+  AU --> AU1["Aprobacion Docs"]
+  AU --> AU2["Datos Entidad"]
+  AU --> AU3["Riesgo"]
+  AU --> AU4["Alta Final"]
+
+  GC --> GC1["Ver / Editar datos"]
+  GC --> GC2["Gestionar docs y personas"]
+
+  OI --> OI1["Justificar"]
+  OI --> OI2["Pasar a Sospechosa"]
+
+  REP --> REP1["ARCA F.8126"]
+  REP --> REP2["BCRA Base Padron"]
+  REP --> REP3["UIF Apt A y B"]
+
+  GU --> GU1["Nivel 1 - Oficial"]
+  GU --> GU2["Nivel 2 - Analista"]
+  GU --> GU3["Nivel 3 - Atencion"]
+
+  style MENU fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px
+  style AU fill:#E0F2FE,stroke:#0EA5E9,stroke-width:2px
+  style GC fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style OI fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px
+  style REP fill:#F3E8FF,stroke:#A855F7,stroke-width:2px
+  style GU fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== ALTA USUARIO ============================== -->
+<div class="page" id="page-alta">
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Flujo Completo — Alta de Usuario <span class="tag tag-blue">KYC</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        La solicitud de alta llega desde la <strong>app del cliente</strong>. El analista interno la ve en su bandeja y sigue <strong>4 pasos</strong>: Aprobacion de documentacion, Datos de la entidad, Riesgo, y Alta final.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  START["Solicitud de alta\nllega desde app del cliente"] --> STEP1
+
+  subgraph STEP1 ["PASO 1 — Aprobacion Documentacion"]
+    A1["Analista abre legajo\ncon docs del cliente"] --> A2["Revisar cada\ndocumento"]
+    A2 --> A3{"Doc OK?"}
+    A3 -->|"Aprobar"| A4["Doc aprobado"]
+    A3 -->|"Rechazar"| A5["Rechazar con\nmotivo obligatorio"]
+    A5 --> A6["Se pide nuevo doc\nal cliente por fuera\nde la herramienta"]
+    A6 --> A6b["Analista recarga\nel doc en la herramienta"]
+    A6b --> A2
+    A4 --> A7{"Todos revisados?"}
+    A7 -->|"No"| A2
+    A7 -->|"Si"| A8["Documentacion OK"]
+  end
+
+  STEP1 --> STEP2
+
+  subgraph STEP2 ["PASO 2 — Datos de la Entidad"]
+    B1["Analista carga datos\nde la entidad"] --> B2["Cargar documentacion\nadicional"]
+    B2 --> B3["Cargar personas\nvinculadas"]
+    B3 --> B4["Beneficiario final, apoderado\ndirector, gerente, vicepresidente\n+ roles segun tipo sociedad"]
+    B4 --> B5["Screening PEP\ny REPET"]
+    B5 --> B5a{"Resultado"}
+    B5a -->|"PEP detectado"| B6["Riesgo auto-escala\na ALTO"]
+    B5a -->|"REPET detectado"| B6b["Alerta REPET\naccion a definir"]
+    B5a -->|"Sin coincidencias"| B7["Datos completos"]
+    B6 --> B7
+    B6b --> B7
+  end
+
+  STEP2 --> STEP3
+
+  subgraph STEP3 ["PASO 3 — Riesgo"]
+    C1["Balance del cliente\nrecibido desde app"] --> C2["Cargar ventas anuales\ndel anio del balance"]
+    C2 --> C3["Calcular NSE\nde la persona"]
+    C3 --> C4["Matriz de riesgo\nautomatica"]
+    C4 --> C5{"Nivel"}
+    C5 -->|"Bajo"| C6["Bajo"]
+    C5 -->|"Medio"| C7["Medio"]
+    C5 -->|"Alto/PEP"| C8["Alto"]
+  end
+
+  STEP3 --> STEP4
+
+  subgraph STEP4 ["PASO 4 — Alta Final"]
+    D1["Visualizar todo\nlo cargado"] --> D2{"Algo para corregir?"}
+    D2 -->|"Si"| D3["Editar directamente\ndesde esta pantalla"]
+    D3 --> D1
+    D2 -->|"No"| D4["Confirmar Alta"]
+    D4 --> D5["Cliente activo\nen el sistema"]
+  end
+
+  style START fill:#FEF3C7,stroke:#D97706,stroke-width:2px
+  style A8 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style A5 fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style B5 fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px
+  style B6 fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style B6b fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style B7 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style C6 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style C7 fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px
+  style C8 fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style D5 fill:#D1FAE5,stroke:#10B981,stroke-width:3px
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== GESTION CLIENTE ============================== -->
+<div class="page" id="page-gestion">
+
+  <!-- VISTA GENERAL -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Vista General — Gestion del Cliente <span class="tag tag-green">Gestion</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        El analista accede al listado de clientes (con filtros por CUIT, nombre, tipo de entidad y nivel de riesgo),
+        selecciona un cliente y entra a su <strong>ficha con 5 tabs</strong>: General, Personas, Documentos, Riesgo y DD, e Historial.
+        Desde aca tambien puede <strong>cambiar el estado</strong> del cliente (aprobar, rechazar, dar de baja).
+      </div>
+      <div class="mermaid">
+flowchart TD
+  START["Menu: Gestion del Cliente"] --> LIST["Listado de clientes\ncon filtros y busqueda"]
+  LIST --> FILTROS["Filtrar por CUIT, nombre\ntipo entidad, nivel riesgo"]
+  FILTROS --> SEL["Seleccionar cliente"]
+  SEL --> FICHA["Ficha del cliente"]
+
+  FICHA --> T1["Tab 1: General"]
+  FICHA --> T2["Tab 2: Personas"]
+  FICHA --> T3["Tab 3: Documentos"]
+  FICHA --> T4["Tab 4: Riesgo y DD"]
+  FICHA --> T5["Tab 5: Historial"]
+
+  FICHA --> ESTADO{"Estado actual\ndel cliente?"}
+  ESTADO -->|"Pendiente de alta"| PEND["Aprobar o Rechazar\ndesde aca o desde Alta"]
+  ESTADO -->|"Ya aprobado"| ACTIVO{"Cambiar estado\nde la cuenta"}
+  ACTIVO -->|"Bloquear"| BLQ["Cuenta bloqueada\nmotivo obligatorio"]
+  ACTIVO -->|"Activar"| ACT["Cuenta activa"]
+
+  style FICHA fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px
+  style T1 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style T2 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style T3 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style T4 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style T5 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style ESTADO fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style PEND fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px
+  style ACTIVO fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style BLQ fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style ACT fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB GENERAL -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Tab General — Datos del cliente <span class="tag tag-green">General</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        Visualizacion y edicion de los datos cargados en el alta: tipo sociedad, CUIT, razon social, direccion, estado, nivel de riesgo.
+        El analista puede <strong>editar cualquier campo</strong> y guardar cambios.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  A["Tab General"] --> B["Ver datos:\nCUIT, razon social\ntipo sociedad, direccion\nestado, riesgo"]
+  B --> C{"Editar?"}
+  C -->|"Si"| D["Modificar campos"]
+  D --> E["Guardar cambios"]
+  E --> F["Cambio registrado\nen historial"]
+  C -->|"No"| G["Solo visualizar"]
+
+  style A fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style E fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px
+  style F fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB PERSONAS -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Tab Personas — Vinculadas al cliente <span class="tag tag-green">Personas</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        Gestion de personas vinculadas al cliente. Al cargar una persona se completan <strong>3 bloques</strong>:<br>
+        1. <strong>Datos personales</strong>: nombre, apellido, DNI (obligatorios) + mail, telefono (opcionales) + domicilio (obligatorio).<br>
+        2. <strong>Esquema firmantes</strong>: se define si la persona es firmante y tipo de firma (individual, conjunta, indistinta).<br>
+        3. <strong>Documentacion</strong>: DNI frente y dorso siempre + otros documentos segun corresponda.<br><br>
+        Roles segun tipo de sociedad — generales: <strong>beneficiario final, apoderado, director, gerente, vicepresidente</strong>.
+        Solo SA: <strong>presidente, accionista</strong>. Solo SRL: <strong>socio</strong>. Solo Sucesion: <strong>heredero</strong>.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  A["Tab Personas"] --> B["Lista de personas\nvinculadas al cliente"]
+  B --> C{"Accion"}
+  C -->|"Agregar"| D["Seleccionar rol\nsegun tipo sociedad"]
+  C -->|"Modificar"| E["Editar datos\nde persona existente"]
+  C -->|"Desvincular"| F["Quitar persona\ndel cliente"]
+
+  D --> DATOS["1. Datos personales\nNombre, Apellido, DNI oblig.\nMail, Telefono opcionales\nDomicilio oblig."]
+  DATOS --> FIRM["2. Esquema firmantes\nEs firmante? Tipo firma:\nindividual / conjunta / indistinta"]
+  FIRM --> DOCS["3. Documentacion\nDNI frente y dorso siempre\n+ otros docs segun corresponda"]
+
+  DOCS --> SCR["Screening PEP\ny REPET"]
+  SCR --> PEP{"Resultado"}
+  PEP -->|"PEP"| PEPSI["Riesgo auto-escala\na ALTO"]
+  PEP -->|"REPET"| REPET["Alerta REPET\naccion a definir"]
+  PEP -->|"Sin coincidencias"| OK["Persona cargada"]
+
+  E --> H["Guardar cambios"]
+  F --> I["Persona desvinculada"]
+
+  style A fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style C fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style DATOS fill:#E0F2FE,stroke:#0EA5E9,stroke-width:2px
+  style FIRM fill:#E0F2FE,stroke:#0EA5E9,stroke-width:2px
+  style DOCS fill:#E0F2FE,stroke:#0EA5E9,stroke-width:2px
+  style SCR fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px
+  style PEP fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style PEPSI fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style REPET fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style OK fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB DOCUMENTOS -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Tab Documentos — Gestion documental <span class="tag tag-green">Documentos</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        Ver documentos cargados, subir nuevos documentos internos o actualizar versiones existentes.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  A["Tab Documentos"] --> B["Lista de documentos\ndel cliente"]
+  B --> C{"Accion"}
+  C -->|"Ver"| D["Visualizar documento"]
+  C -->|"Agregar"| E["Subir nuevo\ndocumento"]
+  C -->|"Actualizar"| F["Reemplazar con\nnueva version"]
+
+  style A fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style C fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB RIESGO & DD -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Tab Riesgo y DD — Evaluacion de riesgo <span class="tag tag-green">Riesgo</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        Nivel de riesgo del cliente (Bajo, Medio, Alto) calculado por la <strong>matriz de riesgo</strong> y el <strong>NSE</strong>.
+        Tipo de debida diligencia asociada: <strong>DDS</strong> (simplificada), <strong>DDM</strong> (media) o <strong>DDR</strong> (reforzada).
+        Se puede ver el historial de evaluaciones y re-evaluar.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  A["Tab Riesgo y DD"] --> B["Ver nivel actual\nBajo / Medio / Alto"]
+  B --> C["Tipo DD:\nDDS / DDM / DDR"]
+  B --> D["Ver historial\nde evaluaciones"]
+  B --> E{"Re-evaluar?"}
+  E -->|"Si"| F["Recalcular matriz\n+ NSE"]
+  F --> G{"PEP?"}
+  G -->|"Si"| H["Riesgo = ALTO"]
+  G -->|"No"| I["Riesgo segun\nmatriz ponderada"]
+  E -->|"No"| J["Mantener actual"]
+
+  style A fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style E fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style H fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style I fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB HISTORIAL -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Tab Historial — Auditoria <span class="tag tag-green">Historial</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        Registro completo de todas las acciones realizadas sobre el cliente: cambios de estado, modificaciones de datos, evaluaciones de riesgo.
+        Incluye <strong>usuario, fecha, IP y motivo</strong> de cada accion.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  A["Tab Historial"] --> B["Timeline de acciones"]
+  B --> C["Cambios de estado\naprobado, rechazado, baja"]
+  B --> D["Modificaciones de datos\ncampos editados"]
+  B --> E["Evaluaciones de riesgo\nnivel anterior vs nuevo"]
+  B --> F["Cada registro incluye:\nusuario, fecha, IP, motivo"]
+
+  style A fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style F fill:#F1F5F9,stroke:#64748B,stroke-width:2px
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== OPERACIONES INUSUALES ============================== -->
+<div class="page" id="page-oi">
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Flujo — Operaciones Inusuales <span class="tag tag-yellow">OI</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        Las OI se generan <strong>automaticamente</strong> por alertas del sistema.
+        El analista las analiza y tiene 2 opciones: <strong>Justificar</strong> (motivo obligatorio, docs opcionales)
+        o <strong>pasar a Operacion Sospechosa</strong> (el ROS se hace por fuera de la herramienta).
+      </div>
+      <div class="mermaid">
+flowchart TD
+  A["Sistema genera alerta\nautomatica de OI"] --> B["OI aparece en bandeja\ndel analista"]
+  B --> C["Analista abre y\nanaliza la operacion"]
+  C --> D["Revisar detalles:\ncliente, monto, tipo"]
+  D --> E{"Decision"}
+
+  E -->|"Justificar"| F["Escribir motivo\nobligatorio"]
+  F --> G{"Adjuntar docs?"}
+  G -->|"Si"| H["Subir documentacion"]
+  G -->|"No"| I["Continuar sin docs"]
+  H --> J["OI Justificada\nCaso cerrado"]
+  I --> J
+
+  E -->|"Sospechosa"| K["Marcar como\nOperacion Sospechosa"]
+  K --> L["Registrar como OS\nen el sistema"]
+  L --> M["Reportar ROS\npor fuera de la herramienta"]
+
+  style A fill:#FFF7ED,stroke:#F97316,stroke-width:2px
+  style E fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style J fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style K fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style M fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== REPORTES ============================== -->
+<div class="page" id="page-reportes">
+
+  <!-- VISTA GENERAL -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Vista General — Reportes Regulatorios <span class="tag tag-purple">Reportes</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        3 organismos, 4 reportes. El analista selecciona periodo, aprieta un boton y se descarga el archivo.
+        <strong>ARCA</strong> se envia automatico via WSM. <strong>BCRA</strong> y <strong>UIF</strong> se exportan a .txt y se envian manualmente.
+        El Apartado C de UIF queda fuera de la herramienta (lo hace el contador externo).
+      </div>
+      <div class="mermaid">
+flowchart TD
+  START["Reportes Regulatorios"] --> SEL{"Organismo"}
+
+  SEL -->|"ARCA"| ARCA["F.8126 — Mensual\nEnvio automatico WSM"]
+  SEL -->|"BCRA"| BCRA["Base Padron — Mensual\nExport .txt + RUNOR"]
+  SEL -->|"UIF"| UIF{"Apartado"}
+  UIF -->|"A"| UIFA["Apartado A — Mensual\nSaldos supervision BCRA"]
+  UIF -->|"B"| UIFB["Apartado B — Mensual\nInfo estadistica + razonabilidad"]
+
+  ARCA --> A1["Seleccionar periodo"] --> A2["Generar"] --> A3["Validar"] --> A4["Envio WSM"]
+  BCRA --> B1["Seleccionar periodo"] --> B2["Generar"] --> B3["Descarga .txt"]
+  UIFA --> UA1["Seleccionar periodo"] --> UA2["Generar"] --> UA3["Descarga .txt"]
+  UIFB --> UB1["Seleccionar periodo"] --> UB2["Generar"] --> UB3["Control razonabilidad"] --> UB4["Descarga .txt"]
+
+  style ARCA fill:#E0F2FE,stroke:#0EA5E9,stroke-width:2px
+  style BCRA fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style UIFA fill:#F3E8FF,stroke:#A855F7,stroke-width:2px
+  style UIFB fill:#F3E8FF,stroke:#A855F7,stroke-width:2px
+  style A4 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style B3 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style UA3 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style UB4 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCA DETALLE -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>ARCA — F.8126 Detalle <span class="tag tag-blue">ARCA</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        El F.8126 responde 4 preguntas: <strong>quien</strong> tiene cuentas (KYC), <strong>que cuentas</strong> existen (CVU),
+        <strong>cuanta plata</strong> tienen (saldos) y <strong>que hicieron</strong> con la plata (movimientos).
+        Archivo con 5 tipos de registro. Envio automatico via WSM. Soporta rectificativas.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  A["Seleccionar periodo\nAAAAMM"] --> B{"Ya existe\npresentacion?"}
+  B -->|"Si"| B1["Rectificativa\nSecuencia +1"]
+  B -->|"No"| B2["Original\nSecuencia 00"]
+  B1 --> C
+  B2 --> C
+
+  C["Sistema genera archivo"] --> D["Reg 01: Cabecera\n261 chars"]
+  D --> E["Reg 02: Cuentas\nCVU, saldos, tipo"]
+  E --> F["Reg 03: Integrantes\npersonas por cuenta"]
+  F --> G["Reg 04: Movimientos\nagrupados tipo+mov+moneda"]
+  G --> H{"Mov es transferencia?"}
+  H -->|"Si 02/03"| I["Reg 05: Detalle transf\nCBU/CVU destino + monto"]
+  H -->|"No efectivo"| J["Sin Reg 05"]
+  I --> K
+  J --> K
+
+  K["Vista previa + conteo"] --> L["Validar"]
+  L --> M{"OK?"}
+  M -->|"Errores"| N["Lista errores\nCorregir y regenerar"]
+  N --> C
+  M -->|"OK"| O["Envio automatico\nWSM a ARCA"]
+  O --> P{"Respuesta"}
+  P -->|"OK"| Q["Enviada"]
+  P -->|"Error"| R["Reintento auto\nhasta 3 veces"]
+
+  style A fill:#E0F2FE,stroke:#0EA5E9,stroke-width:2px
+  style Q fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style N fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px
+  style R fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+      </div>
+    </div>
+  </div>
+
+  <!-- BCRA DETALLE -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>BCRA — Base Padron Detalle <span class="tag tag-green">BCRA</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        El sistema registra <strong>automaticamente</strong> novedades de clientes durante el mes:
+        Alta (10), Baja (20), Modificacion (30 — cambio PEP o cod postal).
+        Al cierre el analista genera, se descarga el .txt y lo envia manual via RUNOR.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  A["Durante el mes:\ncaptura automatica"] --> B["Alta 10\nCliente aprobado"]
+  A --> C["Baja 20\nCliente desactivado"]
+  A --> D["Modificacion 30\nCambio PEP o cod postal"]
+  B --> E["Cola de novedades"]
+  C --> E
+  D --> E
+
+  E --> F["Cierre del mes:\nanalista genera reporte"]
+  F --> G{"Primera vez?"}
+  G -->|"Si"| H["Base completa\nde activos"]
+  G -->|"No"| I["Solo novedades\ndel mes"]
+  H --> J
+  I --> J
+  J["Vista previa + totales"] --> K["Descarga .txt"]
+  K --> L["Envio manual\nvia RUNOR"]
+  L --> M["Marcar enviada"]
+
+  style A fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style K fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px
+  style M fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+      </div>
+    </div>
+  </div>
+
+  <!-- UIF DETALLE -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>UIF — Apartado A y B Detalle <span class="tag tag-purple">UIF</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        <strong>Apartado A</strong> (mensual, vence dia 22): saldos cuentas de pago, FCIs y saldos a liquidar. Importes en miles de pesos sin decimales.<br>
+        <strong>Apartado B</strong> (mensual, vence dia 22): transacciones credito/debito, transferencias CVU-CBU, clientes/cuentas, prestamos.
+        Incluye <strong>control de razonabilidad</strong> automatico (Saldo = Anterior + Creditos - Debitos).
+        Si hay diferencia, justificacion obligatoria antes de exportar.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  START["UIF Apartados"] --> SEL{"Apartado"}
+
+  SEL -->|"A"| AA1["Seleccionar periodo"]
+  AA1 --> AA2["Sistema consolida:\nA. Saldos cuentas de pago\nB. Saldos FCIs\nC. Saldos a liquidar"]
+  AA2 --> AA3["Miles de pesos\nsin decimales"]
+  AA3 --> AA4["Descarga .txt"]
+  AA4 --> AA5["Envio manual\nplataforma UIF"]
+  AA5 --> AA6["Marcar enviada"]
+
+  SEL -->|"B"| AB1["Seleccionar periodo"]
+  AB1 --> AB2["Sistema consolida:\nA. Transacciones cred/deb\nB. Transferencias CVU-CBU\nC. Clientes y cuentas\nD. Prestamos"]
+  AB2 --> AB3["Control razonabilidad\nSaldo = Ant + Cred - Deb"]
+  AB3 --> AB4{"OK?"}
+  AB4 -->|"OK"| AB5["Descarga .txt"]
+  AB4 -->|"Diferencia"| AB6["Justificacion\nobligatoria"]
+  AB6 --> AB5
+  AB5 --> AB7["Envio manual\nplataforma UIF"]
+
+  style SEL fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style AA4 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style AA6 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style AB4 fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style AB5 fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style AB6 fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== GESTION USUARIOS ============================== -->
+<div class="page" id="page-usuarios">
+  <div class="card">
+    <div class="card-header" onclick="toggle(this)">
+      <h3>Flujo — Gestion de Usuarios <span class="tag tag-indigo">Usuarios</span></h3>
+      <span class="arrow">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="desc">
+        Solo <strong>Nivel 1</strong> (Emilio Herz, Oficial de Cumplimiento) puede gestionar usuarios.
+        3 niveles de acceso con permisos diferenciados.
+      </div>
+      <div class="mermaid">
+flowchart TD
+  START["Menu: Gestion de Usuarios"] --> A{"Es Nivel 1?"}
+  A -->|"No"| B["Acceso denegado"]
+  A -->|"Si"| C["Panel de usuarios"]
+
+  C --> D{"Accion"}
+  D -->|"Crear"| E["Datos: nombre\nemail, nivel"]
+  D -->|"Editar"| F["Modificar datos\no nivel"]
+  D -->|"Desactivar"| G["Desactivar cuenta"]
+
+  E --> H{"Nivel"}
+  H -->|"1"| I["Oficial Cumplimiento\nEmilio Herz\nAcceso total, da altas"]
+  H -->|"2"| J["Analista Compliance\nPuede ver y editar"]
+  H -->|"3"| K["Analista Atencion\nal Cliente\nSolo puede ver"]
+
+  I --> L["Usuario creado"]
+  J --> L
+  K --> L
+
+  style A fill:#E0E7FF,stroke:#6366F1,stroke-width:2px
+  style B fill:#FEE2E2,stroke:#EF4444,stroke-width:2px
+  style I fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+  style J fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px
+  style K fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px
+  style L fill:#D1FAE5,stroke:#10B981,stroke-width:2px
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <strong>Herramienta de Compliance — HC deCampo a Campo</strong><br>
+  Flujos del Sistema &bull; Abril 2026 &bull; Uso interno
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    securityLevel: 'loose',
+    themeVariables: {
+      primaryColor: '#dbeafe', primaryTextColor: '#1e3a5f', primaryBorderColor: '#3b82f6',
+      lineColor: '#64748b', secondaryColor: '#f0fdf4', tertiaryColor: '#fef3c7',
+      fontFamily: 'Segoe UI, system-ui, sans-serif', fontSize: '13px'
+    },
+    flowchart: { curve: 'basis', padding: 12, nodeSpacing: 25, rankSpacing: 35, useMaxWidth: true }
+  });
+
+  // Store original mermaid source code before any rendering
+  const mermaidSources = new Map();
+  document.querySelectorAll('.mermaid').forEach((el, i) => {
+    mermaidSources.set(el, el.textContent.trim());
+  });
+
+  const rendered = new Set();
+
+  async function renderPage(id) {
+    if (rendered.has(id)) return;
+    rendered.add(id);
+    const page = document.getElementById('page-' + id);
+    if (!page) return;
+    const elems = page.querySelectorAll('.mermaid');
+    for (let i = 0; i < elems.length; i++) {
+      const el = elems[i];
+      const code = mermaidSources.get(el);
+      if (!code) continue;
+      const uniqueId = 'mm-' + id + '-' + i + '-' + Date.now();
+      try {
+        const { svg } = await mermaid.render(uniqueId, code);
+        el.innerHTML = svg;
+      } catch (e) {
+        el.innerHTML = '<p style="color:red;padding:12px;">Error renderizando diagrama. Ver consola.</p>';
+        console.error('Mermaid error on', id, i, e);
+      }
+    }
+  }
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    event.target.classList.add('active');
+    // Small delay to ensure the page is visible before rendering
+    setTimeout(() => renderPage(id), 50);
+  }
+
+  function toggle(header) {
+    const body = header.nextElementSibling;
+    body.classList.toggle('hidden');
+    header.classList.toggle('closed');
+  }
+
+  // Render the initial active page on load
+  document.addEventListener('DOMContentLoaded', () => {
+    renderPage('menu');
+  });
+</script>
+</body>
+</html>
