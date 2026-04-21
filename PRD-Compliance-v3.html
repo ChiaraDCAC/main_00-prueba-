@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD — Herramienta Compliance PSP v3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.7; }
+  .container { max-width: 960px; margin: 0 auto; padding: 48px 32px; background: white; min-height: 100vh; box-shadow: 0 0 0 1px #e2e8f0; }
+  h1 { font-size: 2rem; font-weight: 800; color: #0f172a; border-bottom: 4px solid #3879a3; padding-bottom: 16px; margin-bottom: 24px; }
+  h2 { font-size: 1.3rem; font-weight: 700; color: #3879a3; margin-top: 40px; margin-bottom: 12px; padding: 10px 16px; background: #f0f9ff; border-left: 4px solid #3879a3; border-radius: 0 8px 8px 0; }
+  h3 { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-top: 28px; margin-bottom: 8px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; }
+  h4 { font-size: 0.95rem; font-weight: 600; color: #475569; margin-top: 20px; margin-bottom: 6px; }
+  p { margin: 10px 0; }
+  ul, ol { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  code { background: #f1f5f9; color: #c0392b; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; font-family: 'SF Mono', Consolas, monospace; }
+  pre { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
+  pre code { background: none; color: inherit; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.88rem; }
+  thead tr { background: #3879a3; color: white; }
+  th { padding: 10px 14px; text-align: left; font-weight: 600; }
+  td { border: 1px solid #e2e8f0; padding: 8px 14px; }
+  tr:nth-child(even) { background: #f8fafc; }
+  hr { border: none; border-top: 2px solid #e2e8f0; margin: 32px 0; }
+  blockquote { border-left: 4px solid #f59e0b; margin: 12px 0; padding: 10px 16px; background: #fffbeb; color: #92400e; border-radius: 0 6px 6px 0; }
+  strong { color: #0f172a; font-weight: 700; }
+  a { color: #3879a3; }
+  @media print { body { background: white; } .container { box-shadow: none; padding: 24px; } }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>PRD - Herramienta Compliance PSP</h1>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Status</strong></td>
+<td>En curso</td>
+</tr>
+<tr>
+<td><strong>Author(s)</strong></td>
+<td>Chiara Giralt · Lanfranco Bortolin · Jerónimo Rech</td>
+</tr>
+<tr>
+<td><strong>Stakeholders</strong></td>
+<td>Administración · Compliance · Atención al Cliente · Legal</td>
+</tr>
+<tr>
+<td><strong>Team</strong></td>
+<td>Producto · Operaciones · Tecnología</td>
+</tr>
+<tr>
+<td><strong>Last Updated</strong></td>
+<td>Abril 2026 — v3</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Resumen Ejecutivo</h2>
+<p>Se está desarrollando una herramienta interna de Compliance para deCampoPagos (dCP) que centraliza la gestión de onboarding de clientes, validación documental, monitoreo de operaciones y generación de reportes regulatorios. El sistema da respuesta a los requerimientos del BCRA y la UIF que deben cumplirse para operar como Proveedor de Servicios de Pago (PSP).</p>
+<p>El producto reemplaza procesos manuales dispersos por un sistema estructurado que permite al equipo de Compliance gestionar legajos, aprobar o rechazar clientes con trazabilidad completa, detectar operaciones inusuales y emitir Reportes de Operaciones Sospechosas (ROS) ante la UIF, todo desde un único entorno centralizado.</p>
+<p>Hay dos perfiles de usuario principales: <strong>analista de Compliance</strong> (revisión, aprobación, riesgo) y <strong>analista de Atención al Cliente</strong> (carga de documentación, seguimiento, comunicación con el cliente).</p>
+<hr>
+<h2>Definición del Problema</h2>
+<h3>¿Por qué?</h3>
+<p><strong>Problema del usuario:</strong>
+El equipo de Compliance no cuenta con un sistema centralizado. Documentación dispersa en emails, carpetas compartidas y hojas de cálculo genera:</p>
+<ul>
+<li>Falta de trazabilidad en decisiones de aprobación/rechazo de clientes.</li>
+<li>Riesgo de inconsistencias o errores en la información registrada.</li>
+<li>Dificultad para auditar el proceso ante BCRA o UIF.</li>
+<li>Dependencia de personas clave para operar el proceso.</li>
+</ul>
+<p><strong>Problema del negocio:</strong>
+La expansión hacia lending y factoring requiere constituirse como PSP. BCRA y UIF exigen recolección, verificación y conservación de información KYC, así como gestión de prevención de lavado de activos y financiamiento del terrorismo (PLA/FT). Sin un sistema que respalde estos procesos, la empresa no puede operar bajo las nuevas líneas de negocio ni responder adecuadamente a auditorías regulatorias.</p>
+<h3>¿Para qué?</h3>
+<ul>
+<li><strong>Para el equipo de Compliance</strong>: Contar con un flujo estructurado que centralice datos, documentación y decisiones en un único lugar.</li>
+<li><strong>Para el equipo de Atención al Cliente</strong>: Saber qué documentación está pendiente, rechazada o vencida para solicitarla al cliente con claridad y en tiempo.</li>
+<li><strong>Para el negocio</strong>: Habilitar la operación como PSP cumpliendo requerimientos del BCRA y la UIF, reduciendo el riesgo de sanciones.</li>
+<li><strong>Para la empresa</strong>: Escalar el proceso de onboarding sin incrementar linealmente el equipo de Compliance.</li>
+</ul>
+<hr>
+<h2>Medición - KPIs y Resultados Esperados</h2>
+<h3>Métricas de Adopción</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>% de altas gestionadas en el sistema vs. total onboardeados</td>
+<td>0%</td>
+<td>100%</td>
+<td>Clientes creados en sistema vs. total reportado por operaciones</td>
+</tr>
+<tr>
+<td>% de documentación cargada en sistema vs. recibida por mail</td>
+<td>0%</td>
+<td>90%</td>
+<td>Documentos en BD vs. flujo de mail</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Uso</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tiempo promedio de revisión de legajo (pendiente → aprobado/rechazado)</td>
+<td>No medido</td>
+<td>&lt; 48 hs</td>
+<td>Diferencia de timestamps en BD</td>
+</tr>
+<tr>
+<td>% de clientes con legajo completo al momento de aprobación</td>
+<td>No medido</td>
+<td>100%</td>
+<td>Documentos requeridos vs. presentes por cliente</td>
+</tr>
+<tr>
+<td>Operaciones inusuales registradas con evidencia adjunta</td>
+<td>0</td>
+<td>100% de casos abiertos</td>
+<td>Casos con evidencia en BD</td>
+</tr>
+</tbody></table>
+<h3>Métricas de Negocio / Compliance</h3>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Baseline</th>
+<th>Target</th>
+<th>Cómo se mide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clientes aprobados por mes con trazabilidad completa en audit log</td>
+<td>0</td>
+<td>100%</td>
+<td>Audit log en BD</td>
+</tr>
+<tr>
+<td>ROS emitidos a la UIF registrados en sistema</td>
+<td>0</td>
+<td>100%</td>
+<td>Tabla <code>suspicious_reports</code></td>
+</tr>
+<tr>
+<td>Tiempo de respuesta ante auditoría regulatoria (consulta de legajo)</td>
+<td>No medido</td>
+<td>&lt; 2 hs</td>
+<td>Manual</td>
+</tr>
+<tr>
+<td>% de aprobaciones con observaciones (docs pendientes)</td>
+<td>No medido</td>
+<td>&lt; 15%</td>
+<td>Registros de aprobación con <code>pendingDocsCount &gt; 0</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Discovery</h2>
+<h3>Casos de Uso Principales</h3>
+<p><strong>CU-00 — Alta de usuario y lectura de documentación</strong>
+El analista de Compliance revisa la documentación enviada por el cliente (específica según el tipo de sociedad), la aprueba o rechaza con motivo registrado, carga los datos del cliente en el sistema, asigna el nivel de riesgo y perfil transaccional, y da de alta al usuario. Si queda documentación o campos pendientes, el proceso queda en estado &quot;Pendiente de Alta&quot;.</p>
+<p><strong>CU-01 — Envío de reportes regulatorios</strong>
+El analista genera reportes regulatorios (Base Padrón, Apartado A/B/C, UIF) consolidando información del sistema. El proceso incluye validaciones automáticas, revisión manual y envío en plazo. El sistema guarda historial y comprobantes de envío.</p>
+<p><strong>CU-02 — Definición de riesgo</strong>
+El analista evalúa el perfil del cliente en base a múltiples variables y asigna un nivel de riesgo (bajo, medio, alto). En función de esto determina el tipo de debida diligencia (simplificada, media o reforzada). La decisión queda registrada con justificación.</p>
+<p><strong>CU-03 — Clasificación de operaciones inusuales</strong>
+El analista monitorea transacciones potencialmente inusuales, las analiza contra el perfil del cliente y toma una decisión: justificar, descartar o elevar a ROS. El sistema centraliza evidencia, comentarios y decisiones. El ROS se gestiona fuera de la herramienta (por normativa vigente).</p>
+<p><strong>CU-04 — Gestión de clientes</strong>
+El analista accede al legajo completo del cliente: información, documentación, riesgo, estado de cuenta y alertas pendientes. Permite seguimiento integral, identificación de vencimientos y toma de decisiones.</p>
+<p><strong>CU-05 — Gestión de alertas</strong>
+El sistema genera alertas automáticas por vencimientos de documentación, altas pendientes y observaciones. El analista las gestiona, registra acciones y puede escalarlas.</p>
+<h3>Diagrama de Flujo — Onboarding</h3>
+<pre><code>[1. Revisión de documentación]
+    ↓ cliente seleccionado de bandeja de pendientes
+[2. Carga de datos de la entidad]
+    ↓ datos de la sociedad + personas vinculadas
+[3. Riesgo y perfil transaccional]
+    ↓ asignación de nivel de riesgo + due diligence
+[4. Alta Final]
+    ↓ resumen del legajo
+    ┌──────────────────────────────────┐
+    ↓                                  ↓
+[Aprobar]                    [Rechazar / Solicitar Info]
+[Aprobar con observaciones]
+</code></pre>
+<h3>Stack Técnico</h3>
+<table>
+<thead>
+<tr>
+<th>Capa</th>
+<th>Tecnología</th>
+<th>Estado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Frontend</td>
+<td>React + TypeScript + Vite + Tailwind</td>
+<td>En desarrollo</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Node.js + Express + Sequelize</td>
+<td>Desarrollado</td>
+</tr>
+<tr>
+<td>Base de datos (dev)</td>
+<td>SQLite</td>
+<td>Operativo en local</td>
+</tr>
+<tr>
+<td>Base de datos (prod)</td>
+<td>PostgreSQL</td>
+<td>Pendiente migración</td>
+</tr>
+<tr>
+<td>Lectura de DNI</td>
+<td>API 4i (app del cliente)</td>
+<td>Post-MVP</td>
+</tr>
+<tr>
+<td>Hosting</td>
+<td>Por definir (Vercel + Railway/Render)</td>
+<td>Pendiente</td>
+</tr>
+</tbody></table>
+<h3>Documentación relacionada</h3>
+<ul>
+<li>Diagrama ER: <code>diagrama-er.html</code></li>
+<li>Flujo de alta: <code>Flujos_Alta_Compliance.html</code></li>
+<li>Flujo integral: <code>Flujo_Integral_Compliance.html</code></li>
+<li>Campos por documento: <code>Campos_por_Documento_Compliance.docx</code></li>
+</ul>
+<hr>
+<h2>Requerimientos</h2>
+<hr>
+<h3>MÓDULO 1 — Alta de Usuario (KYC Onboarding)</h3>
+<hr>
+<p><strong>RF-00 / RF-01 · Como analista de Compliance</strong>
+quiero aprobar o rechazar la documentación recibida del cliente
+para tener registro completo del estado de cada documento antes de avanzar con el alta</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Cada documento tiene estado: <code>Pendiente de carga</code> / <code>Cargado — Pendiente revisión</code> / <code>Aprobado</code> / <code>Rechazado</code> / <code>Solicitado</code></li>
+<li>Al aprobar un documento, el estado cambia a <code>Aprobado</code> y se registra usuario y fecha en el audit log</li>
+<li>El analista puede volver a rechazar un documento que ya fue aprobado (incluso cuando todos los docs están aprobados)</li>
+<li>Al rechazar, el campo motivo de rechazo es obligatorio (mínimo 10 caracteres)</li>
+<li>El legajo muestra el porcentaje de completitud documental en tiempo real</li>
+</ul>
+<hr>
+<p><strong>RF-02 · Como analista de Compliance</strong>
+quiero que al rechazar documentación se registre obligatoriamente el motivo
+para que Atención al Cliente sepa qué comunicarle al cliente al solicitar la corrección</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El campo &quot;Motivo de rechazo&quot; es obligatorio al marcar un documento como <code>Rechazado</code></li>
+<li>El motivo queda visible en el historial del legajo y accesible para el rol de Atención al Cliente</li>
+<li>No es posible guardar el rechazo sin motivo; el sistema muestra error antes de confirmar</li>
+</ul>
+<hr>
+<p><strong>RF-03 · Como analista de Compliance</strong>
+quiero poder volver a aprobar o rechazar documentación ya rechazada
+para verificar si la nueva versión entregada por el cliente es correcta</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Un documento en estado <code>Rechazado</code> puede pasar a <code>Aprobado</code> o a <code>Solicitado</code></li>
+<li>Un documento en estado <code>Aprobado</code> puede pasar a <code>Rechazado</code> (con motivo obligatorio)</li>
+<li>Cada cambio de estado queda registrado en el historial del documento con usuario y fecha</li>
+</ul>
+<hr>
+<p><strong>RF-04 · Como analista de Atención al Cliente</strong>
+quiero poder leer los motivos de rechazo de documentación
+para solicitar correctamente la corrección al cliente</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El rol Atención al Cliente puede ver el detalle del legajo con el motivo de rechazo de cada documento</li>
+<li>Los motivos son visibles en el listado de documentos del cliente sin necesidad de abrir el modal de rechazo</li>
+<li>No puede modificar ni aprobar/rechazar documentos; solo lectura</li>
+</ul>
+<hr>
+<p><strong>RF-05 · Como analista de Atención al Cliente</strong>
+quiero poder cargar la documentación que fue solicitada
+para avanzar con el proceso de alta una vez que el cliente la entregó</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El rol Atención al Cliente puede subir archivos (PDF, JPG, PNG, máx. 10 MB) en los documentos en estado <code>Rechazado</code> o <code>Solicitado</code></li>
+<li>Al cargar el archivo, el estado del documento pasa a <code>Cargado — Pendiente revisión</code></li>
+<li>Se registra en el audit log: quién cargó el archivo y cuándo</li>
+</ul>
+<hr>
+<p><strong>RF-06 · Como analista de Compliance</strong>
+quiero tener acceso a la documentación completa del cliente
+para avanzar con la carga de datos en el proceso de alta</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema muestra el checklist de documentos requeridos según el tipo de entidad (SA, SRL, SH, Sucesión, Monotributista)</li>
+<li>Cada documento puede visualizarse inline (PDF viewer sin necesidad de descargar)</li>
+<li>El estado de cada documento es visible en el listado antes de abrirlo</li>
+</ul>
+<hr>
+<p><strong>RF-07 · Como analista de Compliance</strong>
+quiero poder continuar con la carga de datos aunque no tenga toda la documentación
+para no bloquear el proceso cuando el cliente aún no entregó ciertos documentos</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema <strong>no bloquea</strong> el avance al paso &quot;Datos Entidad&quot; por documentos faltantes</li>
+<li>Si hay documentos requeridos sin aprobar al momento de finalizar el alta, el botón cambia a <strong>&quot;Aprobar con observaciones (N)&quot;</strong> (color ámbar, N = cantidad de docs pendientes)</li>
+<li>El audit log registra explícitamente cuántos y cuáles documentos estaban pendientes al momento de la aprobación</li>
+<li>El sistema muestra una advertencia informativa (no bloqueante) al avanzar con docs incompletos</li>
+</ul>
+<hr>
+<p><strong>RF-07b · Como analista de Compliance</strong>
+quiero poder solicitar información adicional al cliente sin rechazarlo
+para darle la oportunidad de completar su legajo antes de tomar una decisión definitiva</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El analista puede registrar una solicitud de información mediante el botón &quot;Solicitar Info&quot; en la pantalla de revisión</li>
+<li>El sistema actualiza el estado del cliente a <code>info_solicitada</code> y registra el motivo ingresado (obligatorio, mínimo 20 caracteres)</li>
+<li>La solicitud queda visible en el historial del legajo con fecha y usuario</li>
+<li>El cliente puede volver a estado <code>En Revisión</code> cuando el analista retoma el proceso</li>
+</ul>
+<hr>
+<p><strong>RF-08 · Como analista de Compliance</strong>
+quiero poder guardar el progreso del alta mediante un botón de guardado
+para no perder la información cargada y retomar el proceso en otro momento</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema expone un botón &quot;Guardar borrador&quot; visible en cada paso del flujo de alta</li>
+<li>Al guardar, los datos del formulario y los estados de revisión de documentos se persisten</li>
+<li>Al retomar el proceso, el sistema restaura el último estado guardado</li>
+<li>Al navegar entre pasos sin guardar, el sistema advierte si hay cambios no guardados antes de salir</li>
+</ul>
+<hr>
+<p><strong>RF-08b · Como analista de Compliance</strong>
+quiero poder navegar libremente entre los pasos del flujo de alta
+para revisar o corregir información de pasos anteriores sin perder lo cargado</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El paso &quot;Datos Entidad&quot; (paso 2) muestra un botón &quot;Volver a Revisión de Docs.&quot; visible en la parte superior del contenido</li>
+<li>Al volver al paso 1, los estados de revisión de documentos se conservan íntegros</li>
+<li>Cuando todos los documentos están aprobados (<code>readyForAlta</code>), la fila del cliente muestra el botón &quot;Continuar&quot; pero también un toggle para expandir y revisar documentos individuales</li>
+<li>Los documentos aprobados pueden re-rechazarse incluso en estado <code>readyForAlta</code></li>
+</ul>
+<hr>
+<h3>MÓDULO 2 — Personas Vinculadas</h3>
+<hr>
+<p><strong>RF-PV-01 · Como analista de Compliance</strong>
+quiero registrar todas las personas vinculadas a una entidad (socios, directores, apoderados, herederos, beneficiarios finales)
+para cumplir con los requerimientos de la UIF sobre identificación de beneficiarios últimos</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Para cada persona se pueden registrar: apellido, nombre, CUIT/CUIL, número de documento, tipo de documento, fecha de nacimiento, domicilio, email, teléfono, actividad laboral, condición PEP, REPET, porcentaje de participación, cargo, facultades, vigencia del poder</li>
+<li>Los roles disponibles varían según el tipo de entidad:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Rol</th>
+<th>SA</th>
+<th>SRL</th>
+<th>SH</th>
+<th>Sucesión</th>
+<th>Monotributista</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Beneficiario Final</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Accionista</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Socio</td>
+<td>—</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Presidente</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Director</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Gerente</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Apoderado</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Heredero</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Administrador</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✓</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Si se marca como PEP, el sistema solicita la declaración PEP antes de poder aprobar el alta</li>
+<li>La suma de porcentajes de participación de beneficiarios finales no puede superar 100%; el sistema valida en tiempo real</li>
+</ul>
+<hr>
+<p><strong>RF-PV-02 · Como analista de Compliance</strong>
+quiero que los datos de identidad de cada persona se pre-carguen automáticamente desde la lectura de DNI realizada por la app del cliente (integración 4i)
+para no tener que tipear manualmente datos que el cliente ya proporcionó</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Cuando el objeto del cliente incluye datos de <code>4iDocumentDataExtraction</code>, el sistema mapea automáticamente:<ul>
+<li><code>front.LastName</code> → apellido</li>
+<li><code>front.FirstName</code> → nombre</li>
+<li><code>front.DocumentNumber</code> (sin puntos) → número de documento</li>
+<li><code>front.Sex</code> → sexo</li>
+<li><code>front.Nationality</code> → nacionalidad</li>
+<li><code>front.DateOfBirth</code> → fecha de nacimiento <em>(si el valor es <code>01/01/0001</code>, el campo queda vacío y se marca como pendiente)</em></li>
+<li><code>front.DocumentOptionalAdditionalNumber</code> → número de ejemplar del DNI</li>
+<li><code>front.DocumentAdditionalNumber</code> → número de trámite</li>
+<li><code>back.Address</code> (saltos de línea → espacio) → domicilio</li>
+<li><code>front.DateOfIssue</code> → fecha de emisión del DNI</li>
+<li><code>front.DateOfExpiry</code> → fecha de vencimiento del DNI</li>
+</ul>
+</li>
+<li>Los campos pre-cargados están marcados visualmente como &quot;dato del cliente&quot; pero son editables</li>
+<li>Campos que siempre requieren ingreso manual: CUIT, email, teléfono, roles, porcentaje de participación, cargo</li>
+<li>Si 4i no provee datos, el formulario funciona normalmente en modo manual sin ningún impacto</li>
+</ul>
+<hr>
+<h3>MÓDULO 3 — Evaluación de Riesgo</h3>
+<hr>
+<p><strong>RF-09 / RF-14 · Como analista de Compliance</strong>
+quiero que el sistema calcule automáticamente el nivel de riesgo del cliente según la matriz definida
+para cumplir con la normativa del manual de riesgo y determinar el tipo de debida diligencia a aplicar</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El cálculo es automático al guardar el legajo y se recalcula ante cualquier cambio en los factores relevantes</li>
+<li><strong>Regla PEP:</strong> si el cliente o cualquier persona vinculada es PEP → riesgo <strong>Alto</strong> de forma directa, sin calcular el score</li>
+<li>El resultado se clasifica en: <code>Bajo</code> (1.00–2.00) / <code>Medio</code> (2.01–3.00) / <code>Alto</code> (3.01–5.00)</li>
+<li>En función del riesgo se sugiere el tipo de debida diligencia: Simplificada (Bajo) / Media (Medio) / Reforzada (Alto)</li>
+<li>El analista puede sobrescribir el nivel calculado con justificación obligatoria; queda registrado en el audit log</li>
+<li>Solo Nivel 1 puede configurar los pesos y umbrales de la matriz</li>
+</ul>
+<p><strong>Matriz de riesgo — Persona Humana (Monotributista / Resp. Inscripto):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th>Valores</th>
+<th>Ponderación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PEP</td>
+<td>Sí → Riesgo Alto directo</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Residencia</td>
+<td>1 (Bajo) · 3 (Medio) · 5 (Alto) — basado en IP</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>Nacionalidad</td>
+<td>1 (Bajo) · 3 (Medio) · 5 (Alto)</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>Actividad</td>
+<td>1 (Bajo — actividad ganadera) · 5 (Alto — no relacionada)</td>
+<td>30%</td>
+</tr>
+<tr>
+<td>Antigüedad PSP</td>
+<td>&gt;24 meses=1 · 12–24 meses=3 · &lt;12 meses=5</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>Materialidad</td>
+<td>1 (Bajo) · 3 (Medio) · 5 (Alto) — basado en ventas netas anuales</td>
+<td>30%</td>
+</tr>
+</tbody></table>
+<p><strong>Matriz de riesgo — Persona Jurídica:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th>Valores</th>
+<th>Ponderación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PEP</td>
+<td>Si alguna persona vinculada es PEP → Riesgo Alto directo</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Residencia</td>
+<td>1 (Bajo) · 3 (Medio) · 5 (Alto) — promedio de todas las personas vinculadas</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>Actividad</td>
+<td>1 (Bajo — actividad ganadera) · 5 (Alto — no relacionada)</td>
+<td>30%</td>
+</tr>
+<tr>
+<td>Antigüedad PSP</td>
+<td>&gt;24 meses=1 · 12–24 meses=3 · &lt;12 meses=5</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>Materialidad</td>
+<td>1 (Bajo) · 3 (Medio) · 5 (Alto) — basado en ventas netas anuales</td>
+<td>30%</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Notas:</strong></p>
+<ul>
+<li><strong>Residencia:</strong> se determina por IP. En personas jurídicas, se promedia el score de residencia de todas las personas vinculadas.</li>
+<li><strong>Actividad:</strong> la ponderación puede ajustarse si la actividad ganadera deja de ser el core del negocio.</li>
+<li><strong>Antigüedad:</strong> se cuenta desde la fecha de alta en el PSP. A mayor antigüedad, menor riesgo.</li>
+<li><strong>Materialidad:</strong> se basa en las ventas netas anuales cargadas por el analista de Compliance dentro de la herramienta (dato obtenido del último balance o declarado por el cliente). Campo obligatorio para todos los clientes independientemente del nivel de riesgo.</li>
+<li>⚠️ <em>Pendiente:</em> confirmar si materialidad aplica desde el inicio del alta o solo cuando se dispone del balance.</li>
+</ul>
+</blockquote>
+<hr>
+<p><strong>RF-15 · Como analista de Compliance</strong>
+quiero asignar el tipo de debida diligencia según el nivel de riesgo
+para cumplir con lo requerido en el Manual de LA/FT/FP</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema sugiere automáticamente: Simplificada para riesgo Bajo, Media para riesgo Medio, Reforzada para riesgo Alto</li>
+<li>El analista puede modificar el tipo de DD con justificación registrada</li>
+<li>El tipo de DD queda visible en el legajo del cliente y en el listado general</li>
+</ul>
+<hr>
+<p><strong>RF-16 · Como analista de Compliance</strong>
+quiero poder cargar el NSE (nivel socioeconómico) y las ventas netas anuales del cliente
+para completar el perfil transaccional y alimentar el cálculo de riesgo (materialidad)</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li><strong>NSE:</strong> aplica únicamente a personas jurídicas. Opciones: ABC1 / C2 / C3 / D1 / D2E</li>
+<li><strong>Ventas netas anuales:</strong> campo numérico obligatorio para todos los tipos de cliente (PH y PJ). Se carga en el <strong>paso de Riesgo</strong> por el analista de Compliance, obtenido del último balance o declaración del cliente</li>
+<li>Ambos campos son visibles en el legajo y se utilizan como input del cálculo de riesgo (factor Materialidad)</li>
+<li>Si ventas netas anuales no está cargado, el sistema muestra advertencia al intentar calcular el riesgo</li>
+</ul>
+<hr>
+<h3>MÓDULO 4 — Operaciones Inusuales</h3>
+<hr>
+<p><strong>RF-17 · Como analista de Compliance</strong>
+quiero visualizar todas las operaciones inusuales detectadas
+para tomar las medidas necesarias en tiempo y forma</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Las OI son generadas automáticamente por el sistema de pagos y llegan al sistema de Compliance vía integración (no se crean manualmente)</li>
+<li>Al ingresar una OI, la cuenta del cliente se <strong>bloquea automáticamente</strong> de forma preventiva</li>
+<li>El listado muestra: cliente, tipo de operación, monto, fecha, estado, analista asignado</li>
+<li>Filtros disponibles: estado, tipo, rango de fechas, analista</li>
+<li>Las OI en estado <code>Por Analizar</code> se destacan visualmente como urgentes</li>
+<li>Cuando una OI pasa a estado <code>Justificada</code>, la cuenta del cliente se <strong>reactiva automáticamente</strong></li>
+<li>Cuando una OI pasa a estado <code>Operación Sospechosa</code>, la cuenta permanece bloqueada</li>
+<li>El analista de Compliance puede desbloquear/bloquear la cuenta manualmente desde la gestión del cliente en cualquier momento, con motivo obligatorio</li>
+<li><strong>Asignación:</strong> cualquier analista puede tomar y resolver una OI (no hay asignación fija)</li>
+<li><strong>Notificación:</strong> al ingresar una OI nueva, el sistema envía un email automático a los usuarios de Nivel 2 avisando que hay una OI pendiente de resolución</li>
+<li><strong>SLA:</strong> las OI deben resolverse dentro de las <strong>48 horas</strong> desde su ingreso. El sistema genera una alerta visual si una OI supera las 48 hs sin resolución</li>
+<li><strong>Visibilidad en legajo:</strong> si un cliente tiene OI activas, se muestra un indicador visible en su ficha dentro de la vista de Gestión de Clientes</li>
+</ul>
+<hr>
+<p><strong>RF-18 · Como analista de Compliance y como analista de Atención al Cliente</strong>
+quiero poder dejar comentarios en una OI
+para comunicar internamente qué documentación solicitar, qué se recibió y qué decisiones se tomaron</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Ambos roles (Compliance y Atención al Cliente) pueden escribir comentarios en cualquier OI</li>
+<li>El campo de texto libre está disponible en la sección de cada OI</li>
+<li>Cada comentario queda registrado con: usuario, rol, fecha y hora</li>
+<li>Los comentarios de Compliance y de Atención al Cliente se diferencian visualmente</li>
+<li>Los comentarios no pueden editarse ni eliminarse una vez guardados</li>
+</ul>
+<hr>
+<p><strong>RF-19 · Como analista de Compliance</strong>
+quiero dejar registro del análisis realizado y la decisión tomada respecto a una OI
+para que quede constancia del razonamiento detrás de la resolución</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li><strong>Motivo</strong> y <strong>descripción</strong> son campos obligatorios al crear o cambiar el estado de una OI</li>
+<li>La carga de documentación de respaldo (PDF, imagen) es <strong>opcional</strong></li>
+<li>El historial de análisis no es editable una vez guardado</li>
+<li>El historial es visible en el detalle de la OI con fecha y usuario</li>
+</ul>
+<hr>
+<p><strong>RF-20 · Como analista de Compliance</strong>
+quiero visualizar la información completa del cliente asociado a una OI (riesgo, perfil transaccional, historial de operaciones, estado del legajo)
+para ser más asertivo al solicitar documentación de respaldo</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Desde el detalle de una OI, el analista puede acceder al legajo completo del cliente con un click</li>
+<li>Se muestran: nivel de riesgo, tipo de sociedad, perfil transaccional, operaciones anteriores, estado de documentación y alertas activas</li>
+</ul>
+<hr>
+<p><strong>RF-24 · Como analista de Compliance</strong>
+quiero modificar el estado de una OI una vez finalizado el análisis
+para cumplir con los requisitos del manual y de la UIF</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Estados posibles: <code>Por Analizar</code> → <code>Justificada</code> / <code>Operación Sospechosa</code></li>
+<li>Cada cambio de estado requiere comentario obligatorio</li>
+<li>Si el estado final es <code>Operación Sospechosa</code>, se registra que el ROS será gestionado y enviado por fuera de la herramienta (conforme normativa vigente)</li>
+<li>Un caso cerrado no puede reabrirse; si es necesario, el Nivel 1 debe crear un nuevo caso con referencia al anterior</li>
+</ul>
+<hr>
+<p><strong>RF-21 / RF-22 / RF-23 · Como analista de Atención al Cliente</strong>
+quiero visualizar los comentarios de Compliance, cargar documentación solicitada y dejar respuestas
+para colaborar en el proceso de análisis de OI y mejorar los tiempos de respuesta</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El rol Atención al Cliente puede: ver comentarios de Compliance, cargar archivos de respaldo, dejar comentarios propios</li>
+<li>No puede modificar estados de la OI ni el análisis de Compliance</li>
+<li>Comentarios de AC quedan diferenciados visualmente de los de Compliance</li>
+</ul>
+<hr>
+<h3>MÓDULO 5 — Reportes Regulatorios</h3>
+<hr>
+<p><strong>RF-11 · Como analista de Compliance</strong>
+quiero generar y enviar los reportes regulatorios exigidos por BCRA, UIF y ARCA
+para cumplir con las obligaciones de reporte dentro de los plazos establecidos</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema consolida automáticamente la información del período seleccionado</li>
+<li>El sistema valida automáticamente formato, completitud y consistencia de los datos antes de habilitar el envío o descarga</li>
+<li>Cada generación queda registrada en el historial con: fecha, usuario, período y versión</li>
+</ul>
+<p><strong>Reportes contemplados:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Reporte</th>
+<th>Organismo</th>
+<th>Mecanismo de envío</th>
+<th>Periodicidad</th>
+<th>Quién puede generar</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Base Padrón</td>
+<td>BCRA</td>
+<td>Exportación <code>.TXT</code> — envío manual</td>
+<td>Mensual</td>
+<td>Nivel 1 y Nivel 2</td>
+</tr>
+<tr>
+<td>Apartado A</td>
+<td>BCRA</td>
+<td>Exportación <code>.TXT</code> — envío manual vía MFT</td>
+<td>Mensual</td>
+<td>Nivel 1 y Nivel 2</td>
+</tr>
+<tr>
+<td>Apartado B</td>
+<td>BCRA</td>
+<td>Exportación <code>.TXT</code> — envío manual vía MFT</td>
+<td>Mensual</td>
+<td>Nivel 1 y Nivel 2</td>
+</tr>
+<tr>
+<td>F.8126</td>
+<td>ARCA (UIF)</td>
+<td>Envío automático vía Web Service (WS)</td>
+<td>Mensual</td>
+<td>Nivel 1 y Nivel 2</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Apartado C (INFESPECIAL.PDF):</strong> requerimiento trimestral (enero, abril, julio, octubre). Se confecciona y envía <strong>fuera de la herramienta</strong> — proceso manual. No está contemplado en el sistema.</p>
+</blockquote>
+<ul>
+<li>Para los reportes <code>.TXT</code>: el archivo descargado respeta exactamente el formato de columnas y delimitadores requerido por el organismo</li>
+<li>Para el F.8126 ARCA: el sistema realiza el envío vía WS y registra la respuesta del organismo (éxito / error) en el historial</li>
+<li>En caso de error en el WS, el sistema muestra el detalle del error y permite reintentar el envío</li>
+<li>El analista puede adjuntar el comprobante de envío para los reportes manuales, dejando registro completo</li>
+</ul>
+<hr>
+<h4>Especificación técnica — Base Padrón (Régimen 71 · Sección 44 · Com. &quot;A&quot; 8209)</h4>
+<p><strong>Archivo:</strong> <code>PADRON.TXT</code> · <strong>Separador:</strong> <code>;</code> · <strong>Longitud variable</strong>
+<strong>Estructura del zip:</strong> <code>PADRON.TXT</code> + <code>detalle.xml</code> (régimen <code>71</code>, requerimiento <code>1</code>)
+<strong>Contenido:</strong> primera presentación = base completa de clientes activos; presentaciones siguientes = solo novedades del mes (altas, bajas, cambios de PEP y CP)
+<strong>Si no hay novedades:</strong> <code>OPERA=FALSE</code> en el <code>detalle.xml</code></p>
+<p><strong>Diseño de registro:</strong></p>
+<table>
+<thead>
+<tr>
+<th>N°</th>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Long.</th>
+<th>Valores / Reglas</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Tipo identificación tributaria</td>
+<td>Num</td>
+<td>2</td>
+<td><code>11</code> CUIT/CUIL/CDI · <code>55</code> FCI · <code>66</code> Fideicomiso · <code>97</code> sin CUIT · <code>98</code> PJ exterior · <code>99</code> PH exterior</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Número identificación tributaria</td>
+<td>Car</td>
+<td>11</td>
+<td>CUIT sin guiones. Si tipo=97 → valor nulo <code>;;</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Tipo identificación personal</td>
+<td>Num</td>
+<td>2</td>
+<td><code>01</code> DNI · <code>02</code> LE · <code>03</code> LC · <code>04</code> Pasaporte · <code>05</code> Cédula Mercosur · <code>06</code> Cédula Identidad · <code>07</code> Otro · <code>00</code> PJ (nulo) · <code>97</code> nulo PH</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Número identificación personal</td>
+<td>Car</td>
+<td>16</td>
+<td>DNI/LE/LC/Cédula: completar con <code>0</code> a la derecha y ceros a la izquierda hasta 16 posiciones. PJ → valor nulo <code>;;</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Denominación</td>
+<td>Car</td>
+<td>80</td>
+<td>Mayúsculas, sin acento, sin puntos ni comas. Alineado a la izquierda, completar con blancos</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Condición PEP</td>
+<td>Num</td>
+<td>1</td>
+<td><code>0</code> N/A · <code>1</code> Sí · <code>2</code> No. PSP puede informar siempre <code>0</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Código postal</td>
+<td>Car</td>
+<td>8</td>
+<td>Nuevo CPA (Res. 1368/98). Domicilio en exterior: 2 letras SWIFT del país + ceros</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Tipo de movimiento</td>
+<td>Num</td>
+<td>2</td>
+<td><code>10</code> Alta · <code>20</code> Baja · <code>30</code> Modificación. Primera presentación → siempre <code>10</code></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>Alta (<code>10</code>): todos los campos obligatorios. Baja (<code>20</code>): solo campos 1–4. Modificación (<code>30</code>): todos los campos.</p>
+</blockquote>
+<p><strong>Errores de validación (BCRA):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Código</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>01</td>
+<td>Archivo PADRON.TXT no encontrado, vacío o mal formado</td>
+</tr>
+<tr>
+<td>02</td>
+<td>Longitud de registro errónea / campo fuera de diseño</td>
+</tr>
+<tr>
+<td>03</td>
+<td>Código de entidad (sujeto) incorrecto</td>
+</tr>
+<tr>
+<td>04</td>
+<td>Fecha inexistente, con blancos o período no habilitado</td>
+</tr>
+<tr>
+<td>05</td>
+<td>Tipo de identificación tributaria no válido</td>
+</tr>
+<tr>
+<td>06</td>
+<td>CUIT/CUIL/CDI con prefijo no reconocido o dígitos repetidos</td>
+</tr>
+<tr>
+<td>07</td>
+<td>Dígito verificador del CUIT/CUIL/CDI incorrecto</td>
+</tr>
+<tr>
+<td>08</td>
+<td>Tipo de identificación personal no válido o inconsistente con el tipo tributario</td>
+</tr>
+<tr>
+<td>09</td>
+<td>Número de identificación personal contiene caracteres no numéricos (tipos 01/02/03)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Tipo tributario 97 o 99 sin número de identificación personal informado</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Inconsistencia entre tipo y número de identificación tributaria</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Misma identificación tributaria con dos identificaciones personales distintas (o viceversa)</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Campo Denominación vacío</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Novedad duplicada (mismo tipo+número tributario y personal)</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Información del período ya presentada y aceptada</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Rectificativa de período no validado</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Código en campo PEP o Tipo de movimiento no habilitado</td>
+</tr>
+<tr>
+<td>18</td>
+<td>PEP mal informado: PJ con PEP distinto de 0, o PH con PEP distinto de 1/2</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Alta o modificación sin campo PEP y/o CP informado</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Código postal no válido según CPA o SWIFT</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Alta con identificación ya existente, o baja/modificación sin identificación</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Especificación técnica — Apartado A (Régimen 100 · Req. 1 · Sección 69.1 · Com. &quot;A&quot; 8382)</h4>
+<p><strong>Archivos:</strong> <code>CUENTASCLIENTES.TXT</code> + <code>DATOSFONDOS.TXT</code> (solo si operan con FCI) · <strong>Separador:</strong> <code>;</code>
+<strong>Estructura del zip:</strong> ambos TXT + <code>detalle.xml</code> (régimen <code>100</code>, requerimiento <code>1</code>) + <code>INFESTADISTICA.TXT</code> (req. <code>3</code>)
+<strong>Si no hay novedades:</strong> <code>OPERA=FALSE</code> en el <code>detalle.xml</code></p>
+<p><strong>Diseño de registro — <code>CUENTASCLIENTES.TXT</code>:</strong></p>
+<table>
+<thead>
+<tr>
+<th>N°</th>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Long.</th>
+<th>Reglas</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Código de partida</td>
+<td>Num</td>
+<td>7</td>
+<td>Partidas según modelo II.2 de las NP. Formato: <code>XXXXXdd</code> (dd = día del mes)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Saldo</td>
+<td>Num</td>
+<td>11</td>
+<td>Admite nulo <code>;;</code> · No admite signo negativo</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Cantidad</td>
+<td>Num</td>
+<td>11</td>
+<td>Admite nulo <code>;;</code> · No admite signo negativo</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CBU / Nro. Fondo de Dinero</td>
+<td>Num</td>
+<td>22</td>
+<td>Partida 20000dd: CBU válida. Partida 40000dd: código FCI válido. Resto: nulo</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>Se graba un registro por día del mes (hábiles e inhábiles). Si no se operan FCI: solo se graban las partidas <code>30000dd</code> y <code>40000dd</code> del último día del mes con todos los campos nulos, sin incluir <code>DATOSFONDOS.TXT</code>.</p>
+</blockquote>
+<p><strong>Diseño de registro — <code>DATOSFONDOS.TXT</code></strong> <em>(solo si opera con FCI):</em></p>
+<table>
+<thead>
+<tr>
+<th>N°</th>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Long.</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Nro. Fondo de Dinero</td>
+<td>Num</td>
+<td>5</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Denominación/razón social del Fondo</td>
+<td>Car</td>
+<td>50</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Agente involucrado</td>
+<td>Num</td>
+<td>1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Denominación/razón social del Agente</td>
+<td>Car</td>
+<td>50</td>
+</tr>
+<tr>
+<td>5</td>
+<td>CUIT del agente</td>
+<td>Num</td>
+<td>11</td>
+</tr>
+</tbody></table>
+<p><strong>Errores de validación (BCRA):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Código</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>01</td>
+<td>Archivo TXT/PDF no encontrado, vacío o mal formado; o inconsistencia OPERA entre req. 1 y req. 3</td>
+</tr>
+<tr>
+<td>02</td>
+<td>Código de sujeto no habilitado para este régimen</td>
+</tr>
+<tr>
+<td>03</td>
+<td>Fecha inexistente o período anterior no validado</td>
+</tr>
+<tr>
+<td>04</td>
+<td>Error de formato: código de partida inválido, campo con signo negativo o valor no numérico</td>
+</tr>
+<tr>
+<td>05</td>
+<td>CUIT inválido en <code>DATOSFONDOS.TXT</code></td>
+</tr>
+<tr>
+<td>06</td>
+<td>Campos obligatorios sin informar</td>
+</tr>
+<tr>
+<td>07</td>
+<td>Partida <code>XXXXXdd</code> faltante para uno o más días del período</td>
+</tr>
+<tr>
+<td>08</td>
+<td>Inconsistencia entre <code>DATOSFONDOS.TXT</code> y <code>CUENTASCLIENTES.TXT</code>: fondo informado en uno y no en el otro</td>
+</tr>
+<tr>
+<td>09</td>
+<td>Falta informar tipo de agente para un número de fondo</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Novedad duplicada (misma combinación de partida + CBU/fondo)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Período ya presentado y aceptado</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Rectificativa de período no validado</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Cantidad en partida 10000 mayor a partida 50000, o 60000 mayor a 50000</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Día <code>dd</code> en partida no corresponde a día existente del período</td>
+</tr>
+<tr>
+<td>15</td>
+<td>CBU inválida en partida 20000dd; o código FCI inválido en partida 40000dd</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Inconsistencia Saldo/Cantidad en partidas 10000dd y 30000dd (uno en 0 y el otro no)</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Partida 50000dd con Cantidad = 0 en día no exceptuado</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Partidas 30000dd/40000dd del último día no respetan instrucción de valor nulo</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Especificación técnica — Apartado B (Régimen 100 · Req. 3 · Sección 69.2 · Com. &quot;A&quot; 8285)</h4>
+<p><strong>Archivo:</strong> <code>INFESTADISTICA.TXT</code> · <strong>Separador:</strong> <code>;</code> · Va en el mismo zip que Apartado A
+<strong>Si no hay novedades:</strong> <code>OPERA=FALSE</code> debe ser consistente con Apartado A (ambos TRUE o ambos FALSE)</p>
+<p><strong>Diseño de registro:</strong></p>
+<table>
+<thead>
+<tr>
+<th>N°</th>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Long.</th>
+<th>Reglas</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Código de partida</td>
+<td>Num</td>
+<td>7</td>
+<td>Según modelo III.2 del apartado B de las NP</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Medio de pago</td>
+<td>Num</td>
+<td>3</td>
+<td>Tabla 1 del punto III.3. Solo se graban partidas con Cantidad &gt; 0</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Esquema de pago</td>
+<td>Num</td>
+<td>5</td>
+<td>Tabla 2 del punto III.3. Combinaciones válidas según medio de pago</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Cantidad</td>
+<td>Num</td>
+<td>11</td>
+<td>No admite cero</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Monto total</td>
+<td>Num</td>
+<td>11</td>
+<td>Si monto &lt; 1 (en miles) → informar <code>0</code></td>
+</tr>
+</tbody></table>
+<p><strong>Errores de validación (BCRA):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Código</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>01</td>
+<td>Archivo no encontrado, vacío, o inconsistencia OPERA entre req. 1 y req. 3</td>
+</tr>
+<tr>
+<td>02</td>
+<td>Código de sujeto no habilitado</td>
+</tr>
+<tr>
+<td>03</td>
+<td>Fecha inexistente o período anterior no validado</td>
+</tr>
+<tr>
+<td>04</td>
+<td>Error de formato: código de partida, medio/esquema de pago o cantidad inválidos</td>
+</tr>
+<tr>
+<td>05</td>
+<td>Campos obligatorios sin informar</td>
+</tr>
+<tr>
+<td>06</td>
+<td>Combinación medio de pago / esquema de pago no admitida</td>
+</tr>
+<tr>
+<td>07</td>
+<td>Novedad duplicada (misma combinación de campos 1 a 3)</td>
+</tr>
+<tr>
+<td>08</td>
+<td>Período ya presentado y aceptado</td>
+</tr>
+<tr>
+<td>09</td>
+<td>Rectificativa de período no validado</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Inconsistencia entre partidas de transferencias (500X000 vs. suma de 10XXXXX/20XXXXX)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Suma de clientes en transferencias mayor a clientes en transacciones</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Suma de cuentas en transferencias mayor a cuentas en transacciones</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Faltan partidas de clientes/cuentas (603X0XX o 604X0XX)</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Medio de pago 5 informado en partidas incorrectas (o viceversa)</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Falta informar partida total de clientes/cuentas de pago</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Inconsistencia entre total de cuentas del Apartado B y partida 50000dd del Apartado A</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>⚠️ <strong>Alerta de consistencia entre A y B:</strong> el BCRA valida que para el último día del mes, la suma de partidas <code>60410XX</code> + <code>60420XX</code> (Apartado B) coincida con la partida <code>50000dd</code> (Apartado A). Si se presenta una rectificativa que impacta estas partidas, deben re-presentarse también los períodos posteriores.</p>
+</blockquote>
+<hr>
+<p><strong>RF-12 · Como analista de Compliance</strong>
+quiero recibir alertas de vencimiento de reportes regulatorios
+para presentarlos en tiempo y forma ante el organismo correspondiente</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema genera alertas automáticas X días antes del vencimiento de cada reporte (configurable por el Nivel 1)</li>
+<li>Las alertas son visibles en el dashboard y pueden enviarse por email al analista responsable</li>
+<li>El sistema distingue entre &quot;próximo a vencer&quot; (alerta amarilla) y &quot;vencido&quot; (alerta roja)</li>
+</ul>
+<hr>
+<p><strong>RF-13 · Como analista de Compliance</strong>
+quiero descargar los reportes en formato .TXT
+para cumplir con la formalidad de entrega exigida por los entes reguladores</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El botón &quot;Descargar .TXT&quot; está disponible en el detalle de cada reporte generado</li>
+<li>El archivo descargado respeta exactamente el formato de columnas y delimitadores requerido por BCRA/UIF</li>
+<li>El sistema permite adjuntar el comprobante de envío una vez presentado el reporte, para dejar registro completo</li>
+</ul>
+<hr>
+<h3>MÓDULO 9 — Gestión de Usuarios Internos</h3>
+<hr>
+<p><strong>RF-GU-01 · Como Oficial de Cumplimiento (Nivel 1)</strong>
+quiero poder crear, editar y desactivar los usuarios internos de la herramienta
+para controlar quién tiene acceso al sistema y con qué nivel de permisos</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Solo Nivel 1 puede acceder al módulo de gestión de usuarios internos</li>
+<li>Al crear un usuario se ingresan: nombre, apellido, email, contraseña inicial y rol (Nivel 1 / Nivel 2 / Nivel 3)</li>
+<li>El email debe ser único en el sistema; si ya existe, el sistema muestra error antes de guardar</li>
+<li>La contraseña inicial debe cumplir la política de seguridad (mínimo 8 caracteres, una mayúscula, un número)</li>
+<li>El usuario creado recibe un email automático con sus credenciales de acceso</li>
+<li>El Nivel 1 puede editar nombre, apellido, email y rol de cualquier usuario</li>
+<li>El Nivel 1 puede desactivar un usuario sin eliminarlo — el usuario desactivado no puede iniciar sesión pero su historial de acciones queda intacto en el audit log</li>
+<li>Un usuario desactivado puede reactivarse en cualquier momento por el Nivel 1</li>
+<li>El listado de usuarios muestra: nombre, apellido, email, rol, estado (activo/inactivo), fecha de creación y último acceso</li>
+<li>Todas las altas, ediciones y desactivaciones quedan registradas en el audit log con usuario responsable y fecha</li>
+</ul>
+<hr>
+<h3>MÓDULO 6 — Gestión de Clientes</h3>
+<hr>
+<p><strong>RF-25 · Como analista de Compliance o Atención al Cliente</strong>
+quiero consultar el estado de cada cliente
+para saber si puede o no operar con el PSP</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El listado muestra: nombre/razón social, CUIT, tipo, estado, nivel de riesgo, fecha de alta, responsable asignado</li>
+<li>Estados visibles: <code>Pendiente</code> / <code>En Revisión</code> / <code>Pendiente de Documentación</code> / <code>Info Solicitada</code> / <code>Aprobado</code> / <code>Rechazado</code></li>
+<li>El listado puede filtrarse por estado, tipo de cliente, nivel de riesgo, responsable y rango de fechas</li>
+<li>Si el cliente tiene OI activas, se muestra un indicador visual en su fila del listado</li>
+</ul>
+<hr>
+<p><strong>RF-26 · Como analista de Compliance (Nivel 1 o Nivel 2)</strong>
+quiero poder editar cualquier información del cliente
+para mantener el legajo actualizado</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Nivel 1 y Nivel 2 pueden editar los datos del cliente desde el detalle del legajo</li>
+<li>Cada edición queda registrada en el audit log con: valor anterior, valor nuevo, usuario y fecha</li>
+<li>Los documentos aprobados pueden ser re-rechazados con motivo; el audit log registra la acción</li>
+<li>Atención al Cliente puede ver el legajo completo pero no puede editar ningún dato</li>
+</ul>
+<hr>
+<p><strong>RF-37 · Como analista de Compliance (Nivel 1 o Nivel 2)</strong>
+quiero poder bloquear o desbloquear la cuenta de un cliente
+para proteger las operaciones ante situaciones de riesgo o irregularidades detectadas</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>Nivel 1 y Nivel 2 pueden bloquear o desbloquear manualmente una cuenta desde el detalle del cliente</li>
+<li>El bloqueo y desbloqueo requieren motivo obligatorio</li>
+<li>El sistema registra en el audit log: quién bloqueó/desbloqueó, cuándo y por qué</li>
+<li>Un cliente bloqueado aparece con badge visual diferenciado en el listado y en el dashboard</li>
+<li>El desbloqueo automático ocurre cuando una OI pasa a estado <code>Justificada</code></li>
+</ul>
+<hr>
+<p><strong>RF-40 · Como analista de Compliance</strong>
+quiero ver separados los clientes dados de alta de los que están en estado pendiente
+para gestionar eficientemente la cola de revisión</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>La vista principal tiene dos secciones claramente diferenciadas: &quot;Clientes Activos&quot; y &quot;Pendientes de Alta&quot;</li>
+<li>Los pendientes se ordenan por fecha de ingreso (más antiguos primero)</li>
+<li>El listado puede exportarse a CSV</li>
+</ul>
+<hr>
+<hr>
+<p><strong>RF-35 · Como analista de Compliance</strong>
+quiero registrar observaciones sobre un cliente
+para dejar constancia de cambios, incidencias o información relevante</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El campo de observaciones está disponible en el detalle de cada cliente, en cada paso del alta y en el resumen final</li>
+<li>Las observaciones quedan registradas con usuario, fecha y hora</li>
+<li>No pueden editarse ni eliminarse una vez guardadas</li>
+</ul>
+<hr>
+<h3>MÓDULO 7 — Alertas <em>(Post-MVP)</em></h3>
+<blockquote>
+<p>El módulo de alertas completo queda fuera del alcance del MVP. Ver sección Post-MVP para el detalle.</p>
+</blockquote>
+<hr>
+<h3>MÓDULO 8 — Autenticación y Roles</h3>
+<hr>
+<p><strong>Como usuario del sistema</strong>
+quiero autenticarme con usuario y contraseña
+para acceder solo a las funciones permitidas para mi rol</p>
+<p><strong>Criterios de aceptación:</strong></p>
+<ul>
+<li>El sistema soporta 3 niveles de acceso:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Nivel</th>
+<th>Nombre</th>
+<th>Permisos clave</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Nivel 1</td>
+<td>Oficial de Cumplimiento</td>
+<td>Ver todo + Editar + Aprobar altas + Bloquear/desbloquear cuentas + Gestión usuarios internos + Audit Log</td>
+</tr>
+<tr>
+<td>Nivel 2</td>
+<td>Analista / Atención al Cliente</td>
+<td>Ver todo + Editar clientes + Cargar docs + Bloquear/desbloquear cuentas</td>
+</tr>
+<tr>
+<td>Nivel 3</td>
+<td>Solo lectura</td>
+<td>Ver todo — sin acciones</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Las contraseñas requieren mínimo 8 caracteres, una mayúscula y un número</li>
+<li>Las sesiones expiran tras 30 minutos de inactividad</li>
+<li>Más de 5 intentos de login fallidos bloquean la cuenta temporalmente</li>
+<li>Todos los accesos quedan registrados en el audit log</li>
+<li>El usuario puede solicitar el reseteo de su contraseña por email desde la pantalla de login — recibe un link de reseteo con expiración de 1 hora</li>
+<li>Si el reset por email no está disponible en MVP, el Nivel 1 puede asignar una nueva contraseña desde el ABM de usuarios internos (Módulo 9)</li>
+</ul>
+<hr>
+<h2>Fuera de Alcance (Out of Scope)</h2>
+<ul>
+<li><strong>Lectura automática de DNI (OCR / 4i) desde el sistema de Compliance</strong> — La lectura la realiza la app del cliente; el sistema de Compliance recibe el resultado ya procesado. La integración directa de 4i queda para Post-MVP.</li>
+<li><strong>Envío del ROS directamente desde el sistema</strong> — Por normativa vigente, el ROS se gestiona y envía por fuera de la herramienta. El sistema registra el caso y documenta la decisión.</li>
+<li><strong>Integración en tiempo real con API de AFIP</strong> — Validación de CUIT es de formato en V1. La consulta en tiempo real a AFIP se evaluará en V2.</li>
+<li><strong>Portal de autogestión para clientes</strong> — El onboarding V1 es 100% operado por el equipo interno. El portal de cliente se evaluará en V2.</li>
+<li><strong>Integración automática con el core transaccional de dCP</strong> — El monitoreo de OI en V1 requiere carga manual por el analista. La ingesta automática desde el sistema de pagos se planificará en V2.</li>
+<li><strong>Aplicación mobile</strong> — Sistema exclusivamente web desktop en V1.</li>
+</ul>
+<hr>
+<h2>Riesgos</h2>
+<h3>Regulatorios</h3>
+<ul>
+<li><p><strong>Los requerimientos de la UIF o el BCRA pueden actualizarse durante el desarrollo</strong>
+Mitigación: Mantener contacto activo con el área Legal. El checklist de documentos y los campos de reportes deben ser configurables sin necesidad de un deploy.</p>
+</li>
+<li><p><strong>Los documentos requeridos difieren entre tipos de clientes y pueden tener interpretaciones ambiguas</strong>
+Mitigación: Validar el checklist con el equipo Legal antes del desarrollo del módulo de documentos. Usar una versión provisional para no bloquear el desarrollo.</p>
+</li>
+</ul>
+<h3>Técnicos</h3>
+<ul>
+<li><p><strong>La migración de SQLite a PostgreSQL puede revelar inconsistencias en modelos o migraciones</strong>
+Mitigación: Ejecutar la migración en un entorno de staging antes de producción.</p>
+</li>
+<li><p><strong>El frontend puede tener lógica acoplada al modo demo que introduzca inconsistencias al conectar con el backend real</strong>
+Mitigación: Definir contrato de API claro antes de la integración. Priorizar las pantallas más críticas (alta de clientes, revisión de legajo) para la primera integración.</p>
+</li>
+</ul>
+<h3>De Integración con App del Cliente</h3>
+<ul>
+<li><p><strong>El objeto del cliente enviado por la app puede no incluir <code>4iDocumentDataExtraction</code> o tener campos nulos/inválidos</strong>
+Mitigación: Todos los campos de 4i son opcionales. El sistema nunca bloquea el flujo si 4i no entrega datos. Validar el campo <code>DateOfBirth</code> — 4i devuelve <code>01/01/0001</code> como valor inválido.</p>
+</li>
+<li><p><strong>El schema de la app del cliente puede no estar alineado con el schema del sistema de Compliance</strong>
+Mitigación: Definir un contrato de API documentado antes de conectar ambos sistemas. Validar con un cliente de prueba end-to-end.</p>
+</li>
+</ul>
+<h3>De Decisión (Compliance)</h3>
+<ul>
+<li><strong>Permitir &quot;Aprobar con observaciones&quot; puede usarse para aprobar clientes con documentación incompleta de forma sistemática</strong>
+Mitigación: El audit log registra cuántos y cuáles documentos estaban pendientes al momento de la aprobación. Los reportes internos deben incluir el porcentaje de aprobaciones con observaciones. La métrica target es &lt; 15%.</li>
+</ul>
+<h3>De Adopción</h3>
+<ul>
+<li><strong>El equipo puede resistir el cambio si el sistema es más lento que el proceso manual</strong>
+Mitigación: Involucrar al equipo de Compliance en revisiones de UX. Priorizar velocidad y claridad en los flujos más frecuentes.</li>
+</ul>
+<h3>De Timeline</h3>
+<ul>
+<li><strong>La definición del hosting y dominio en producción puede requerir aprobaciones internas</strong>
+Mitigación: Iniciar el proceso de aprobación e infraestructura en paralelo con el desarrollo.</li>
+</ul>
+<hr>
+<h2>Dependencias</h2>
+<table>
+<thead>
+<tr>
+<th>Dependencia</th>
+<th>Estado</th>
+<th>Impacto si no está lista</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Definición final del checklist documental (con Legal)</td>
+<td>Pendiente</td>
+<td>Bloquea desarrollo del módulo de documentos</td>
+</tr>
+<tr>
+<td>Cuenta en Supabase / Neon (PostgreSQL en la nube)</td>
+<td>Pendiente</td>
+<td>Bloquea despliegue a producción</td>
+</tr>
+<tr>
+<td>Hosting backend (Railway / Render)</td>
+<td>Pendiente</td>
+<td>Bloquea despliegue a producción</td>
+</tr>
+<tr>
+<td>Hosting frontend (Vercel / Netlify)</td>
+<td>Pendiente</td>
+<td>Bloquea despliegue a producción</td>
+</tr>
+<tr>
+<td>Definición de roles y permisos</td>
+<td>Resuelto — 3 niveles definidos</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Listas de sanciones para screening (OFAC, ONU, BCRA)</td>
+<td>Pendiente</td>
+<td>Bloquea módulo de screening</td>
+</tr>
+<tr>
+<td>Contrato de API con app del cliente (schema + formato <code>4iDocumentDataExtraction</code>)</td>
+<td>Pendiente</td>
+<td>Bloquea prefill de personas desde 4i</td>
+</tr>
+<tr>
+<td>Definición de campos mínimos enviados por persona vinculada desde la app</td>
+<td>Pendiente</td>
+<td>Bloquea mapeo de datos de personas al onboarding</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Tracking / Eventos</h2>
+<blockquote>
+<p>Sistema interno de backoffice. Los eventos miden el uso del equipo de Compliance y la eficiencia de los flujos.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Evento</th>
+<th>Dónde</th>
+<th>Event Action</th>
+<th>Event Name</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Inicio de alta de cliente</td>
+<td>Bandeja de pendientes</td>
+<td>IniciarAlta</td>
+<td>Iniciar alta de cliente</td>
+</tr>
+<tr>
+<td>Documento aprobado</td>
+<td>Revisión Docs.</td>
+<td>DocumentoAprobado</td>
+<td>Aprobar documento</td>
+</tr>
+<tr>
+<td>Documento rechazado</td>
+<td>Revisión Docs.</td>
+<td>DocumentoRechazado</td>
+<td>Rechazar documento</td>
+</tr>
+<tr>
+<td>Documento re-rechazado (estaba aprobado)</td>
+<td>Revisión Docs.</td>
+<td>DocumentoReRechazado</td>
+<td>Re-rechazar doc aprobado</td>
+</tr>
+<tr>
+<td>Volver a Revisión de Docs. desde Datos Entidad</td>
+<td>Onboarding paso 2</td>
+<td>VolverARevisionDocs</td>
+<td>Volver al paso anterior</td>
+</tr>
+<tr>
+<td>Datos de persona pre-cargados desde 4i</td>
+<td>Formulario personas</td>
+<td>DatosPersonaPrecargados4i</td>
+<td>Prefill desde 4i (automático)</td>
+</tr>
+<tr>
+<td>Datos de persona editados manualmente sobre 4i</td>
+<td>Formulario personas</td>
+<td>DatosPersonaEditadosManualmente</td>
+<td>Editar datos prefillados de 4i</td>
+</tr>
+<tr>
+<td>Cliente aprobado</td>
+<td>Revisión legajo</td>
+<td>ClienteAprobado</td>
+<td>Aprobar cliente</td>
+</tr>
+<tr>
+<td>Cliente aprobado con observaciones</td>
+<td>Revisión legajo</td>
+<td>ClienteAprobadoConObs</td>
+<td>Aprobar con docs pendientes</td>
+</tr>
+<tr>
+<td>Solicitud de info enviada</td>
+<td>Revisión legajo</td>
+<td>InfoSolicitada</td>
+<td>Solicitar info al cliente</td>
+</tr>
+<tr>
+<td>Cliente rechazado</td>
+<td>Revisión legajo</td>
+<td>ClienteRechazado</td>
+<td>Rechazar cliente</td>
+</tr>
+<tr>
+<td>Riesgo calculado automáticamente</td>
+<td>Alta — paso Riesgo</td>
+<td>RiesgoCalculado</td>
+<td>Cálculo automático de riesgo</td>
+</tr>
+<tr>
+<td>Riesgo sobrescrito manualmente</td>
+<td>Alta — paso Riesgo</td>
+<td>RiesgoSobrescrito</td>
+<td>Editar nivel de riesgo</td>
+</tr>
+<tr>
+<td>OI creada</td>
+<td>Módulo OI</td>
+<td>OICreada</td>
+<td>Crear operación inusual</td>
+</tr>
+<tr>
+<td>Estado OI modificado</td>
+<td>Detalle OI</td>
+<td>OIEstadoModificado</td>
+<td>Cambiar estado OI</td>
+</tr>
+<tr>
+<td>Reporte regulatorio generado</td>
+<td>Módulo Reportes</td>
+<td>ReporteGenerado</td>
+<td>Generar reporte regulatorio</td>
+</tr>
+<tr>
+<td>Reporte descargado en .TXT</td>
+<td>Módulo Reportes</td>
+<td>ReporteDescargado</td>
+<td>Descargar reporte .TXT</td>
+</tr>
+<tr>
+<td>Alerta gestionada</td>
+<td>Dashboard / Alertas</td>
+<td>AlertaGestionada</td>
+<td>Gestionar alerta</td>
+</tr>
+<tr>
+<td>Cuenta bloqueada</td>
+<td>Detalle cliente</td>
+<td>CuentaBloqueada</td>
+<td>Bloquear cuenta</td>
+</tr>
+<tr>
+<td>Cuenta desbloqueada</td>
+<td>Detalle cliente</td>
+<td>CuentaDesbloqueada</td>
+<td>Desbloquear cuenta</td>
+</tr>
+<tr>
+<td>Screening ejecutado</td>
+<td>Alta / Detalle cliente</td>
+<td>ScreeningEjecutado</td>
+<td>Ejecutar screening</td>
+</tr>
+<tr>
+<td>Audit log exportado</td>
+<td>Vista audit log</td>
+<td>AuditLogExportado</td>
+<td>Exportar audit log</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Post-MVP</h2>
+<h3>Automatización</h3>
+<ul>
+<li><strong>RF-OCR</strong> <em>(fuera de scope MVP)</em>: Lectura automática de documentos con tecnología OCR — integración directa de la API 4i desde el sistema de Compliance para leer documentos subidos manualmente, sin necesidad de la app del cliente.</li>
+<li><strong>RF-DD-RIESGO</strong>: Alinear el tipo de Due Diligence directamente con el nivel de riesgo calculado automáticamente (Simplificada = Bajo / Media = Medio / Reforzada = Alto).</li>
+<li><strong>RF-WS</strong>: Integración con Web Service externo (a definir con el equipo técnico — consultar con Adrián).</li>
+<li><strong>RF-INGESTA</strong>: Ingesta automática de operaciones desde el core transaccional de dCP para el módulo de monitoreo de OI.</li>
+</ul>
+<h3>Alertas de Vencimiento de Documentación por Riesgo <em>(propuesto por Maxi)</em></h3>
+<ul>
+<li><p><strong>RF-ALERTA-DOC</strong>: Implementar lógica de periodicidad de re-solicitud de documentos basada en el nivel de riesgo del cliente y en el tipo de documento — no todos los documentos se re-solicitan con la misma frecuencia ni por el mismo motivo.</p>
+<p><strong>Reglas por tipo de documento:</strong></p>
+<ul>
+<li><strong>Estatuto</strong>: se solicita 1 sola vez. Se vuelve a pedir únicamente ante un cambio societario.</li>
+<li><strong>Libro de Accionistas</strong>: se solicita 1 vez; se re-solicita anualmente o ante cambio de composición accionaria.</li>
+<li><strong>Designación de Autoridades</strong>: tiene fecha de inicio y fecha de fin de mandato. El sistema debe alertar próximo al vencimiento. Si el estatuto no define el plazo del mandato, la periodicidad de re-solicitud se define por riesgo:<ul>
+<li>Riesgo Alto → re-solicitar cada <strong>1 año</strong></li>
+<li>Riesgo Bajo/Medio → re-solicitar cada <strong>3 años</strong></li>
+</ul>
+</li>
+<li>Para el resto de documentos con fecha de vencimiento: alertar X días antes (configurable).</li>
+</ul>
+<p><strong>Criterio general:</strong> los documentos se vuelven a pedir cuando hay un <strong>cambio</strong> (no por periodicidad fija), salvo aquellos que tienen fecha de vencimiento explícita o mandato definido.</p>
+<blockquote>
+<p>⚠️ <em>Pendiente de validación</em>: consultar con Adrián si es viable definir la lógica de periodicidad documento por documento.</p>
+</blockquote>
+</li>
+</ul>
+<h3>Personas</h3>
+<ul>
+<li><strong>RF-ESTADO-CIVIL</strong>: Agregar campo &quot;Estado civil&quot; a la ficha de cada persona vinculada. Opciones: Soltero / Casado / Viudo. Si el valor seleccionado es <strong>Casado</strong>, el sistema solicita obligatoriamente los datos del cónyuge: nombre, apellido y DNI.</li>
+<li><strong>RF-ACCIONES-ACCIONISTA</strong>: Al cargar el Libro de Accionistas, además del número total de acciones emitidas, permitir registrar el porcentaje de acciones individual de cada accionista en su ficha de persona vinculada.</li>
+<li><strong>RF-CONTACTO-INICIAL</strong>: Solicitar teléfono y email de contacto al inicio del proceso de alta (no necesariamente del titular — puede ser de un referente o responsable del trámite) para poder comunicarse ante cualquier consulta o pedido de documentación.</li>
+</ul>
+<h3>Flujo</h3>
+<ul>
+<li><strong>RF-FLUJO-INVERSO</strong>: Evaluar cambio de orden en el flujo de alta: <strong>1° carga de datos → 2° aprobación de documentación</strong> (inverso al flujo actual). A definir con el equipo de Compliance y UX.</li>
+</ul>
+<h3>Permisos y Archivos</h3>
+<ul>
+<li><strong>RF-PERMISOS</strong>: Revisión y ajuste fino de la matriz de permisos por rol — definir casos borde y accesos granulares no contemplados en MVP.</li>
+<li><strong>RF-ARCHIVOS-RECHAZADOS</strong>: Mejorar el manejo de archivos rechazados — historial de versiones por documento, visualización de la versión rechazada junto a la nueva, trazabilidad completa del ciclo de vida de cada archivo.</li>
+</ul>
+<h3>Alertas</h3>
+<ul>
+<li><strong>RF-ALERTA-DOCS</strong>: Alertas automáticas cuando la documentación de un cliente está próxima a vencer (configurable, default 30 días) o ya venció. Visibles en dashboard y detalle del cliente. El analista puede marcarlas como &quot;gestionadas&quot; con comentario opcional.</li>
+<li><strong>RF-ALERTA-DASHBOARD</strong>: Dashboard centralizado con: alertas activas, altas pendientes por antigüedad, OI abiertas y reportes próximos a vencer. Navegación directa desde cada alerta al legajo o caso asociado.</li>
+<li><strong>RF-ALERTA-URGENTES</strong>: Cuentas bloqueadas y altas pendientes con más de 72 hs destacadas como &quot;Urgentes&quot;. Notificación por email ante nuevos bloqueos.</li>
+<li><strong>RF-ALERTA-REPORTES</strong>: Alertas de vencimiento de reportes regulatorios con X días de anticipación (configurable por Nivel 1). Distinción visual entre &quot;próximo a vencer&quot; (amarillo) y &quot;vencido&quot; (rojo).</li>
+</ul>
+<h3>Exportación de Legajo</h3>
+<ul>
+<li><strong>RF-LEGAJO-PDF</strong>: Exportar el legajo completo de un cliente en formato PDF desde el detalle del cliente. Incluye: datos del cliente, personas vinculadas, documentación (estados e historial), nivel de riesgo, historial de OI y audit log del legajo. La exportación queda registrada con usuario y fecha.</li>
+</ul>
+<h3>Integraciones</h3>
+<ul>
+<li><strong>RF-REPET</strong>: Integración con el listado REPET (Registro de Personas Expuestas Políticamente) para screening automático de personas vinculadas durante el onboarding. El sistema consultaría el listado y marcaría automáticamente las coincidencias para revisión del analista.</li>
+<li><strong>RF-AFIP</strong>: Integración en tiempo real con API de AFIP para validación de CUIT y consulta de datos fiscales.</li>
+<li><strong>RF-PORTAL</strong>: Portal de autogestión para que el cliente cargue directamente su documentación sin intervención del equipo interno.</li>
+</ul>
+<hr>
+<h2>Anexo — Documentación requerida por tipo de entidad</h2>
+<h3>SA (Sociedad Anónima)</h3>
+<p><strong>Documentos obligatorios:</strong> Estatuto · Acta de designación de autoridades · Última página del Libro de Registro de Accionistas · Poder
+<strong>Campos a completar:</strong> Duración societaria · Capital suscripto · Mandato vigente · Año inicio/fin mandato · Total acciones emitidas · Fecha última anotación libro · Denominación social coincide · Poder verificado y vigente · Observaciones poder · Fecha DDJJ beneficiarios finales</p>
+<h3>SRL (Sociedad de Responsabilidad Limitada)</h3>
+<p><strong>Documentos obligatorios:</strong> Contrato Social · Última Acta de Asamblea o Reunión de Socios · Libro de Registro de Socios (última hoja) · Poder
+<strong>Campos a completar:</strong> Plazo · Capital social · Fecha de asamblea · Mandato vigente · Inicio/fin mandato · Total cuotas emitidas · Fecha última anotación · Los datos coinciden con ARCA · Poder verificado y vigente · Observaciones poder · Fecha DDJJ beneficiarios finales · Fecha DDJJ PEP</p>
+<h3>SH (Sociedad de Hecho)</h3>
+<p><strong>Documentos obligatorios:</strong> Contrato Social Privado o Acuerdo de Constitución · DNI de todos los socios · DDJJ de Designación de Representante/Apoderado (si aplica)
+<strong>Campos a completar:</strong> Fecha de constitución · Domicilio completo (calle, número, piso, depto, localidad, provincia, CP) · Objeto social · Duración · Capital · Fecha DDJJ beneficiarios finales · Observaciones BF · Fecha DDJJ PEP</p>
+<h3>Sucesión / Sucesión Indivisa</h3>
+<p><strong>Documentos obligatorios:</strong> Declaratoria de Herederos o Testamento Protocolizado · Designación de Administrador (si corresponde) · DNI de todos los herederos/administrador · Poder (opcional)
+<strong>Campos a completar:</strong> Juzgado · N° de expediente · Carátula · Tipo de sucesión · Estado del trámite · ¿Existe administrador? · Fecha de designación del administrador · Estado de aceptación del cargo</p>
+<h3>Monotributista</h3>
+<p><strong>Documentos obligatorios:</strong> Constancia de actividad/inscripción · Declaración PEP · DNI frente · DNI dorso
+<strong>Campos a completar (desde DNI):</strong> Nacionalidad · Sexo · Fecha de emisión del DNI · Fecha de vencimiento del DNI · N° de trámite · DNI vigente</p>
+<h3>Complementarios (todos los casos)</h3>
+<ul>
+<li>Declaración Jurada de Beneficiarios Finales</li>
+<li>Declaración Jurada de Persona Expuesta Políticamente (PEP)</li>
+</ul>
+<h3>Campos de Personas (todos los tipos de entidad)</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Origen</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Nombre</td>
+<td>GET (app del cliente / 4i)</td>
+</tr>
+<tr>
+<td>Apellido</td>
+<td>GET (app del cliente / 4i)</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>GET (app del cliente)</td>
+</tr>
+<tr>
+<td>Teléfono</td>
+<td>GET (app del cliente)</td>
+</tr>
+<tr>
+<td>Tipo de documento</td>
+<td>POST (carga manual)</td>
+</tr>
+<tr>
+<td>N° de documento</td>
+<td>GET/POST (4i o manual)</td>
+</tr>
+<tr>
+<td>CUIT/CUIL</td>
+<td>POST (carga manual)</td>
+</tr>
+<tr>
+<td>Fecha de nacimiento</td>
+<td>GET/POST (4i o manual)</td>
+</tr>
+<tr>
+<td>Domicilio</td>
+<td>GET/POST (4i o manual)</td>
+</tr>
+<tr>
+<td>Actividad laboral</td>
+<td>GET (app del cliente)</td>
+</tr>
+<tr>
+<td>Firmante</td>
+<td>POST (decisión del analista)</td>
+</tr>
+<tr>
+<td>Condición PEP</td>
+<td>POST (declaración)</td>
+</tr>
+<tr>
+<td>REPET</td>
+<td>POST (carga manual)</td>
+</tr>
+<tr>
+<td>Sexo</td>
+<td>GET (4i)</td>
+</tr>
+<tr>
+<td>Nacionalidad</td>
+<td>GET (4i)</td>
+</tr>
+<tr>
+<td>N° de trámite DNI</td>
+<td>GET (4i)</td>
+</tr>
+<tr>
+<td>N° de ejemplar DNI</td>
+<td>GET (4i)</td>
+</tr>
+</tbody></table>
+
+</div>
+</body>
+</html>
