@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Save, Check, Plus, Trash2 } from 'lucide-react';
+import { Save, Check, Plus, Trash2, Info } from 'lucide-react';
 import { FORM_FIELDS } from '../config/documentRequirements';
 
 const DocumentForm = ({
@@ -249,6 +249,25 @@ const DocumentForm = ({
         <h3 className="font-semibold text-foreground">{document.name}</h3>
         <p className="text-sm text-muted-foreground mt-1">{document.description}</p>
       </div>
+
+      {/* Banner: documento dataOnly (PRD VF §6.2.1 — Persona Humana / PF) */}
+      {document.dataOnly && (
+        <div className="px-4 py-3 bg-sky-50 dark:bg-sky-900/20 border-b border-sky-200 dark:border-sky-800 flex items-start gap-3">
+          <Info className="w-4 h-4 text-sky-600 dark:text-sky-400 mt-0.5 shrink-0" />
+          <div className="text-xs text-sky-800 dark:text-sky-200 leading-relaxed">
+            <p className="font-semibold">
+              {document.fuente === '4iDigital'
+                ? 'Datos pre-cargados desde 4iDigital'
+                : document.fuente === 'declarado_cliente'
+                  ? 'Datos declarados por el cliente en el front'
+                  : 'Datos pre-cargados'}
+            </p>
+            <p className="mt-0.5 text-sky-700 dark:text-sky-300">
+              No se carga archivo. Confirmá los valores antes de avanzar al paso 3.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">

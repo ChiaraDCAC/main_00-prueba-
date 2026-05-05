@@ -2,8 +2,13 @@ const { Client, Document } = require('../models');
 
 // Replicating frontend logic for document requirements
 // Ideally this should be in a shared config or database table
+//
+// PRD VF §6.2.1 — Persona Humana / PF (monotributista, particular, profesional
+// independiente, trabajador autónomo, responsable inscripto): NO carga archivos
+// desde el front del cliente. Toda la información llega como datos estructurados
+// (4iDigital + formulario del cliente). Por eso `monotributista: []`.
 const DOCUMENT_REQUIREMENTS = {
-  monotributista: ['ddjj_pep_monotributo'],
+  monotributista: [],
   sa: ['estatuto', 'acta_autoridades', 'registro_accionistas', 'constancia_cuit'],
   srl: ['contrato_social', 'acta_asamblea', 'registro_socios', 'constancia_cuit'],
   // Sociedad de Hecho: Contrato privado y DNI de todos los socios son OBLIGATORIOS
@@ -11,6 +16,19 @@ const DOCUMENT_REQUIREMENTS = {
   sh: ['contrato_privado', 'dni_socios'],
   sucesion: ['declaratoria_herederos', 'dni_herederos'],
 };
+
+// Campos estructurados mínimos para PF (vienen como formData, no documentos).
+// Si falta alguno, el alta queda incompleta.
+const PF_REQUIRED_FORM_FIELDS = [
+  // DNI Frente (4iDigital)
+  'dni_numero', 'dni_apellido', 'dni_nombre', 'dni_sexo',
+  'dni_nacionalidad', 'dni_fecha_nacimiento', 'dni_ejemplar',
+  // DNI Dorso (4iDigital)
+  'dni_domicilio', 'dni_jurisdiccion_residencia', 'dni_fecha_emision',
+  'dni_fecha_vencimiento', 'dni_tramite', 'dni_vigente',
+  // Declaración del cliente
+  'ocupacion', 'es_pep',
+];
 
 // Documentos condicionales por tipo de entidad
 // Para SH según normativa UIF:
@@ -67,9 +85,27 @@ const validationService = {
     let legalFormKey = '';
 
     if (client.legalForm?.toLowerCase() === 'monotributista') {
-      specificRequirements = DOCUMENT_REQUIREMENTS.monotributista;
-      includeComplementary = false;
-      legalFormKey = 'monotributista';
+      // PRD VF §6.2.1 — PF no carga archivos. Validamos formData (datos estructurados)
+      // en lugar de documentos cargados.
+      const formData = client.formData || {};
+      // formData puede venir aplanado o agrupado por docId; aplanamos para chequear keys.
+      const flatData = Object.values(formData).reduce((acc, v) => {
+        if (v && typeof v === 'object') return { ...acc, ...v };
+        return acc;
+      }, { ...formData });
+
+      const missingFields = PF_REQUIRED_FORM_FIELDS.filter(field => {
+        const v = flatData[field];
+        return v == null || v === '';
+      });
+
+      return {
+        isValid: missingFields.length === 0,
+        missingDocuments: missingFields,            // semántica reutilizada para no romper el contrato
+        conditionalRequired: [],
+        conditionalMissing: [],
+        pfFormValidation: true,                     // hint para el caller: la validación corrió contra formData
+      };
     } else if (clientType === 'persona_juridica') {
       legalFormKey = client.legalForm ? client.legalForm.toLowerCase() : '';
       if (legalFormKey === 'sa') specificRequirements = DOCUMENT_REQUIREMENTS.sa;
