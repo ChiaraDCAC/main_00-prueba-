@@ -144,39 +144,55 @@ const ENTITY_FIELDS = {
       },
     ],
   },
+  // Persona Humana / PF (incluye monotributista, particular, profesional independiente,
+  // trabajador autónomo, responsable inscripto). PRD VF §6.2.1.
+  // Toda la información llega como datos estructurados (4iDigital + formulario del cliente).
+  // El admin solo CONFIRMA estos datos en paso 2; no hay carga ni revisión de archivos para PH.
   [ENTITY_TYPES.MONOTRIBUTISTA]: {
     sections: [
       {
-        title: 'Datos Personales',
+        title: 'DNI Frente — datos validados por 4iDigital',
         icon: User,
+        helpText: 'Datos extraídos por 4iDigital del frente del DNI. Confirme los valores antes de avanzar.',
         fields: [
-          { id: 'apellido', label: 'Apellido', type: 'text', required: true },
-          { id: 'nombre', label: 'Nombre', type: 'text', required: true },
-          { id: 'dni', label: 'DNI', type: 'text', required: true },
-          { id: 'cuit', label: 'CUIT', type: 'text', required: true },
-          { id: 'fecha_nacimiento', label: 'Fecha de Nacimiento', type: 'date', required: true },
-          { id: 'nacionalidad', label: 'Nacionalidad', type: 'text', required: true },
-          { id: 'estado_civil', label: 'Estado Civil', type: 'select', options: ['Soltero/a', 'Casado/a', 'Divorciado/a', 'Viudo/a', 'Unión convivencial'], required: true },
+          { id: 'dni_numero', label: 'Número de DNI', type: 'text', required: true },
+          { id: 'dni_apellido', label: 'Apellido', type: 'text', required: true },
+          { id: 'dni_nombre', label: 'Nombre/s', type: 'text', required: true },
+          { id: 'dni_sexo', label: 'Sexo', type: 'select', options: ['M', 'F', 'X'], required: true },
+          { id: 'dni_nacionalidad', label: 'Nacionalidad', type: 'select', options: ['Argentina', 'MERCOSUR', 'Otra jurisdicción'], required: true, helpText: 'Factor de riesgo PF (PRD §6.3).' },
+          { id: 'dni_fecha_nacimiento', label: 'Fecha de Nacimiento', type: 'date', required: true },
+          { id: 'dni_ejemplar', label: 'Ejemplar', type: 'select', options: ['A', 'B', 'C', 'D', 'E', 'F'], required: true },
         ],
       },
       {
-        title: 'Datos de Contacto',
+        title: 'DNI Dorso — datos validados por 4iDigital',
         icon: FileText,
+        helpText: 'Datos extraídos por 4iDigital del dorso del DNI. Confirme los valores antes de avanzar.',
         fields: [
-          { id: 'domicilio_real', label: 'Domicilio Real', type: 'text', required: true },
-          { id: 'domicilio_fiscal', label: 'Domicilio Fiscal', type: 'text', required: true },
-          { id: 'telefono', label: 'Teléfono', type: 'text', required: true },
-          { id: 'email', label: 'Email', type: 'email', required: true },
+          { id: 'dni_domicilio', label: 'Domicilio (según DNI)', type: 'text', required: true },
+          { id: 'dni_jurisdiccion_residencia', label: 'Jurisdicción de residencia', type: 'select', options: ['Argentina', 'MERCOSUR', 'Otra jurisdicción'], required: true, helpText: 'Factor de riesgo PF (PRD §6.3).' },
+          { id: 'dni_fecha_emision', label: 'Fecha de Emisión', type: 'date', required: true },
+          { id: 'dni_fecha_vencimiento', label: 'Fecha de Vencimiento', type: 'date', required: true },
+          { id: 'dni_tramite', label: 'Nº de Trámite', type: 'text', required: true },
+          { id: 'dni_vigente', label: '¿DNI vigente?', type: 'select', options: ['Sí', 'No', 'Próximo a vencer'], required: true },
         ],
       },
       {
-        title: 'Datos Monotributo',
+        title: 'Declaración del cliente — Ocupación y PEP',
         icon: Building2,
+        helpText: 'Datos declarados por el cliente en su formulario de alta. Confirme antes de avanzar.',
         fields: [
-          { id: 'categoria', label: 'Categoría', type: 'select', options: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'], required: true },
-          { id: 'actividad_principal', label: 'Actividad Principal', type: 'text', required: true },
-          { id: 'fecha_inscripcion', label: 'Fecha de Inscripción', type: 'date', required: true },
-          { id: 'ingresos_anuales', label: 'Ingresos Brutos Anuales ($)', type: 'number', required: true },
+          { id: 'ocupacion', label: 'Ocupación declarada', type: 'select', options: ['Empleado/a', 'Monotributista', 'Profesional independiente', 'Responsable inscripto', 'Trabajador autónomo', 'Particular', 'Otro'], required: true, helpText: 'Factor "actividad" en la matriz de riesgo PF.' },
+          { id: 'es_pep', label: '¿Es PEP?', type: 'select', options: ['No', 'Sí'], required: true, helpText: 'Si declara PEP, dispara override de riesgo alto en la matriz PF.' },
+        ],
+      },
+      {
+        title: 'Datos de Contacto (opcionales)',
+        icon: FileText,
+        helpText: 'Información complementaria del cliente para comunicación.',
+        fields: [
+          { id: 'telefono', label: 'Teléfono', type: 'text', required: false },
+          { id: 'email', label: 'Email', type: 'email', required: false },
         ],
       },
     ],

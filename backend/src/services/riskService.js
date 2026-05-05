@@ -14,19 +14,27 @@ const riskService = {
       factorMap[f.factor][f.value] = f.score;
     });
 
-    // Calcular puntuación por factor
-    const scores = {
-      clientTypeScore: this.getClientTypeScore(client, factorMap),
-      activityScore: this.getActivityScore(client, factorMap),
-      geographicScore: this.getGeographicScore(client, factorMap),
-      productScore: 5, // Default medio
-      channelScore: 5, // Default medio
-      pepScore: this.getPepScore(client),
-      transactionScore: 5, // Se calcula con historial
-    };
+    // PRD VF §6.3 — Selección de matriz: PF (persona_humana) vs PJ (sociedad).
+    const isPF = client.clientType === 'persona_humana';
+    const scores = isPF
+      ? this.calculatePFScores(client)
+      : {
+          clientTypeScore: this.getClientTypeScore(client, factorMap),
+          activityScore: this.getActivityScore(client, factorMap),
+          geographicScore: this.getGeographicScore(client, factorMap),
+          productScore: 5, // Default medio
+          channelScore: 5, // Default medio
+          pepScore: this.getPepScore(client),
+          transactionScore: 5, // Se calcula con historial
+        };
 
-    const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
-    const riskLevel = this.getRiskLevel(totalScore);
+    // PEP override binario para PF (PRD §6.3): si el cliente declara PEP, riesgo alto
+    // sin importar el resto de los factores.
+    const pepOverride = isPF && client.isPep === true;
+    const totalScore = pepOverride
+      ? 35
+      : Object.values(scores).reduce((a, b) => a + (b || 0), 0);
+    const riskLevel = pepOverride ? 'alto' : this.getRiskLevel(totalScore);
     const dueDiligenceType = this.getDueDiligenceType(riskLevel);
 
     // Calcular próxima fecha de revisión según nivel de riesgo
@@ -65,6 +73,57 @@ const riskService = {
     });
 
     return assessment;
+  },
+
+  // PRD VF §6.3 — Matriz Persona Humana / PF.
+  // Factores en onboarding: nacionalidad, residencia, actividad (ocupación) + PEP override.
+  // Materialidad y antigüedad NO se consideran en onboarding (entran a partir del mes 13).
+  // Cada factor mapea a 1 (bajo) / 3 (medio) / 5 (alto). Escalamos x7 para que el rango
+  // total alinee con el mapeo del PRD: ≥35 alto / 20-34 medio / <20 bajo.
+  //
+  // Mapeo a columnas existentes de RiskAssessment (sin nuevas columnas):
+  //   clientTypeScore  ← nacionalidad
+  //   geographicScore  ← residencia
+  //   activityScore    ← actividad/ocupación
+  //   pepScore         ← isPep ? 35 : 0  (override binario)
+  //   productScore / channelScore / transactionScore = 0 (no aplican a PF en onboarding)
+  calculatePFScores(client) {
+    const formData = client.formData || {};
+    // Aplanar formData (puede venir agrupado por docId).
+    const flat = Object.values(formData).reduce((acc, v) => {
+      if (v && typeof v === 'object') return { ...acc, ...v };
+      return acc;
+    }, { ...formData });
+
+    const jurisdictionScore = (v) => {
+      if (v === 'Argentina') return 1;
+      if (v === 'MERCOSUR') return 3;
+      if (v === 'Otra jurisdicción' || v === 'Otra' || v === 'Extranjera') return 5;
+      return 3; // default medio si no hay dato
+    };
+
+    const activityScoreFor = (v) => {
+      if (!v) return 3;
+      if (v === 'Empleado/a' || v === 'Particular') return 1;
+      if (v === 'Monotributista' || v === 'Profesional independiente' || v === 'Trabajador autónomo') return 3;
+      if (v === 'Responsable inscripto' || v === 'Otro') return 5;
+      return 3;
+    };
+
+    const nacionalidad = flat.dni_nacionalidad || client.nationality;
+    const residencia = flat.dni_jurisdiccion_residencia || client.country;
+    const ocupacion = flat.ocupacion || client.mainActivity;
+
+    return {
+      clientTypeScore: jurisdictionScore(nacionalidad) * 7,
+      geographicScore: jurisdictionScore(residencia) * 7,
+      activityScore: activityScoreFor(ocupacion) * 7,
+      pepScore: client.isPep ? 35 : 0,
+      // No aplican en onboarding PF (PRD §6.3)
+      productScore: 0,
+      channelScore: 0,
+      transactionScore: 0,
+    };
   },
 
   getClientTypeScore(client, factorMap) {

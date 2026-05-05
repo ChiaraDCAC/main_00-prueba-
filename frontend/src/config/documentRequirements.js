@@ -20,12 +20,18 @@ export const ENTITY_TYPE_LABELS = {
 export const DOCUMENT_REQUIREMENTS = {
 
 
+  // Persona Humana / PF — PRD VF §6.2.1
+  // PF NO carga archivos desde el front del cliente. Toda la información llega como
+  // datos estructurados (4iDigital + formulario del cliente). El admin solo CONFIRMA
+  // estos datos en paso 2; no hay carga ni revisión de archivos para PH.
   [ENTITY_TYPES.MONOTRIBUTISTA]: [
     {
       id: 'dni_frente',
-      name: 'DNI Frente',
-      description: 'Fotografía del frente del DNI del titular',
+      name: 'DNI Frente — datos validados por 4iDigital',
+      description: 'Datos extraídos por 4iDigital del frente del DNI. El admin confirma los valores; no se carga archivo.',
       required: true,
+      dataOnly: true,
+      fuente: '4iDigital',
       fields: [
         'dni_numero', 'dni_apellido', 'dni_nombre', 'dni_sexo', 'dni_nacionalidad',
         'dni_fecha_nacimiento', 'dni_ejemplar'
@@ -33,20 +39,24 @@ export const DOCUMENT_REQUIREMENTS = {
     },
     {
       id: 'dni_dorso',
-      name: 'DNI Dorso',
-      description: 'Fotografía del dorso del DNI del titular',
+      name: 'DNI Dorso — datos validados por 4iDigital',
+      description: 'Datos extraídos por 4iDigital del dorso del DNI. El admin confirma los valores; no se carga archivo.',
       required: true,
+      dataOnly: true,
+      fuente: '4iDigital',
       fields: [
-        'dni_domicilio', 'dni_fecha_emision', 'dni_fecha_vencimiento',
-        'dni_tramite', 'dni_vigente'
+        'dni_domicilio', 'dni_jurisdiccion_residencia', 'dni_fecha_emision',
+        'dni_fecha_vencimiento', 'dni_tramite', 'dni_vigente'
       ],
     },
     {
-      id: 'ddjj_pep_monotributo',
-      name: 'Declaración Jurada PEP',
-      description: 'Si es PEP o no se indica en la sección Personas',
+      id: 'declaracion_cliente',
+      name: 'Declaración del cliente — Ocupación y PEP',
+      description: 'Datos declarados por el cliente en su formulario de alta (vista cliente). El admin los confirma; no hay documento adjunto.',
       required: true,
-      fields: ['ddjj_pep_fecha', 'ddjj_pep_observaciones'],
+      dataOnly: true,
+      fuente: 'declarado_cliente',
+      fields: ['ocupacion', 'es_pep'],
     },
   ],
 
@@ -845,7 +855,16 @@ export const FORM_FIELDS = {
   dni_nacionalidad: {
     label: 'Nacionalidad',
     type: 'select',
-    options: ['Argentina', 'Extranjera']
+    // PRD VF §6.3: factor de riesgo PF "nacionalidad" — Argentina=1, MERCOSUR=3, otra=5
+    options: ['Argentina', 'MERCOSUR', 'Otra jurisdicción'],
+    helpText: 'Jurisdicción de la nacionalidad declarada en el DNI (factor de riesgo PF).',
+  },
+  dni_jurisdiccion_residencia: {
+    label: 'Jurisdicción de residencia',
+    type: 'select',
+    // PRD VF §6.3: factor de riesgo PF "residencia" — Argentina=1, MERCOSUR=3, otra=5
+    options: ['Argentina', 'MERCOSUR', 'Otra jurisdicción'],
+    helpText: 'Jurisdicción derivada del domicilio del DNI Dorso (factor de riesgo PF).',
   },
   dni_fecha_nacimiento: { label: 'Fecha de Nacimiento', type: 'date' },
   dni_fecha_emision: { label: 'Fecha de Emisión', type: 'date' },
@@ -922,6 +941,24 @@ export const FORM_FIELDS = {
   actividad_principal: { label: 'Actividad Principal', type: 'text' },
   fecha_inscripcion: { label: 'Fecha de Inscripción', type: 'date' },
   domicilio_fiscal: { label: 'Domicilio Fiscal', type: 'text' },
+
+  // Ocupación declarada por el cliente — PRD VF §6.2.1
+  // Selección única que también se usa como factor "actividad" en la matriz PF (§6.3)
+  ocupacion: {
+    label: 'Ocupación declarada',
+    type: 'select',
+    options: [
+      'Empleado/a',
+      'Monotributista',
+      'Profesional independiente',
+      'Responsable inscripto',
+      'Trabajador autónomo',
+      'Particular',
+      'Otro',
+    ],
+    important: true,
+    helpText: 'Declarado por el cliente en el front. Usado como factor "actividad" en la matriz de riesgo PF.',
+  },
 
   // DNI Fotos - Monotributista
   foto_dni_frente: {
