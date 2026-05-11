@@ -734,4 +734,113 @@ El incumplimiento en los plazos de presentación o la presentación de informaci
 - **RF-09.1** Mostrar vencimientos de todos los reportes activos:
   - F.8126 ARCA: mensual, configurable.
   - Base Padrón BCRA: mensual, configurable.
-  - UIF Apartados A y B: día 22 del mes siguiente (o día hábil 
+  - UIF Apartados A y B: día 22 del mes siguiente (o día hábil posterior).
+  - UIF Apartado C: trimestral, configurable.
+- **RF-09.2** Resaltar en amarillo los reportes con vencimiento ≤ 5 días hábiles.
+- **RF-09.3** Resaltar en rojo los reportes vencidos sin presentación registrada.
+- **RF-09.4** El dashboard debe incluir el indicador de "Próximos vencimientos regulatorios" sin necesidad de navegar al módulo.
+- **RF-09.5** Cada item del calendario debe ser clickeable y navegar al módulo correspondiente.
+
+**Criterios de Aceptación:**
+
+- **CA-09.1** El calendario muestra correctamente todos los vencimientos del mes actual y del siguiente.
+- **CA-09.2** Un reporte con estado `Enviado` para el período vigente no aparece en rojo aunque la fecha haya pasado.
+- **CA-09.3** Un reporte sin `Enviado` con fecha vencida aparece en rojo con indicación del retraso en días.
+- **CA-09.4** El indicador del dashboard muestra en tiempo real el conteo de vencimientos próximos y vencidos.
+- **CA-09.5** Las fechas de vencimiento son configurables por el Oficial de Cumplimiento sin requerir deploy.
+
+---
+
+## Fuera de Alcance (Out of Scope)
+
+- **Integración directa con el portal de presentación de la UIF** — En V1 el envío de Apartados A, B y C es manual (export `.txt` + carga en plataforma UIF); la integración automática queda para V2.
+- **Integración con RUNOR BCRA para envío automático del Base Padrón** — En V1 el envío es manual; se evalúa integración en V2.
+- **Generación del informe del auditor externo (Apartado C)** — La herramienta genera el template; el informe final es responsabilidad del auditor externo.
+- **Soporte multi-período simultáneo (generar varios meses en paralelo)** — En V1 se genera de a un período por vez.
+- **Generación automática programada (cron job mensual)** — En V1 el analista dispara la generación manualmente; la generación automática queda para V2.
+- **Validación en tiempo real contra el Web Service de ARCA previo a la generación** — En V1 la validación es local contra las reglas del sistema.
+
+---
+
+## Riesgos
+
+### Técnicos
+- **Las especificaciones de formato del F.8126 (longitud fija de campos, tablas de códigos) pueden cambiar por nuevas versiones del aplicativo ARCA.**
+  - Mitigación: La versión del aplicativo (`00200`) debe ser configurable por el Oficial de Cumplimiento sin deploy. Registrar la versión utilizada en cada presentación.
+
+- **La conexión WSM con ARCA puede estar no disponible en el momento de envío.**
+  - Mitigación: Implementar reintentos automáticos (hasta 3 intentos) con intervalo configurable. El analista puede reintentar manualmente desde el historial.
+
+- **Los datos de saldos y movimientos deben estar consolidados y correctos al momento de generar el reporte; si hay transacciones pendientes de conciliación, el reporte puede ser incorrecto.**
+  - Mitigación: Mostrar advertencia antes de generar si existen transacciones del período sin conciliar.
+
+- **El Apartado B requiere agregar movimientos por combinaciones de tipo + método + moneda, lo que implica queries de agregación sobre la tabla de transacciones.**
+  - Mitigación: Crear vistas o índices específicos para estas consultas antes del desarrollo. Testear performance con volúmenes reales.
+
+### Regulatorios
+- **Las tablas de códigos de ARCA (tipos de documento, monedas, métodos de iniciación) pueden actualizarse.**
+  - Mitigación: Las tablas de códigos deben ser configurables por el Oficial de Cumplimiento desde el backoffice del sistema.
+
+- **La fecha de primer vencimiento (Apartados A y B) se activa a partir del certificado de inscripción en el Registro de PSPCP de la SEFyC.**
+  - Mitigación: El sistema debe permitir configurar la fecha de inicio de obligación de presentación por tipo de reporte.
+
+### De Adopción
+- **Si el equipo no confía en que los datos generados son correctos, puede seguir usando la construcción manual en paralelo.**
+  - Mitigación: Incluir el control de razonabilidad del Apartado B como validación visible y exportable. Generar reportes de revisión previos al envío.
+
+### De Timeline
+- **La integración WSM con ARCA requiere homologación previa con el organismo, lo que puede tomar tiempo.**
+  - Mitigación: Iniciar el proceso de homologación con ARCA en paralelo con el desarrollo. En caso de demora, ofrecer exportación del archivo para envío manual como fallback.
+
+---
+
+## Dependencias
+
+| Dependencia | Estado | Impacto si no está lista |
+|-------------|--------|--------------------------|
+| Módulo de Clientes (Alta Usuario) | En desarrollo | Bloqueante — los registros 02, 03 y Base Padrón usan datos de clientes |
+| Datos de transacciones y saldos disponibles en BD | Pendiente de definición | Bloqueante para registros 04, 05 y Apartados A y B |
+| Credenciales WSM ARCA configuradas y homologadas | Pendiente | Bloqueante para envío automático F.8126 |
+| Tablas de códigos ARCA cargadas en el sistema | Pendiente | Bloqueante para validación y generación del F.8126 |
+| Generación de archivos `.txt` | Pendiente de definición | Bloqueante para exportación de reportes BCRA y UIF |
+| Migración a PostgreSQL | Pendiente | Necesaria antes de salida a producción |
+
+---
+
+## Tracking / Eventos
+
+| Evento | Dónde | Event Category | Event Action | Event Name | Negocio | Producto | Placement |
+|--------|-------|----------------|--------------|------------|---------|----------|-----------|
+| Iniciar generación F.8126 | Módulo ARCA | Interacción | IniciarGeneracionF8126 | Iniciar F.8126 | dCP | Compliance | CTA General |
+| Validar archivo F.8126 | Módulo ARCA | Interacción | ValidarArchivoF8126 | Validar F.8126 | dCP | Compliance | CTA General |
+| Enviar F.8126 vía WSM | Módulo ARCA | Interacción | EnviarF8126WSM | Enviar F.8126 WSM | dCP | Compliance | CTA General |
+| Error en envío WSM | Módulo ARCA | Navegación | ErrorEnvioWSM | Error envío ARCA WSM | dCP | Compliance | - |
+| Generar Base Padrón BCRA | Módulo BCRA | Interacción | GenerarBasePadron | Generar Base Padrón | dCP | Compliance | CTA General |
+| Exportar Base Padrón .txt | Módulo BCRA | Interacción | ExportarBasePadronTXT | Exportar Base Padrón .txt | dCP | Compliance | CTA General |
+| Generar Apartado A UIF | Módulo UIF | Interacción | GenerarApartadoA | Generar Apartado A UIF | dCP | Compliance | CTA General |
+| Generar Apartado B UIF | Módulo UIF | Interacción | GenerarApartadoB | Generar Apartado B UIF | dCP | Compliance | CTA General |
+| Generar Apartado C UIF | Módulo UIF | Interacción | GenerarApartadoC | Generar Apartado C UIF | dCP | Compliance | CTA General |
+| Exportar Apartado A .txt | Módulo UIF | Interacción | ExportarApartadoATXT | Exportar Apartado A .txt | dCP | Compliance | CTA General |
+| Exportar Apartado B .txt | Módulo UIF | Interacción | ExportarApartadoBTXT | Exportar Apartado B .txt | dCP | Compliance | CTA General |
+| Control razonabilidad aprobado | Módulo UIF | Navegación | RazonabilidadOK | Razonabilidad Apt. B OK | dCP | Compliance | - |
+| Control razonabilidad con diferencia | Módulo UIF | Navegación | RazonabilidadError | Razonabilidad Apt. B con diferencia | dCP | Compliance | - |
+| Marcar presentación como enviada | Historial reportes | Interacción | MarcarPresentacionEnviada | Marcar presentación enviada | dCP | Compliance | CTA Particular |
+| Ver calendario vencimientos | Dashboard | Navegación | VerCalendarioVencimientos | Ver calendario vencimientos regulatorios | dCP | Compliance | - |
+
+---
+
+## Agenda / Plan de Desarrollo
+
+| Instancia | Status | Fecha | Notas |
+|-----------|--------|-------|-------|
+| Kickoff | | | Incluir representante de ARCA/BCRA/UIF si posible |
+| Desarrollo experiencia (UX) | | | Pendiente diseño en Figma — priorizar flujo F.8126 |
+| Iteración experiencia | | | |
+| Proceso de homologación WSM con ARCA | | | Iniciar en paralelo con desarrollo |
+| Alineación con negocio | | | Confirmar fecha de primer vencimiento regulatorio |
+| Desarrollo — Base Padrón BCRA | | | Primer módulo recomendado (más simple, sin WSM) |
+| Desarrollo — UIF Apartados A y B | | | Depende de datos de transacciones en BD |
+| Desarrollo — F.8126 ARCA (sin WSM) | | | Generación del archivo + validaciones |
+| Desarrollo — Integración WSM ARCA | | | Depende de homologación con ARCA |
+| Desarrollo — UIF Apartado C | | | Menor prioridad (trimestral, template manual) |
+| Salida a PROD | | | Bloqueado por migración a PostgreSQL y homologación WSM |
