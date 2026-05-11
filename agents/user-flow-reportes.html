@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>User Flow — Módulo Reportes Regulatorios — HC DCAC Compliance</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #EAF4FB; padding: 30px; color: #222; }
+
+.header-dcac {
+  background: linear-gradient(135deg, #0077B6 0%, #00B4D8 100%);
+  border-radius: 14px;
+  padding: 28px 36px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0,119,182,0.25);
+}
+.header-dcac .brand { color: #fff; }
+.header-dcac .brand h1 { font-size: 22px; font-weight: 700; }
+.header-dcac .brand p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+.header-dcac .badge {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+.card h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0077B6;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #E8F4FD;
+}
+.card h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #444;
+  margin: 20px 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* FLOW LANES */
+.flow-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.lane {
+  flex: 1;
+  min-width: 220px;
+}
+.lane-title {
+  background: #0077B6;
+  color: #fff;
+  border-radius: 8px 8px 0 0;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+.lane-body {
+  border: 2px solid #0077B6;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+}
+
+/* NODES */
+.node {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  position: relative;
+}
+.node-trigger {
+  background: #FFF8E7;
+  border: 1.5px solid #F4A261;
+  color: #7B4A00;
+}
+.node-action {
+  background: #E8F4FD;
+  border: 1.5px solid #00B4D8;
+  color: #0077B6;
+}
+.node-system {
+  background: #F0F4FF;
+  border: 1.5px dashed #5B7FD4;
+  color: #2C3E8C;
+}
+.node-decision {
+  background: #FFF3E0;
+  border: 1.5px solid #FF9800;
+  color: #7B3F00;
+  border-radius: 4px;
+}
+.node-success {
+  background: #F0FFF4;
+  border: 1.5px solid #2ECC71;
+  color: #1A6B3A;
+}
+.node-error {
+  background: #FFF0F0;
+  border: 1.5px solid #E74C3C;
+  color: #7B1A1A;
+}
+.node-end {
+  background: #0077B6;
+  color: #fff;
+  border-radius: 20px;
+  text-align: center;
+  font-weight: 700;
+  border: none;
+}
+
+.arrow {
+  text-align: center;
+  color: #0077B6;
+  font-size: 16px;
+  line-height: 1;
+  margin: -4px 0;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.tag-ws  { background: #E8F4FD; color: #0077B6; border: 1px solid #00B4D8; }
+.tag-zip { background: #F0FFF4; color: #1A6B3A; border: 1px solid #2ECC71; }
+.tag-manual { background: #FFF8E7; color: #7B4A00; border: 1px solid #F4A261; }
+.tag-auto { background: #F0F4FF; color: #2C3E8C; border: 1px solid #5B7FD4; }
+
+/* TRACKING TABLE */
+.tracking-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.tracking-table th {
+  background: #0077B6;
+  color: #fff;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+}
+.tracking-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #E8F4FD;
+  vertical-align: top;
+}
+.tracking-table tr:last-child td { border-bottom: none; }
+.tracking-table tr:hover td { background: #F5FBFF; }
+code {
+  background: #F0F4FF;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 11px;
+  color: #2C3E8C;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #555;
+}
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="header-dcac">
+  <div class="brand">
+    <h1>User Flow — Reportes Regulatorios</h1>
+    <p>deCampoPagos · HC DCAC Compliance · Módulo Reportes</p>
+  </div>
+  <div class="badge">v1.0 · 2026</div>
+</div>
+
+<!-- LEYENDA -->
+<div class="card">
+  <h2>Referencias</h2>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#FFF8E7;border:1.5px solid #F4A261;"></div> Disparador / inicio</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E8F4FD;border:1.5px solid #00B4D8;"></div> Acción del usuario</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F0F4FF;border:1.5px dashed #5B7FD4;"></div> Proceso del sistema</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FFF3E0;border:1.5px solid #FF9800;"></div> Decisión / bifurcación</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F0FFF4;border:1.5px solid #2ECC71;"></div> Estado exitoso</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FFF0F0;border:1.5px solid #E74C3C;"></div> Error</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FLOW 1 — UIF Apartado A y B -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Flow 1 — UIF · Apartado A y B <span class="tag tag-zip">EXPORT ZIP</span> <span class="tag tag-manual">PRESENTACIÓN MANUAL</span></h2>
+
+  <div class="flow-container">
+
+    <div class="lane">
+      <div class="lane-title">Analista</div>
+      <div class="lane-body">
+        <div class="node node-trigger">Entra al módulo Reportes → selecciona <strong>UIF</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Selecciona período (AAAAMM)</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Presiona <strong>"Generar Apartado A y B"</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Presiona <strong>"Descargar ZIP"</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Sube el ZIP al sistema de la UIF (fuera de la herramienta)</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Vuelve y presiona <strong>"Marcar como Presentado ✓"</strong></div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">Sistema</div>
+      <div class="lane-body">
+        <div class="node node-system">Consulta DB → arma archivo Apartado A (saldos) con SQL estándar</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Arma archivo Apartado B (operaciones) con SQL estándar</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Empaqueta ambos en ZIP</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Registra evento <code>EXPORTAR_ZIP</code> en TRACKING_EVENTO</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Al marcar: actualiza <code>REPORTE.estado = ENVIADO</code> + <code>presentado_manual = true</code></div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Registra evento <code>MARCAR_PRESENTADO</code> en TRACKING_EVENTO</div>
+        <div class="arrow">↓</div>
+        <div class="node node-success">Calendario vencimiento → cambia a <strong>VERDE</strong></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FLOW 2 — BCRA Base Padrón -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Flow 2 — BCRA · Base Padrón <span class="tag tag-zip">EXPORT ZIP</span> <span class="tag tag-manual">PRESENTACIÓN MANUAL VÍA RUNOR</span></h2>
+
+  <div class="flow-container">
+
+    <div class="lane">
+      <div class="lane-title">Analista</div>
+      <div class="lane-body">
+        <div class="node node-trigger">Entra al módulo Reportes → selecciona <strong>BCRA</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Selecciona período (AAAAMM)</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Presiona <strong>"Generar Base Padrón"</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Presiona <strong>"Descargar ZIP"</strong> (PADRON.TXT + Detalle.xml)</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Sube el ZIP al RUNOR (fuera de la herramienta)</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Vuelve y presiona <strong>"Marcar como Presentado ✓"</strong></div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">Sistema</div>
+      <div class="lane-body">
+        <div class="node node-system">Consulta <code>BCRA_NOVEDAD</code> → filtra novedades del período (altas, bajas, modificaciones)</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Genera PADRON.TXT en formato BCRA + Detalle.xml</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Empaqueta en ZIP</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Registra evento <code>EXPORTAR_ZIP</code> en TRACKING_EVENTO</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Al marcar: actualiza <code>REPORTE.estado = ENVIADO</code> + <code>presentado_manual = true</code></div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Registra evento <code>MARCAR_PRESENTADO</code> en TRACKING_EVENTO</div>
+        <div class="arrow">↓</div>
+        <div class="node node-success">Calendario vencimiento → cambia a <strong>VERDE</strong></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FLOW 3 — ARCA F.8126 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Flow 3 — ARCA · F.8126 <span class="tag tag-ws">ENVÍO POR WEB SERVICE</span> <span class="tag tag-auto">MARCADO AUTOMÁTICO</span></h2>
+
+  <div class="flow-container">
+
+    <div class="lane">
+      <div class="lane-title">Analista</div>
+      <div class="lane-body">
+        <div class="node node-trigger">Entra al módulo Reportes → selecciona <strong>ARCA</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Selecciona período (AAAAMM)</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Presiona <strong>"Generar F.8126"</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Revisa preview (cabecera + cantidad de cuentas/integrantes)</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Presiona <strong>"Enviar a ARCA"</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-decision">¿WS responde OK?</div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">Sistema — Flujo OK</div>
+      <div class="lane-body">
+        <div class="node node-system">Arma ARCA_CABECERA + ARCA_CUENTA + ARCA_INTEGRANTE + ARCA_MOVIMIENTO + ARCA_TRANSFERENCIA desde DB con SQL estándar</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Registra evento <code>GENERAR</code> en TRACKING_EVENTO</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Llama al WS de ARCA (WSM) con el archivo generado</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Guarda respuesta en <code>REPORTE.respuesta_organismo</code></div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Actualiza <code>REPORTE.estado = ENVIADO</code> automáticamente</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Registra evento <code>ENVIAR_WS</code> resultado <code>OK</code></div>
+        <div class="arrow">↓</div>
+        <div class="node node-success">Calendario → <strong>VERDE</strong> · Muestra respuesta del organismo</div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">Sistema — Flujo ERROR</div>
+      <div class="lane-body">
+        <div class="node node-error">WS devuelve error</div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Guarda error en <code>REPORTE.respuesta_organismo</code></div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Actualiza <code>REPORTE.estado = ERROR</code></div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Registra evento <code>ENVIAR_WS</code> resultado <code>ERROR</code></div>
+        <div class="arrow">↓</div>
+        <div class="node node-error">Calendario → <strong>ROJO</strong> · Muestra código de error al analista</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Analista corrige y reintenta → genera rectificativa (<code>secuencia = 01</code>)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- CALENDARIO DE VENCIMIENTOS -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Flow 4 — Calendario de Vencimientos</h2>
+  <div class="flow-container">
+    <div class="lane">
+      <div class="lane-title">Analista</div>
+      <div class="lane-body">
+        <div class="node node-trigger">Entra al módulo Reportes → ve el <strong>Calendario</strong></div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Identifica reportes pendientes por color</div>
+        <div class="arrow">↓</div>
+        <div class="node node-action">Hace clic en el reporte → va al flow correspondiente (1, 2 o 3)</div>
+      </div>
+    </div>
+    <div class="lane">
+      <div class="lane-title">Sistema</div>
+      <div class="lane-body">
+        <div class="node node-system">Calcula indicador por período y tipo:<br>
+          🟢 <strong>VERDE</strong> = presentado<br>
+          🟡 <strong>AMARILLO</strong> = faltan ≤5 días para vencer<br>
+          🔴 <strong>ROJO</strong> = vencido o con error
+        </div>
+        <div class="arrow">↓</div>
+        <div class="node node-system">Muestra tabla: UIF A·B / BCRA / ARCA por mes</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- TRACKING EVENTOS -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="card">
+  <h2>Eventos Registrados en TRACKING_EVENTO</h2>
+  <table class="tracking-table">
+    <tr>
+      <th>Evento</th>
+      <th>Disparado por</th>
+      <th>Organismo</th>
+      <th>Descripción</th>
+    </tr>
+    <tr>
+      <td><code>GENERAR</code></td>
+      <td>Usuario</td>
+      <td>ARCA / UIF / BCRA</td>
+      <td>Se generan los archivos desde la DB con SQL estándar</td>
+    </tr>
+    <tr>
+      <td><code>EXPORTAR_ZIP</code></td>
+      <td>Usuario</td>
+      <td>UIF / BCRA</td>
+      <td>Usuario descarga el ZIP con los archivos para presentar manualmente</td>
+    </tr>
+    <tr>
+      <td><code>ENVIAR_WS</code></td>
+      <td>Sistema</td>
+      <td>ARCA</td>
+      <td>Sistema llama al Web Service de ARCA. Resultado: OK o ERROR</td>
+    </tr>
+    <tr>
+      <td><code>MARCAR_PRESENTADO</code></td>
+      <td>Usuario</td>
+      <td>UIF / BCRA</td>
+      <td>Analista confirma que subió el ZIP al organismo externo. Tick manual.</td>
+    </tr>
+    <tr>
+      <td><code>RECTIFICAR</code></td>
+      <td>Usuario</td>
+      <td>ARCA / UIF / BCRA</td>
+      <td>Se genera una rectificativa (secuencia = 01+) sobre una presentación ya enviada</td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

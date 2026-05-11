@@ -1,0 +1,574 @@
+{
+  "usuarios_internos": [
+    {
+      "nombre": "Chiara",
+      "apellido": "Giralt",
+      "email": "oficial@compliance.com",
+      "password": "Oficial2026!",
+      "nivel": "nivel_1"
+    },
+    {
+      "nombre": "María",
+      "apellido": "López",
+      "email": "analista1@compliance.com",
+      "password": "Analista2026!",
+      "nivel": "nivel_2"
+    },
+    {
+      "nombre": "Carlos",
+      "apellido": "Suárez",
+      "email": "analista2@compliance.com",
+      "password": "Analista2026!",
+      "nivel": "nivel_2"
+    }
+  ],
+
+  "clientes": [
+    {
+      "tipo": "SA",
+      "sociedad": {
+        "razon_social": "Inversiones del Sur S.A.",
+        "cuit_cuil": "30-71234567-8",
+        "tipo_sociedad": "SA",
+        "estado": "pendiente"
+      },
+      "personas": [
+        {
+          "apellido": "Méndez",
+          "nombre": "Juan Carlos",
+          "nro_documento": "12345678",
+          "cuit": "20-12345678-9",
+          "correo_electronico": "jmendez@inversur.com",
+          "telefono": "11-4567-8900",
+          "domicilio": "Av. Corrientes 1234, CABA",
+          "es_pep": false,
+          "cargo_societario": "presidente",
+          "tipo_firma": "individual",
+          "rol": "presidente"
+        },
+        {
+          "apellido": "González",
+          "nombre": "María Laura",
+          "nro_documento": "23456789",
+          "cuit": "27-23456789-0",
+          "correo_electronico": "mgonzalez@inversur.com",
+          "telefono": "11-4567-8901",
+          "domicilio": "Av. Santa Fe 567, CABA",
+          "es_pep": false,
+          "cargo_societario": "director",
+          "tipo_firma": "conjunta",
+          "rol": "director"
+        },
+        {
+          "apellido": "Ferreyra",
+          "nombre": "Pablo Andrés",
+          "nro_documento": "30123456",
+          "cuit": "20-30123456-7",
+          "correo_electronico": "pferreyra@inversur.com",
+          "telefono": "11-4567-8902",
+          "domicilio": "Av. Rivadavia 890, CABA",
+          "es_pep": false,
+          "cargo_societario": "vicepresidente",
+          "tipo_firma": "conjunta",
+          "rol": "vicepresidente"
+        }
+      ],
+      "documentos": [
+        {
+          "id_documento": "doc_estatuto_sa",
+          "nombre_documento": "Estatuto Social",
+          "categoria": "societario",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "sa_razon_social": "Inversiones del Sur S.A.",
+              "sa_cuit": "30-71234567-8",
+              "sa_fecha_constitucion": "2015-03-12",
+              "sa_nro_inscripcion_igj": "IGJ-15.432/2015",
+              "sa_dom_legal": "Av. Corrientes 1234, CABA",
+              "sa_dom_real": "Av. Corrientes 1234, CABA",
+              "sa_objeto_social": "Inversiones financieras y agropecuarias",
+              "sa_capital_social": 5000000,
+              "sa_plazo_duracion": "99 años",
+              "sa_fecha_cierre_ejercicio": "2024-12-31",
+              "sa_tipo_acciones": "Ordinarias Nominativas No Endosables",
+              "sa_total_acciones": 50000,
+              "sa_valor_nominal_accion": 100
+            }
+          }
+        },
+        {
+          "id_documento": "doc_acta_autoridades",
+          "nombre_documento": "Acta de Designación de Autoridades",
+          "categoria": "societario",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "observado",
+            "observaciones": "El acta no indica fecha de vencimiento del mandato. Solicitar nueva versión con ese dato completo.",
+            "datos_formulario": {
+              "fecha_acta": "2024-04-01",
+              "autoridades": [
+                { "cargo": "Presidente", "nombre": "Juan Carlos Méndez", "cuit": "20-12345678-9" },
+                { "cargo": "Director", "nombre": "María Laura González", "cuit": "27-23456789-0" }
+              ]
+            }
+          }
+        },
+        {
+          "id_documento": "doc_registro_accionistas",
+          "nombre_documento": "Registro de Accionistas",
+          "categoria": "societario",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "accionistas": [
+                { "nombre": "Juan Carlos Méndez", "cuit": "20-12345678-9", "acciones": 25000, "porcentaje": 50 },
+                { "nombre": "María Laura González", "cuit": "27-23456789-0", "acciones": 15000, "porcentaje": 30 },
+                { "nombre": "Pablo Andrés Ferreyra", "cuit": "20-30123456-7", "acciones": 10000, "porcentaje": 20 }
+              ]
+            }
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_pep",
+          "nombre_documento": "DDJJ Personas Expuestas Políticamente",
+          "categoria": "pep",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "declarantes": [
+                { "nombre": "Juan Carlos Méndez", "cuit": "20-12345678-9", "es_pep": false },
+                { "nombre": "María Laura González", "cuit": "27-23456789-0", "es_pep": false },
+                { "nombre": "Pablo Andrés Ferreyra", "cuit": "20-30123456-7", "es_pep": false }
+              ],
+              "fecha_declaracion": "2024-04-15"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_bf",
+          "nombre_documento": "DDJJ Beneficiarios Finales",
+          "categoria": "beneficiario_final",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "beneficiarios": [
+                { "nombre": "Juan Carlos Méndez", "cuit": "20-12345678-9", "porcentaje": 50 },
+                { "nombre": "María Laura González", "cuit": "27-23456789-0", "porcentaje": 30 },
+                { "nombre": "Pablo Andrés Ferreyra", "cuit": "20-30123456-7", "porcentaje": 20 }
+              ],
+              "fecha_declaracion": "2024-04-15"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "tipo": "SRL",
+      "sociedad": {
+        "razon_social": "Tecnología Aplicada S.R.L.",
+        "cuit_cuil": "30-65432109-7",
+        "tipo_sociedad": "SRL",
+        "estado": "pendiente"
+      },
+      "personas": [
+        {
+          "apellido": "Sánchez",
+          "nombre": "Roberto Damián",
+          "nro_documento": "34567890",
+          "cuit": "20-34567890-3",
+          "correo_electronico": "rsanchez@tecnoap.com",
+          "telefono": "11-5678-1234",
+          "domicilio": "Av. Belgrano 2345, CABA",
+          "es_pep": false,
+          "cargo_societario": "gerente",
+          "tipo_firma": "individual",
+          "rol": "socio_gerente"
+        },
+        {
+          "apellido": "Romero",
+          "nombre": "Valeria",
+          "nro_documento": "40123456",
+          "cuit": "27-40123456-8",
+          "correo_electronico": "vromero@tecnoap.com",
+          "telefono": "11-5678-1235",
+          "domicilio": "Av. Callao 678, CABA",
+          "es_pep": false,
+          "cargo_societario": "gerente",
+          "tipo_firma": "conjunta",
+          "rol": "socia_gerente"
+        }
+      ],
+      "documentos": [
+        {
+          "id_documento": "doc_contrato_social",
+          "nombre_documento": "Contrato Social",
+          "categoria": "societario",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "srl_razon_social": "Tecnología Aplicada S.R.L.",
+              "srl_cuit": "30-65432109-7",
+              "srl_fecha_constitucion": "2018-07-20",
+              "srl_nro_inscripcion_igj": "IGJ-22.876/2018",
+              "srl_dom_legal": "Av. Belgrano 2345, CABA",
+              "srl_dom_real": "Av. Belgrano 2345, CABA",
+              "srl_objeto_social": "Desarrollo y comercialización de software y soluciones tecnológicas",
+              "srl_capital_social": 1200000,
+              "srl_total_cuotas": 12000,
+              "srl_valor_cuota": 100,
+              "srl_tipo_gerencia": "plural",
+              "srl_tipo_firma": "conjunta"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_acta_asamblea",
+          "nombre_documento": "Acta de Asamblea / Designación de Gerentes",
+          "categoria": "societario",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "fecha_acta": "2024-01-15",
+              "gerentes": [
+                { "nombre": "Roberto Damián Sánchez", "cuit": "20-34567890-3", "tipo_firma": "individual" },
+                { "nombre": "Valeria Romero", "cuit": "27-40123456-8", "tipo_firma": "conjunta" }
+              ]
+            }
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_pep",
+          "nombre_documento": "DDJJ Personas Expuestas Políticamente",
+          "categoria": "pep",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "declarantes": [
+                { "nombre": "Roberto Damián Sánchez", "cuit": "20-34567890-3", "es_pep": false },
+                { "nombre": "Valeria Romero", "cuit": "27-40123456-8", "es_pep": false }
+              ],
+              "fecha_declaracion": "2024-01-15"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_bf",
+          "nombre_documento": "DDJJ Beneficiarios Finales",
+          "categoria": "beneficiario_final",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "rechazado",
+            "motivo_rechazo": "Los porcentajes de participación declarados no coinciden con el contrato social. El contrato indica 60/40 y la DDJJ declara 50/50. Corregir y reenviar.",
+            "datos_formulario": {
+              "beneficiarios": [
+                { "nombre": "Roberto Damián Sánchez", "cuit": "20-34567890-3", "porcentaje": 50 },
+                { "nombre": "Valeria Romero", "cuit": "27-40123456-8", "porcentaje": 50 }
+              ],
+              "fecha_declaracion": "2024-01-15"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "tipo": "SH",
+      "sociedad": {
+        "razon_social": "López y Hermanos S.H.",
+        "cuit_cuil": "30-55566677-1",
+        "tipo_sociedad": "SH",
+        "estado": "pendiente"
+      },
+      "personas": [
+        {
+          "apellido": "López",
+          "nombre": "Héctor Daniel",
+          "nro_documento": "15678901",
+          "cuit": "20-15678901-4",
+          "correo_electronico": "hlopez@lopezyhermanos.com",
+          "telefono": "11-6789-2345",
+          "domicilio": "Av. Entre Ríos 1122, CABA",
+          "es_pep": false,
+          "cargo_societario": "ninguno",
+          "tipo_firma": "individual",
+          "rol": "socio_administrador"
+        },
+        {
+          "apellido": "López",
+          "nombre": "Sergio Fabián",
+          "nro_documento": "18901234",
+          "cuit": "20-18901234-5",
+          "correo_electronico": "slopez@lopezyhermanos.com",
+          "telefono": "11-6789-2346",
+          "domicilio": "Av. Entre Ríos 1122, CABA",
+          "es_pep": false,
+          "cargo_societario": "ninguno",
+          "tipo_firma": "conjunta",
+          "rol": "socio"
+        }
+      ],
+      "documentos": [
+        {
+          "id_documento": "doc_formulario_sh",
+          "nombre_documento": "Formulario Sociedad de Hecho",
+          "categoria": "societario",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "observado",
+            "observaciones": "Falta indicar la actividad principal de la sociedad. Completar campo y reenviar.",
+            "datos_formulario": {
+              "sh_denominacion": "López y Hermanos",
+              "sh_fecha_inicio": "2020-05-10",
+              "sh_domicilio": "Av. Entre Ríos 1122, CABA",
+              "sh_actividad_principal": "",
+              "sh_cantidad_socios": 2,
+              "sh_representante": "Héctor Daniel López",
+              "sh_cuit_representante": "20-15678901-4",
+              "sh_gestor_es_representante": true,
+              "sh_tiene_apoderado": false
+            }
+          }
+        },
+        {
+          "id_documento": "doc_dni_socios",
+          "nombre_documento": "DNI de los Socios",
+          "categoria": "identificacion",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "socios": [
+                { "nombre": "Héctor Daniel López", "dni": "15678901" },
+                { "nombre": "Sergio Fabián López", "dni": "18901234" }
+              ]
+            }
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_pep",
+          "nombre_documento": "DDJJ Personas Expuestas Políticamente",
+          "categoria": "pep",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "declarantes": [
+                { "nombre": "Héctor Daniel López", "cuit": "20-15678901-4", "es_pep": false },
+                { "nombre": "Sergio Fabián López", "cuit": "20-18901234-5", "es_pep": false }
+              ],
+              "fecha_declaracion": "2024-03-01"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_bf",
+          "nombre_documento": "DDJJ Beneficiarios Finales",
+          "categoria": "beneficiario_final",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "beneficiarios": [
+                { "nombre": "Héctor Daniel López", "cuit": "20-15678901-4", "porcentaje": 50 },
+                { "nombre": "Sergio Fabián López", "cuit": "20-18901234-5", "porcentaje": 50 }
+              ],
+              "fecha_declaracion": "2024-03-01"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "tipo": "sucesion",
+      "sociedad": {
+        "razon_social": "Sucesión de María González",
+        "cuit_cuil": "30-71234570-1",
+        "tipo_sociedad": "sucesion",
+        "estado": "pendiente"
+      },
+      "personas": [
+        {
+          "apellido": "González",
+          "nombre": "Patricio Emilio",
+          "nro_documento": "26789012",
+          "cuit": "20-26789012-6",
+          "correo_electronico": "pgonzalez@mail.com",
+          "telefono": "11-7890-3456",
+          "domicilio": "Av. Cabildo 3456, CABA",
+          "es_pep": false,
+          "cargo_societario": "ninguno",
+          "tipo_firma": "individual",
+          "rol": "administrador_justicia"
+        },
+        {
+          "apellido": "González",
+          "nombre": "Lucía María",
+          "nro_documento": "35678901",
+          "cuit": "27-35678901-2",
+          "correo_electronico": "lgonzalez@mail.com",
+          "telefono": "11-7890-3457",
+          "domicilio": "Av. Cabildo 3456, CABA",
+          "es_pep": false,
+          "cargo_societario": "ninguno",
+          "tipo_firma": "ninguna",
+          "rol": "heredero"
+        }
+      ],
+      "documentos": [
+        {
+          "id_documento": "doc_declaratoria_herederos",
+          "nombre_documento": "Declaratoria de Herederos",
+          "categoria": "societario",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "suc_nombre_causante": "María González",
+              "suc_cuit_causante": "27-10234567-3",
+              "suc_fecha_fallecimiento": "2023-11-15",
+              "suc_juzgado": "Juzgado Nacional Civil N°45",
+              "suc_nro_expediente": "45.678/2023",
+              "suc_fecha_declaratoria": "2024-02-20"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_designacion_admin",
+          "nombre_documento": "Designación de Administrador de la Sucesión",
+          "categoria": "societario",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "suc_administrador": "Patricio Emilio González",
+              "suc_cuit_administrador": "20-26789012-6",
+              "fecha_designacion": "2024-02-20",
+              "juzgado": "Juzgado Nacional Civil N°45",
+              "nro_expediente": "45.678/2023"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_dni_herederos",
+          "nombre_documento": "DNI de los Herederos",
+          "categoria": "identificacion",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {
+              "herederos": [
+                { "nombre": "Patricio Emilio González", "dni": "26789012", "vinculo": "hijo" },
+                { "nombre": "Lucía María González", "dni": "35678901", "vinculo": "hija" }
+              ]
+            }
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_pep",
+          "nombre_documento": "DDJJ Personas Expuestas Políticamente",
+          "categoria": "pep",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "declarantes": [
+                { "nombre": "Patricio Emilio González", "cuit": "20-26789012-6", "es_pep": false },
+                { "nombre": "Lucía María González", "cuit": "27-35678901-2", "es_pep": false }
+              ],
+              "fecha_declaracion": "2024-03-05"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "tipo": "monotributista",
+      "sociedad": {
+        "razon_social": "Juan Martín Rodríguez",
+        "cuit_cuil": "20-28901234-7",
+        "tipo_sociedad": "monotributista",
+        "estado": "aprobado"
+      },
+      "personas": [
+        {
+          "apellido": "Rodríguez",
+          "nombre": "Juan Martín",
+          "nro_documento": "28901234",
+          "cuit": "20-28901234-7",
+          "correo_electronico": "jrodriguez@mail.com",
+          "telefono": "11-8901-4567",
+          "domicilio": "Av. Independencia 789, CABA",
+          "es_pep": false,
+          "cargo_societario": "ninguno",
+          "tipo_firma": "individual",
+          "rol": "titular"
+        }
+      ],
+      "documentos": [
+        {
+          "id_documento": "doc_dni",
+          "nombre_documento": "DNI",
+          "categoria": "identificacion",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "mono_apellido": "Rodríguez",
+              "mono_nombre": "Juan Martín",
+              "mono_dni": "28901234",
+              "mono_cuit": "20-28901234-7",
+              "mono_fecha_nacimiento": "1990-06-14",
+              "mono_nacionalidad": "Argentina",
+              "mono_estado_civil": "soltero",
+              "mono_dom_real": "Av. Independencia 789, CABA"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_constancia_monotributo",
+          "nombre_documento": "Constancia de Monotributo (AFIP)",
+          "categoria": "identificacion",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "mono_categoria": "D",
+              "mono_actividad_principal": "Servicios de consultoría informática",
+              "mono_fecha_inscripcion": "2019-03-01",
+              "mono_ingresos_anuales": 2800000,
+              "mono_dom_fiscal": "Av. Independencia 789, CABA",
+              "mono_telefono": "11-8901-4567",
+              "mono_email": "jrodriguez@mail.com"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_pep",
+          "nombre_documento": "DDJJ Personas Expuestas Políticamente",
+          "categoria": "pep",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "declarantes": [
+                { "nombre": "Juan Martín Rodríguez", "cuit": "20-28901234-7", "es_pep": false }
+              ],
+              "fecha_declaracion": "2024-02-10"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

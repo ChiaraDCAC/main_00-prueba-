@@ -33,3 +33,15 @@ Thumbs.db
 docker-compose.override.yml
 backend/data/*.sqlite
 backend/data/*.csv
+
+# Office lock files
+~$*
+.~lock.*
+
+# Temp / error logs locales
+err.tmp
+err.txt
+*.tmp
+
+# Claude / IDE locales
+.claude/

@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flujo Integral — Herramienta Compliance HC DCAC</title>
+  <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #0077B6;
+      --primary-dark: #005f92;
+      --secondary-color: #00B4D8;
+      --background-color: #EAF4FB;
+      --card-background: #ffffff;
+      --text-color: #1e293b;
+      --border-color: #cde8f5;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --info-color: #6366f1;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: var(--background-color);
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 2rem 2.5rem;
+      border-radius: 14px;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 25px rgba(0, 119, 182, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .header .subtitle { font-size: 1rem; opacity: 0.9; }
+    .header .badge {
+      background: rgba(255,255,255,0.2);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 6px 18px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: sticky;
+      top: 2rem;
+      box-shadow: 0 2px 10px rgba(0,119,182,0.07);
+    }
+    .toc h3 { color: var(--primary-color); margin-bottom: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .toc ul { list-style: none; }
+    .toc li { margin-bottom: 0.4rem; }
+    .toc a {
+      color: var(--text-color);
+      text-decoration: none;
+      font-size: 0.88rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: block;
+      transition: all 0.2s;
+    }
+    .toc a:hover, .toc a.active { background: #E0F0FA; color: var(--primary-color); font-weight: 600; }
+    .toc .toc-sub { padding-left: 1rem; }
+    .toc .toc-sub a { font-size: 0.82rem; color: #64748b; }
+
+    /* MODULE INDICATOR */
+    .module-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .tag-onboarding { background: #dbeafe; color: #1e40af; }
+    .tag-risk { background: #fef3c7; color: #92400e; }
+    .tag-monitoring { background: #fce7f3; color: #9d174d; }
+    .tag-reports { background: #d1fae5; color: #065f46; }
+    .tag-auth { background: #e0e7ff; color: #3730a3; }
+    .tag-investigation { background: #fee2e2; color: #991b1b; }
+    .tag-contracts { background: #f3e8ff; color: #6b21a8; }
+    .tag-integral { background: linear-gradient(135deg, #0077B6, #00B4D8); color: white; }
+
+    /* CARDS */
+    .flow-section {
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,119,182,0.07);
+    }
+    .flow-section .section-header {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .flow-section .section-header:hover { background: #f8fbfe; }
+    .flow-section .section-header .icon { font-size: 1.4rem; }
+    .flow-section .section-header h2 { font-size: 1.15rem; font-weight: 600; }
+    .flow-section .section-header .toggle {
+      margin-left: auto;
+      font-size: 1.2rem;
+      color: #94a3b8;
+      transition: transform 0.3s;
+    }
+    .flow-section .section-header.collapsed .toggle { transform: rotate(-90deg); }
+    .flow-section .section-body { padding: 1.5rem; }
+    .flow-section .section-body.hidden { display: none; }
+    .flow-section .description {
+      background: #f0f9ff;
+      border-left: 4px solid var(--primary-color);
+      padding: 0.8rem 1rem;
+      margin-bottom: 1.2rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    /* MERMAID */
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+    .mermaid svg { max-width: 100%; }
+
+    /* LEGEND */
+    .legend {
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0,119,182,0.07);
+    }
+    .legend h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--primary-color); }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.8rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* STATS */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,119,182,0.05);
+    }
+    .stat-card .stat-number { font-size: 1.6rem; font-weight: 700; color: var(--primary-color); }
+    .stat-card .stat-label { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+
+    /* NOTES */
+    .note-box {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #92400e;
+    }
+    .note-box strong { color: #78350f; }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .header { flex-direction: column; gap: 1rem; text-align: center; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* PRINT */
+    @media print {
+      body { background: white; padding: 0; }
+      .toc, .header .badge { display: none; }
+      .grid { grid-template-columns: 1fr; }
+      .flow-section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HEADER -->
+    <div class="header">
+      <div>
+        <h1>Flujo Integral del Sistema</h1>
+        <div class="subtitle">Herramienta de Compliance — HC deCampo a Campo</div>
+      </div>
+      <div class="badge">v2.0 &bull; Abril 2026</div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-number">12</div>
+        <div class="stat-label">Modulos del Sistema</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">8</div>
+        <div class="stat-label">Flujos Principales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">3</div>
+        <div class="stat-label">Niveles de Acceso</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Estados de Cliente</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">6</div>
+        <div class="stat-label">Tipos de Entidad</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Tipos de Alerta</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- TOC -->
+      <nav class="toc">
+        <h3>Indice de Flujos</h3>
+        <ul>
+          <li><a href="#vision-general">Vision General del Sistema</a></li>
+          <li><a href="#auth">Autenticacion y Acceso</a></li>
+          <li><a href="#onboarding">Onboarding / Alta de Cliente</a></li>
+          <li class="toc-sub"><a href="#onboarding-docs">Gestion Documental</a></li>
+          <li class="toc-sub"><a href="#onboarding-persons">Personas Vinculadas</a></li>
+          <li><a href="#screening">Screening y Listas</a></li>
+          <li><a href="#risk">Evaluacion de Riesgo</a></li>
+          <li><a href="#dds">Debida Diligencia (DDS)</a></li>
+          <li><a href="#contracts">Contratos</a></li>
+          <li><a href="#monitoring">Monitoreo y Alertas</a></li>
+          <li><a href="#unusual-ops">Operaciones Inusuales</a></li>
+          <li><a href="#investigation">Casos de Investigacion</a></li>
+          <li><a href="#reports">Reportes Regulatorios</a></li>
+          <li><a href="#audit">Auditoria y Trazabilidad</a></li>
+        </ul>
+      </nav>
+
+      <!-- CONTENT -->
+      <div class="content">
+
+        <!-- LEGEND -->
+        <div class="legend">
+          <h3>Leyenda de Colores</h3>
+          <div class="legend-grid">
+            <div class="legend-item"><div class="legend-color" style="background:#dbeafe"></div> Onboarding / KYC</div>
+            <div class="legend-item"><div class="legend-color" style="background:#fef3c7"></div> Evaluacion de Riesgo</div>
+            <div class="legend-item"><div class="legend-color" style="background:#d1fae5"></div> Aprobacion / Exito</div>
+            <div class="legend-item"><div class="legend-color" style="background:#fee2e2"></div> Rechazo / Alerta Critica</div>
+            <div class="legend-item"><div class="legend-color" style="background:#fce7f3"></div> Monitoreo / OI</div>
+            <div class="legend-item"><div class="legend-color" style="background:#e0e7ff"></div> Autenticacion</div>
+            <div class="legend-item"><div class="legend-color" style="background:#f3e8ff"></div> Contratos</div>
+            <div class="legend-item"><div class="legend-color" style="background:#f0fdf4"></div> Reportes UIF</div>
+            <div class="legend-item"><div class="legend-color" style="background:#fef3c7; border: 2px solid #d97706;"></div> App del Cliente (origen externo)</div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 0. VISION GENERAL -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="vision-general">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">🗺️</span>
+            <h2>Vision General del Sistema <span class="module-tag tag-integral">Flujo Integral</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Vista integral del sistema de compliance para <strong>uso interno</strong> del personal de HC deCampo a Campo.
+              Las sociedades ingresan desde la <strong>app del cliente</strong> con sus documentos ya cargados.
+              El personal interno revisa, aprueba, rechaza o solicita informacion adicional.
+            </div>
+            <div class="mermaid">
+graph TB
+  subgraph EXTERNAL["📱 APP DEL CLIENTE - Origen externo"]
+    E1["Sociedad solicita alta
+    desde app del cliente"]
+    E2["Carga documentos
+    y datos requeridos"]
+    E1 --> E2
+  end
+
+  subgraph AUTH["🔐 AUTENTICACION INTERNA"]
+    A1[Login Personal Interno] --> A2{Nivel de Acceso}
+    A2 -->|Nivel 1| A3[Oficial de Cumplimiento]
+    A2 -->|Nivel 2| A4[Administrativo]
+    A2 -->|Nivel 3| A5[Solo Lectura]
+  end
+
+  subgraph ONBOARDING["📋 REVISION DE ALTA - Uso Interno"]
+    O1["Bandeja: Solicitudes
+    de alta pendientes"] --> O2["Revisar legajo y
+    documentacion recibida"]
+    O2 --> O3{Decision del Analista}
+    O3 -->|Aprobar| O4[Alta Aprobada]
+    O3 -->|Rechazar| O5["Rechazar con motivo
+    → Opcion recargar archivo"]
+    O3 -->|Solicitar Info| O6["Solicitud enviada
+    al cliente via app"]
+  end
+
+  subgraph SCREENING["🔍 SCREENING"]
+    S1[Consulta OFAC / ONU / BCRA]
+    S1 --> S2{Coincidencia?}
+    S2 -->|Si| S3[Revision Manual]
+    S2 -->|No| S4[Limpio]
+  end
+
+  subgraph RISK["⚖️ EVALUACION DE RIESGO"]
+    R1[Calcular Matriz]
+    R1 --> R2{Nivel de Riesgo}
+    R2 -->|Bajo| R3[Riesgo Bajo]
+    R2 -->|Medio| R4[Riesgo Medio]
+    R2 -->|Alto / PEP| R5[Riesgo Alto]
+  end
+
+  subgraph DDS["📑 DEBIDA DILIGENCIA"]
+    D1[Verificacion Identidad]
+    D1 --> D2[Verificacion PEP]
+    D2 --> D3[Listas de Sanciones]
+    D3 --> D4[Fuentes Externas - Nosis/Veraz]
+    D4 --> D5{Resultado DDS}
+    D5 -->|Aprobado| D6[DDS Aprobada]
+    D5 -->|Rechazado| D7[DDS Rechazada]
+  end
+
+  subgraph CONTRACTS["📄 CONTRATOS"]
+    C1[Generar Contrato] --> C2[Enviar al Cliente]
+    C2 --> C3[Firma y Carga PDF]
+    C3 --> C4[Contrato Vigente]
+  end
+
+  subgraph MONITORING["📡 MONITOREO"]
+    M1[Motor de Alertas]
+    M1 --> M2[Alerta Vencimiento DDJJ]
+    M1 --> M3[Alerta Doc Pendiente]
+    M1 --> M4[Alerta Renovacion]
+    M1 --> M5[Alerta Info Pendiente]
+  end
+
+  subgraph OI["⚠️ OPERACIONES INUSUALES"]
+    OI1[Detectar Operacion] --> OI2[Crear OI]
+    OI2 --> OI3[Investigar]
+    OI3 --> OI4{Decision}
+    OI4 -->|Justificada| OI5[Cerrar OI]
+    OI4 -->|Sospechosa| OI6[Escalar a OS]
+  end
+
+  subgraph INVESTIGATION["🔬 CASOS DE INVESTIGACION"]
+    I1[Abrir Caso] --> I2[Recopilar Evidencia]
+    I2 --> I3[Solicitar Documentos]
+    I3 --> I4{Resolucion}
+    I4 -->|Descartado| I5[Archivar]
+    I4 -->|Sospechoso| I6[Derivar a ROS]
+  end
+
+  subgraph REPORTS["📊 REPORTES UIF"]
+    RP1[Base Padron Mensual]
+    RP2[Apartados OS]
+    RP3[BP Mensual]
+    RP4[Envio a UIF]
+  end
+
+  subgraph AUDIT["📝 AUDITORIA"]
+    AU1[Log Inmutable de Acciones]
+    AU2[Trazabilidad Completa]
+  end
+
+  %% FLUJO PRINCIPAL
+  EXTERNAL -->|"Solicitud llega al sistema"| ONBOARDING
+  AUTH --> ONBOARDING
+  O6 -->|"Cliente responde, analista carga"| O1
+  O5 -->|"Analista recarga archivo"| O1
+  O2 --> SCREENING
+  S4 --> RISK
+  S3 -->|Falso Positivo| S4
+  S3 -->|Match Real| O5
+  RISK --> DDS
+  R5 -->|Auto-escala| D2
+  D6 --> O3
+  O4 --> CONTRACTS
+  O4 --> MONITORING
+  MONITORING --> OI
+  OI6 --> INVESTIGATION
+  M2 --> OI
+  M3 --> OI
+  I6 --> REPORTS
+  RP1 --> RP4
+  RP2 --> RP4
+  RP3 --> RP4
+
+  %% AUDITORIA TRANSVERSAL
+  ONBOARDING -.->|Log| AUDIT
+  SCREENING -.->|Log| AUDIT
+  RISK -.->|Log| AUDIT
+  DDS -.->|Log| AUDIT
+  CONTRACTS -.->|Log| AUDIT
+  MONITORING -.->|Log| AUDIT
+  OI -.->|Log| AUDIT
+  INVESTIGATION -.->|Log| AUDIT
+  REPORTS -.->|Log| AUDIT
+
+  %% ESTILOS
+  classDef extStyle fill:#fef3c7,stroke:#d97706,stroke-width:3px,color:#78350f
+  classDef authStyle fill:#e0e7ff,stroke:#6366f1,stroke-width:2px,color:#1e1b4b
+  classDef onbStyle fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
+  classDef screenStyle fill:#fef9c3,stroke:#eab308,stroke-width:2px,color:#713f12
+  classDef riskStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef ddsStyle fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e
+  classDef approveStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef rejectStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+  classDef infoReqStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+  classDef contractStyle fill:#f3e8ff,stroke:#a855f7,stroke-width:2px,color:#581c87
+  classDef monitorStyle fill:#fce7f3,stroke:#ec4899,stroke-width:2px,color:#831843
+  classDef oiStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+  classDef investStyle fill:#fef2f2,stroke:#dc2626,stroke-width:2px,color:#991b1b
+  classDef reportStyle fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d
+  classDef auditStyle fill:#f1f5f9,stroke:#94a3b8,stroke-width:2px,color:#334155
+
+  class E1,E2 extStyle
+  class A1,A2,A3,A4,A5 authStyle
+  class O1,O2,O3 onbStyle
+  class O4 approveStyle
+  class O5 rejectStyle
+  class O6 infoReqStyle
+  class S1,S2,S3,S4 screenStyle
+  class R1,R2,R3,R4,R5 riskStyle
+  class D1,D2,D3,D4,D5,D6,D7 ddsStyle
+  class C1,C2,C3,C4 contractStyle
+  class M1,M2,M3,M4,M5 monitorStyle
+  class OI1,OI2,OI3,OI4,OI5,OI6 oiStyle
+  class I1,I2,I3,I4,I5,I6 investStyle
+  class RP1,RP2,RP3,RP4 reportStyle
+  class AU1,AU2 auditStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 1. AUTENTICACION -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="auth">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">🔐</span>
+            <h2>Autenticacion y Acceso <span class="module-tag tag-auth">Auth</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Acceso exclusivo para <strong>personal interno</strong> de HC deCampo a Campo.
+              Sistema de autenticacion con JWT y 3 niveles de acceso.
+              <strong>Nivel 1</strong> (Oficial de Cumplimiento) tiene permisos completos,
+              <strong>Nivel 2</strong> (Administrativo) gestiona sin aprobar,
+              <strong>Nivel 3</strong> (Solo Lectura) solo visualiza.
+            </div>
+            <div class="mermaid">
+graph TD
+  L1[Personal interno ingresa credenciales] --> L2{Credenciales validas?}
+  L2 -->|No| L3{Intentos > 5?}
+  L3 -->|Si| L4[Cuenta bloqueada temporalmente]
+  L3 -->|No| L5[Mostrar error, reintentar]
+  L5 --> L1
+  L2 -->|Si| L6[Generar JWT Token]
+  L6 --> L7{Nivel del Usuario}
+  L7 -->|Nivel 1| L8["Dashboard Completo
+  - Aprobar/Rechazar clientes
+  - Cerrar casos
+  - Gestionar usuarios
+  - Ver auditoria completa"]
+  L7 -->|Nivel 2| L9["Dashboard Operativo
+  - Crear/editar clientes
+  - Completar DDS
+  - Gestionar investigaciones
+  - Sin aprobacion final"]
+  L7 -->|Nivel 3| L10["Dashboard Lectura
+  - Visualizar informacion
+  - Sin modificaciones"]
+  L8 --> L11[Sesion activa - Timeout 30 min]
+  L9 --> L11
+  L10 --> L11
+  L11 --> L12{Inactividad > 30 min?}
+  L12 -->|Si| L13[Cerrar sesion automatica]
+  L12 -->|No| L14[Refresh Token]
+
+  classDef loginStyle fill:#e0e7ff,stroke:#6366f1,stroke-width:2px,color:#1e1b4b
+  classDef errorStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+  classDef successStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+
+  class L1,L6,L7,L11,L14 loginStyle
+  class L3,L4,L5,L12,L13 errorStyle
+  class L8,L9,L10 successStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 2. ONBOARDING -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="onboarding">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">📋</span>
+            <h2>Onboarding / Alta de Cliente <span class="module-tag tag-onboarding">KYC</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              <strong>Perspectiva interna:</strong> Las sociedades llegan al sistema desde la app del cliente
+              con sus datos y documentos ya cargados. El personal interno ve las solicitudes pendientes
+              en su bandeja y puede <strong>Aprobar</strong>, <strong>Rechazar</strong> (motivo obligatorio, queda pendiente
+              para volver a solicitar al cliente) o <strong>Solicitar Informacion</strong> (vuelve al cliente via app).
+            </div>
+            <div class="mermaid">
+graph TD
+  ON0["📱 App del Cliente:
+  Sociedad solicita alta
+  y carga documentos"] --> ON1
+
+  ON1["Bandeja del Analista:
+  Solicitudes de Alta Pendientes"] --> ON2["Seleccionar solicitud
+  para revision"]
+  ON2 --> ON3["Revisar datos de la sociedad"]
+  ON3 --> ON3b{Tipo de Persona}
+  ON3b -->|Persona Humana| ON3c["DNI, CUIT, Fecha Nac,
+  Nacionalidad, Domicilio,
+  Declaracion PEP"]
+  ON3b -->|Persona Juridica| ON3d["SA / SRL / SH /
+  Monotributista / Sucesion /
+  Fideicomiso"]
+  ON3c --> ON4
+  ON3d --> ON4
+  ON4["Revisar documentacion
+  recibida del cliente"]
+
+  ON4 --> ON5["Ejecutar Screening"]
+  ON5 --> ON6["Evaluar Riesgo - Matriz"]
+  ON6 --> ON7["Completar DDS"]
+
+  ON7 --> ON8{Decision del Analista}
+
+  ON8 -->|"✓ Aprobar"| ON9["Estado: Aprobado
+  Cliente activo en el sistema"]
+  ON9 --> ON10[Generar CVU si aplica]
+  ON10 --> ON11["Estado: alta_psp"]
+
+  ON8 -->|"✗ Rechazar"| ON12["Ingresar motivo
+  obligatorio del rechazo"]
+  ON12 --> ON13["Estado: Pendiente
+  Doc queda para resolicitar"]
+  ON13 --> ON14["Analista recarga el
+  archivo corregido"]
+  ON14 --> ON1
+
+  ON8 -->|"📨 Solicitar Info"| ON16["Especificar que
+  informacion se necesita"]
+  ON16 --> ON17["Solicitud enviada
+  al cliente via app"]
+  ON17 -->|"Cliente responde
+  con la informacion"| ON18["Analista recibe info
+  y carga/recarga docs"]
+  ON18 --> ON1
+
+  classDef extStyle fill:#fef3c7,stroke:#d97706,stroke-width:3px,color:#78350f
+  classDef bandejaStyle fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
+  classDef reviewStyle fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e
+  classDef processStyle fill:#f3e8ff,stroke:#a855f7,stroke-width:2px,color:#581c87
+  classDef okStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef rejectStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+  classDef pendStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef infoStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+
+  class ON0 extStyle
+  class ON1,ON2 bandejaStyle
+  class ON3,ON3b,ON3c,ON3d,ON4 reviewStyle
+  class ON5,ON6,ON7,ON8 processStyle
+  class ON9,ON10,ON11 okStyle
+  class ON12 rejectStyle
+  class ON13,ON14,ON15 pendStyle
+  class ON16,ON17,ON18 infoStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- GESTION DOCUMENTAL -->
+        <div class="flow-section" id="onboarding-docs">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">📄</span>
+            <h2>Gestion Documental <span class="module-tag tag-onboarding">Documentos</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Los documentos llegan desde la <strong>app del cliente</strong> ya cargados.
+              El analista interno los revisa y puede: aprobar, rechazar (con motivo obligatorio, queda pendiente
+              para que el analista vuelva a solicitar la recarga) u observar.
+              Ademas, el analista puede <strong>cargar documentos internos o complementarios</strong> al legajo.
+              Maximo 10MB por archivo (PDF/JPG/PNG).
+            </div>
+            <div class="mermaid">
+graph TD
+  DC0["📱 Documentos cargados
+  por el cliente desde la app"] --> DC1
+
+  DC1["Documentos en el legajo
+  listos para revision"] --> DC2{Analista Revisa cada doc}
+
+  DC2 -->|"✓ Aprueba"| DC3["Estado: Aprobado ✓
+  Version queda inmutable"]
+
+  DC2 -->|"✗ Rechaza"| DC4["Ingresar motivo
+  obligatorio del rechazo"]
+  DC4 --> DC5["Estado: Pendiente
+  Doc queda para recargar"]
+  DC5 --> DC6["Analista recarga
+  el archivo corregido"]
+  DC6 --> DC1
+
+  DC2 -->|"👁 Observa"| DC8["Estado: Observable
+  Solicita correccion sin rechazar"]
+  DC8 --> DC5
+
+  DC2 -->|"Doc no cargado"| DC5b["Documento faltante"]
+  DC5b --> DC6
+
+  DC9["El analista tambien puede:"] --> DC10["Cargar documentos
+  internos complementarios"]
+  DC10 --> DC11["Informes internos,
+  notas, comprobantes propios"]
+
+  DC12["Documentos segun tipo de entidad:"]
+  DC12 --> DC13["SA: Estatuto, Acta Directorio,
+  Libro Accionistas, Poder, CUIT"]
+  DC12 --> DC14["SRL: Contrato Social,
+  Designacion Gerente, CUIT"]
+  DC12 --> DC15["Humana: DNI frente/dorso,
+  CUIT, Declaracion PEP"]
+  DC12 --> DC16["Monotributista: Constancia
+  Monotributo, DNI, CUIT"]
+
+  classDef extStyle fill:#fef3c7,stroke:#d97706,stroke-width:3px,color:#78350f
+  classDef docStyle fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
+  classDef okStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef rejectStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+  classDef pendStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef obsStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+  classDef internalStyle fill:#e0e7ff,stroke:#6366f1,stroke-width:2px,color:#3730a3
+  classDef infoStyle fill:#f0f9ff,stroke:#0ea5e9,stroke-width:1px,color:#0c4a6e
+
+  class DC0 extStyle
+  class DC1,DC2 docStyle
+  class DC3 okStyle
+  class DC4 rejectStyle
+  class DC5,DC5b,DC6 pendStyle
+  class DC8 obsStyle
+  class DC9,DC10,DC11 internalStyle
+  class DC12,DC13,DC14,DC15,DC16 infoStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- PERSONAS VINCULADAS -->
+        <div class="flow-section" id="onboarding-persons">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">👥</span>
+            <h2>Personas Vinculadas <span class="module-tag tag-onboarding">Personas</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Las personas vinculadas llegan informadas desde la <strong>app del cliente</strong>.
+              El analista interno las revisa, verifica los datos y la deteccion de PEP es automatica.
+              Si se detecta PEP, el riesgo se escala automaticamente a ALTO.
+            </div>
+            <div class="mermaid">
+graph TD
+  PV0["📱 Personas vinculadas
+  informadas desde app del cliente"] --> PV1
+
+  PV1["Analista revisa personas
+  vinculadas al legajo"] --> PV2{Roles informados}
+  PV2 --> PV3[Beneficiarios Finales]
+  PV2 --> PV4[Firmantes]
+  PV2 --> PV5[Apoderados]
+  PV2 --> PV6[Autoridades Societarias]
+  PV2 --> PV7[Accionistas / Socios]
+
+  PV3 --> PV8["Verificar datos:
+  Nombre, DNI, CUIT,
+  % Participacion, PEP"]
+  PV4 --> PV8
+  PV5 --> PV8
+  PV6 --> PV8
+  PV7 --> PV8
+
+  PV8 --> PV9{Es PEP?}
+  PV9 -->|Si| PV10["🚨 Flag PEP Detectado
+  Riesgo auto-escala a ALTO"]
+  PV9 -->|No| PV11[Continuar proceso normal]
+
+  PV8 --> PV12{Datos incompletos?}
+  PV12 -->|Si| PV13["Analista completa o
+  corrige los datos faltantes"]
+  PV12 -->|No| PV14[Datos verificados OK]
+
+  classDef extStyle fill:#fef3c7,stroke:#d97706,stroke-width:3px,color:#78350f
+  classDef personStyle fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
+  classDef roleStyle fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e
+  classDef pepStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+  classDef okStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef infoStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+
+  class PV0 extStyle
+  class PV1,PV2 personStyle
+  class PV3,PV4,PV5,PV6,PV7,PV8 roleStyle
+  class PV10 pepStyle
+  class PV9,PV11,PV14 okStyle
+  class PV12,PV13 infoStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 3. SCREENING -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="screening">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">🔍</span>
+            <h2>Screening y Listas de Sanciones <span class="module-tag tag-risk">Screening</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Verificacion automatica contra listas de sanciones (OFAC, ONU, BCRA).
+              Se ejecuta cuando el analista interno inicia la revision del legajo y antes de la aprobacion final.
+              Los matches se revisan manualmente y pueden marcarse como falso positivo.
+            </div>
+            <div class="mermaid">
+graph TD
+  SC1["Trigger: Analista inicia
+  revision del legajo"] --> SC2[Ejecutar Screening]
+  SC2 --> SC3[Consulta OFAC]
+  SC2 --> SC4[Consulta ONU]
+  SC2 --> SC5[Consulta Lista BCRA]
+
+  SC3 --> SC6{Resultados}
+  SC4 --> SC6
+  SC5 --> SC6
+
+  SC6 -->|Sin coincidencias| SC7["✓ Cliente Limpio
+  Continuar proceso"]
+  SC6 -->|Coincidencia detectada| SC8["⚠️ Match Pendiente
+  Requiere revision manual"]
+
+  SC8 --> SC9{Analista Revisa}
+  SC9 -->|Falso Positivo| SC10["Marcar con justificacion
+  → Cliente Limpio"]
+  SC9 -->|Match Real| SC11["🚨 Bloquear Aprobacion
+  Escalar a Nivel 1"]
+
+  SC10 --> SC7
+  SC11 --> SC12[Nivel 1 decide]
+  SC12 -->|Rechazar cliente| SC13[Cliente Rechazado]
+  SC12 -->|Monitoreo reforzado| SC14[Alta con restricciones]
+
+  classDef triggerStyle fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e
+  classDef processStyle fill:#fef9c3,stroke:#eab308,stroke-width:2px,color:#713f12
+  classDef cleanStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef alertStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+  classDef warnStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+
+  class SC1,SC2 triggerStyle
+  class SC3,SC4,SC5,SC6,SC9 processStyle
+  class SC7,SC10,SC14 cleanStyle
+  class SC11,SC13 alertStyle
+  class SC8,SC12 warnStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 4. RIESGO -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="risk">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">⚖️</span>
+            <h2>Evaluacion de Riesgo <span class="module-tag tag-risk">Riesgo</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Calculo automatico del nivel de riesgo mediante una matriz ponderada.
+              Los factores y pesos varian segun el tipo de persona (Humana vs. Juridica).
+              PEP detectado siempre escala a riesgo ALTO.
+            </div>
+            <div class="mermaid">
+graph TD
+  RI1[Iniciar Evaluacion de Riesgo] --> RI2{Tipo de Persona}
+
+  RI2 -->|Persona Humana| RI3["Factores Humana:
+  Residencia (10%)
+  Nacionalidad (10%)
+  Actividad (30%)
+  Antiguedad (20%)
+  Materialidad (30%)"]
+
+  RI2 -->|Persona Juridica| RI4["Factores Juridica:
+  Residencia (20%)
+  Actividad (30%)
+  Antiguedad (20%)
+  Materialidad (30%)"]
+
+  RI3 --> RI5[Calcular Score Ponderado]
+  RI4 --> RI5
+
+  RI5 --> RI6{PEP Detectado?}
+  RI6 -->|Si| RI7["🔴 RIESGO ALTO
+  Auto-escalado por PEP"]
+  RI6 -->|No| RI8{Score Resultante}
+
+  RI8 -->|"Score ≤ 2.00"| RI9["🟢 RIESGO BAJO
+  Renovacion DDS: 24 meses"]
+  RI8 -->|"Score 2.01 - 3.00"| RI10["🟡 RIESGO MEDIO
+  Renovacion DDS: 24 meses"]
+  RI8 -->|"Score > 3.00"| RI11["🔴 RIESGO ALTO
+  Renovacion DDS: 12 meses"]
+
+  RI7 --> RI12[Registrar en Historial]
+  RI9 --> RI12
+  RI10 --> RI12
+  RI11 --> RI12
+  RI12 --> RI13["Log: evaluador, fecha,
+  score, nivel, IP"]
+
+  classDef evalStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef lowStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef medStyle fill:#fef9c3,stroke:#eab308,stroke-width:2px,color:#713f12
+  classDef highStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+  classDef logStyle fill:#f1f5f9,stroke:#94a3b8,stroke-width:2px,color:#334155
+
+  class RI1,RI2,RI3,RI4,RI5,RI6,RI8 evalStyle
+  class RI9 lowStyle
+  class RI10 medStyle
+  class RI7,RI11 highStyle
+  class RI12,RI13 logStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 5. DDS -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="dds">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">📑</span>
+            <h2>Debida Diligencia (DDS) <span class="module-tag tag-onboarding">DDS</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Proceso integral de debida diligencia con 6 secciones obligatorias.
+              La DDS tiene estados propios (Borrador → En Revision → Aprobada/Rechazada → Vencida)
+              y se renueva cada 12 o 24 meses segun nivel de riesgo.
+            </div>
+            <div class="mermaid">
+graph TD
+  DD1["Iniciar DDS"] --> DD2["Estado: Borrador"]
+  DD2 --> DD3["1. Verificacion de Identidad
+  Validez doc, foto match"]
+  DD3 --> DD4["2. Verificacion PEP
+  Nacional / Extranjero / Ninguno"]
+  DD4 --> DD5["3. Listas de Sanciones
+  OFAC, ONU, BCRA"]
+  DD5 --> DD6["4. Verificacion de Actividad
+  Origen de fondos"]
+  DD6 --> DD7["5. Fuentes Externas
+  Nosis / Veraz (min. 1 requerida)"]
+  DD7 --> DD8["6. Evaluacion de Riesgo
+  Inherente vs. Residual"]
+
+  DD8 --> DD9["Estado: En Revision"]
+  DD9 --> DD10{Validaciones}
+
+  DD10 -->|"Match total en listas"| DD11["🚫 Bloqueo: no se puede aprobar
+  hasta resolver match"]
+  DD10 -->|"PEP sin resultado"| DD12["⚠️ Resultado PEP obligatorio"]
+  DD10 -->|"Sin fuente externa"| DD13["⚠️ Min. 1 fuente requerida"]
+  DD10 -->|Todo OK| DD14{Nivel 1 Aprueba?}
+
+  DD11 --> DD5
+  DD12 --> DD4
+  DD13 --> DD7
+
+  DD14 -->|Si| DD15["Estado: Aprobada ✓"]
+  DD14 -->|No| DD16["Estado: Rechazada ✗"]
+
+  DD15 --> DD17{Nivel de Riesgo}
+  DD17 -->|Alto| DD18["Renovar en 12 meses"]
+  DD17 -->|Bajo/Medio| DD19["Renovar en 24 meses"]
+  DD18 --> DD20["Alerta pre-vencimiento"]
+  DD19 --> DD20
+  DD20 --> DD21["Estado: Vencida → Nueva DDS"]
+  DD21 --> DD1
+
+  classDef ddsStyle fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e
+  classDef stepStyle fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
+  classDef blockStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+  classDef warnStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef okStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef renewStyle fill:#f3e8ff,stroke:#a855f7,stroke-width:2px,color:#581c87
+
+  class DD1,DD2,DD9,DD10 ddsStyle
+  class DD3,DD4,DD5,DD6,DD7,DD8 stepStyle
+  class DD11 blockStyle
+  class DD12,DD13,DD14,DD16 warnStyle
+  class DD15 okStyle
+  class DD17,DD18,DD19,DD20,DD21 renewStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 6. CONTRATOS -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="contracts">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">📃</span>
+            <h2>Contratos <span class="module-tag tag-contracts">Contratos</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Gestion interna del ciclo de vida de contratos. El analista genera y gestiona contratos.
+              No se puede marcar como firmado sin PDF adjunto.
+              El sistema genera alertas 30 dias antes del vencimiento.
+            </div>
+            <div class="mermaid">
+graph TD
+  CT1[Cliente Aprobado] --> CT2[Generar Contrato]
+  CT2 --> CT3["Estado: Pendiente de Envio"]
+  CT3 --> CT4[Enviar al Cliente]
+  CT4 --> CT5["Estado: Enviado"]
+  CT5 --> CT6[Cliente firma]
+  CT6 --> CT7{PDF adjunto?}
+  CT7 -->|No| CT8["⚠️ No se puede marcar firmado
+  sin PDF cargado"]
+  CT8 --> CT9[Cargar PDF firmado]
+  CT9 --> CT7
+  CT7 -->|Si| CT10[Registrar firma con fecha]
+  CT10 --> CT11["Estado: Firmado ✓"]
+  CT11 --> CT12[Contrato Vigente]
+
+  CT12 --> CT13{30 dias antes de vencimiento}
+  CT13 --> CT14["🔔 Alerta de Vencimiento"]
+  CT14 --> CT15{Renovar?}
+  CT15 -->|Si| CT2
+  CT15 -->|No| CT16["Estado: Vencido"]
+
+  CT17[Cliente Rechazado] --> CT18["Contrato auto-expira"]
+
+  classDef contractStyle fill:#f3e8ff,stroke:#a855f7,stroke-width:2px,color:#581c87
+  classDef okStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef warnStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef errStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+
+  class CT1,CT2,CT3,CT4,CT5,CT6,CT9,CT10 contractStyle
+  class CT7,CT11,CT12,CT15 okStyle
+  class CT8,CT13,CT14,CT16 warnStyle
+  class CT17,CT18 errStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 7. MONITOREO -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="monitoring">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">📡</span>
+            <h2>Monitoreo y Alertas <span class="module-tag tag-monitoring">Monitoreo</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Motor de alertas que detecta automaticamente vencimientos, documentacion pendiente,
+              y situaciones que requieren atencion. Las alertas pueden resolverse o derivarse
+              en operaciones inusuales.
+            </div>
+            <div class="mermaid">
+graph TD
+  MO1["Motor de Alertas Automatico"] --> MO2{Tipo de Alerta}
+
+  MO2 --> MO3["📅 Vencimiento DDJJ
+  DDS proxima a vencer"]
+  MO2 --> MO4["📋 Informe DD Pendiente
+  DDS no completada"]
+  MO2 --> MO5["📨 Solicitud Info Pendiente
+  Esperando respuesta cliente"]
+  MO2 --> MO6["📄 Documentacion Pendiente
+  Docs faltantes o vencidos"]
+  MO2 --> MO7["🔄 Renovacion Documento
+  Doc proximo a vencer"]
+
+  MO3 --> MO8{Accion del Analista}
+  MO4 --> MO8
+  MO5 --> MO8
+  MO6 --> MO8
+  MO7 --> MO8
+
+  MO8 -->|Resolver| MO9["✓ Alerta Resuelta
+  Accion completada"]
+  MO8 -->|Ignorar| MO10["Alerta Ignorada
+  Con justificacion"]
+  MO8 -->|Crear OI| MO11["Derivar a Operacion
+  Inusual"]
+  MO8 -->|Crear Caso| MO12["Abrir Caso de
+  Investigacion"]
+
+  classDef motorStyle fill:#fce7f3,stroke:#ec4899,stroke-width:2px,color:#831843
+  classDef alertStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+  classDef resolveStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef deriveStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+
+  class MO1,MO2,MO8 motorStyle
+  class MO3,MO4,MO5,MO6,MO7 alertStyle
+  class MO9,MO10 resolveStyle
+  class MO11,MO12 deriveStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 8. OPERACIONES INUSUALES -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="unusual-ops">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">⚠️</span>
+            <h2>Operaciones Inusuales <span class="module-tag tag-monitoring">OI</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Flujo de deteccion, registro y resolucion de operaciones inusuales.
+              Cada OI recibe un codigo unico (OI-XXXX) y puede escalarse a
+              Operacion Sospechosa (OS) para derivar a un ROS.
+            </div>
+            <div class="mermaid">
+graph TD
+  OI1["Deteccion de Operacion
+  Inusual"] --> OI2{Origen}
+  OI2 -->|Manual| OI3[Analista crea OI]
+  OI2 -->|Desde Alerta| OI4[Derivada del Motor]
+  OI2 -->|Transaccional| OI5[Umbral superado]
+
+  OI3 --> OI6["Estado: Nueva
+  Codigo: OI-XXXX"]
+  OI4 --> OI6
+  OI5 --> OI6
+
+  OI6 --> OI7[Agregar Comentarios]
+  OI7 --> OI8[Adjuntar Evidencia]
+  OI8 --> OI9[Analisis del Caso]
+
+  OI9 --> OI10{Decision}
+  OI10 -->|Justificada| OI11["Estado: Justificada ✓
+  Motivo obligatorio"]
+  OI10 -->|Sospechosa| OI12["Estado: OS ⚠️
+  Escalar a Operacion Sospechosa"]
+
+  OI11 --> OI13[OI Cerrada]
+  OI12 --> OI14[Crear Caso de Investigacion]
+  OI14 --> OI15[Derivar a ROS]
+
+  classDef detectStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+  classDef newStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef processStyle fill:#fce7f3,stroke:#ec4899,stroke-width:2px,color:#831843
+  classDef justStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef suspStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+
+  class OI1,OI2,OI3,OI4,OI5 detectStyle
+  class OI6 newStyle
+  class OI7,OI8,OI9,OI10 processStyle
+  class OI11,OI13 justStyle
+  class OI12,OI14,OI15 suspStyle
+            </div>
+            <div class="note-box">
+              <strong>Reglas de negocio:</strong> No se pueden agregar adjuntos despues de cerrar la OI.
+              Los comentarios son inmutables una vez publicados.
+              El cierre requiere motivo obligatorio.
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 9. INVESTIGACION -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="investigation">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">🔬</span>
+            <h2>Casos de Investigacion <span class="module-tag tag-investigation">Investigacion</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Gestion de casos de investigacion profunda. Los casos se abren desde alertas u OI
+              y siguen un flujo de recopilacion de evidencia, solicitud de documentos y resolucion.
+              Nivel 1 cierra el caso, Nivel 2 gestiona la investigacion.
+            </div>
+            <div class="mermaid">
+graph TD
+  IV1{Origen del Caso} -->|Desde Alerta| IV2[Alerta escalada]
+  IV1 -->|Desde OI| IV3[OI marcada como OS]
+  IV1 -->|Manual| IV4[Apertura directa]
+
+  IV2 --> IV5["Estado: Abierto"]
+  IV3 --> IV5
+  IV4 --> IV5
+
+  IV5 --> IV6["Estado: En Investigacion"]
+  IV6 --> IV7[Recopilar Evidencia]
+  IV7 --> IV8["Solicitar Documentos
+  al Cliente via app"]
+  IV8 --> IV9{Respuesta recibida?}
+  IV9 -->|Si| IV10[Analizar documentacion]
+  IV9 -->|No + 7 dias| IV11["🔔 Alerta: caso inactivo"]
+  IV11 --> IV8
+
+  IV10 --> IV12{Urgencia Critica?}
+  IV12 -->|Si| IV13["🚨 Notificar Nivel 1
+  inmediatamente"]
+  IV12 -->|No| IV14[Continuar analisis]
+
+  IV13 --> IV15{Resolucion - Solo Nivel 1}
+  IV14 --> IV15
+
+  IV15 -->|Descartado| IV16["Caso Archivado ✓
+  Sin indicios suficientes"]
+  IV15 -->|Sospechoso| IV17["Derivar a ROS ⚠️"]
+  IV15 -->|Archivar| IV18["Caso Cerrado
+  Para seguimiento futuro"]
+
+  IV17 --> IV19[Generar Reporte ROS]
+
+  classDef originStyle fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+  classDef stateStyle fill:#fef2f2,stroke:#dc2626,stroke-width:2px,color:#991b1b
+  classDef processStyle fill:#fce7f3,stroke:#ec4899,stroke-width:2px,color:#831843
+  classDef alertStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef closeStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#064e3b
+  classDef rosStyle fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+
+  class IV1,IV2,IV3,IV4 originStyle
+  class IV5,IV6 stateStyle
+  class IV7,IV8,IV9,IV10,IV14,IV15 processStyle
+  class IV11,IV12,IV13 alertStyle
+  class IV16,IV18 closeStyle
+  class IV17,IV19 rosStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 10. REPORTES -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="reports">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">📊</span>
+            <h2>Reportes Regulatorios UIF <span class="module-tag tag-reports">Reportes</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Generacion de reportes regulatorios para la UIF. Incluye Base Padron mensual,
+              Apartados de operaciones sospechosas y BP mensual.
+              Los reportes enviados se vuelven inmutables.
+            </div>
+            <div class="mermaid">
+graph TD
+  RP1[Generar Reportes Periodo] --> RP2{Tipo de Reporte}
+
+  RP2 --> RP3["📋 Base Padron
+  Registro mensual de clientes
+  activos, altas y bajas"]
+  RP2 --> RP4["⚠️ Apartados
+  Resumen de operaciones
+  sospechosas del periodo"]
+  RP2 --> RP5["📈 BP Mensual
+  Operaciones sospechosas
+  reportadas"]
+
+  RP3 --> RP6[Validar Formato UIF]
+  RP4 --> RP6
+  RP5 --> RP6
+
+  RP6 --> RP7{Formato valido?}
+  RP7 -->|No| RP8["⚠️ Corregir errores
+  de formato"]
+  RP8 --> RP6
+  RP7 -->|Si| RP9[Exportar Archivo]
+
+  RP9 --> RP10["Formato texto plano
+  estructura UIF"]
+  RP10 --> RP11[Revision Nivel 1]
+  RP11 --> RP12{Aprueba?}
+  RP12 -->|Si| RP13["Estado: Enviado a UIF
+  🔒 Reporte Inmutable"]
+  RP12 -->|No| RP14[Corregir y regenerar]
+  RP14 --> RP1
+
+  RP13 --> RP15["Log de auditoria:
+  quien, cuando, IP"]
+
+  classDef reportStyle fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d
+  classDef typeStyle fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#065f46
+  classDef validateStyle fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f
+  classDef sentStyle fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
+  classDef lockStyle fill:#e0e7ff,stroke:#6366f1,stroke-width:2px,color:#3730a3
+
+  class RP1,RP2 reportStyle
+  class RP3,RP4,RP5 typeStyle
+  class RP6,RP7,RP8,RP14 validateStyle
+  class RP9,RP10,RP11,RP12 sentStyle
+  class RP13,RP15 lockStyle
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 11. AUDITORIA -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="flow-section" id="audit">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="icon">📝</span>
+            <h2>Auditoria y Trazabilidad <span class="module-tag tag-auth">Audit</span></h2>
+            <span class="toggle">▼</span>
+          </div>
+          <div class="section-body">
+            <div class="description">
+              Log inmutable y transversal que registra <strong>todas</strong> las acciones del sistema.
+              Cada registro incluye usuario, accion, estados anterior/nuevo, motivo, IP y timestamp.
+              Solo Nivel 1 tiene acceso completo al log.
+            </div>
+            <div class="mermaid">
+graph TD
+  AU1["TODAS LAS ACCIONES
+  DEL SISTEMA"] --> AU2[auditLogger]
+
+  AU2 --> AU3["Registro inmutable:
+  id_sociedad
+  id_usuario_interno
+  tipo_accion
+  estado_anterior → estado_nuevo
+  motivo
+  direccion_ip
+  timestamp"]
+
+  AU3 --> AU4{Acciones Registradas}
+
+  AU4 --> AU5["👤 CRUD Clientes
+  Alta, edicion, aprobacion, rechazo"]
+  AU4 --> AU6["📄 Documentos
+  Carga, aprobacion, rechazo, versiones"]
+  AU4 --> AU7["📑 DDS
+  Creacion, revision, aprobacion"]
+  AU4 --> AU8["⚠️ OI y Casos
+  Creacion, escalacion, cierre"]
+  AU4 --> AU9["🔐 Sesiones
+  Login, logout, intentos fallidos"]
+  AU4 --> AU10["⚖️ Riesgo
+  Evaluaciones y cambios"]
+  AU4 --> AU11["📊 Reportes
+  Generacion y envio"]
+  AU4 --> AU12["📃 Contratos
+  Creacion, firma, vencimiento"]
+
+  AU3 --> AU13{Acceso al Log}
+  AU13 -->|Nivel 1| AU14["Vista completa
+  Todos los clientes y acciones"]
+  AU13 -->|Nivel 2| AU15["Vista parcial
+  Solo clientes asignados"]
+  AU13 -->|Nivel 3| AU16["Sin acceso
+  al log de auditoria"]
+
+  classDef centralStyle fill:#f1f5f9,stroke:#94a3b8,stroke-width:2px,color:#334155
+  classDef actionStyle fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e
+  classDef accessStyle fill:#e0e7ff,stroke:#6366f1,stroke-width:2px,color:#3730a3
+
+  class AU1,AU2,AU3,AU4 centralStyle
+  class AU5,AU6,AU7,AU8,AU9,AU10,AU11,AU12 actionStyle
+  class AU13,AU14,AU15,AU16 accessStyle
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /grid -->
+
+    <!-- FOOTER -->
+    <div style="text-align:center; margin-top:2rem; padding:1.5rem; color:#64748b; font-size:0.85rem; border-top:1px solid var(--border-color);">
+      <strong>Herramienta de Compliance — HC deCampo a Campo</strong><br>
+      Flujo Integral del Sistema &bull; Generado Abril 2026<br>
+      <span style="font-size:0.75rem; opacity:0.7;">12 modulos &bull; 8 flujos principales &bull; Regulacion BCRA / UIF</span>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Mermaid
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#dbeafe',
+        primaryTextColor: '#1e3a5f',
+        primaryBorderColor: '#3b82f6',
+        lineColor: '#64748b',
+        secondaryColor: '#f0fdf4',
+        tertiaryColor: '#fef3c7',
+        fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
+        fontSize: '13px'
+      },
+      flowchart: {
+        curve: 'basis',
+        padding: 15,
+        nodeSpacing: 30,
+        rankSpacing: 40,
+        htmlLabels: true,
+        useMaxWidth: true
+      }
+    });
+
+    // Toggle sections
+    function toggleSection(header) {
+      const body = header.nextElementSibling;
+      body.classList.toggle('hidden');
+      header.classList.toggle('collapsed');
+    }
+
+    // Smooth scroll for TOC
+    document.querySelectorAll('.toc a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Expand if collapsed
+          const body = target.querySelector('.section-body');
+          if (body && body.classList.contains('hidden')) {
+            body.classList.remove('hidden');
+            target.querySelector('.section-header').classList.remove('collapsed');
+          }
+        }
+        // Active state
+        document.querySelectorAll('.toc a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

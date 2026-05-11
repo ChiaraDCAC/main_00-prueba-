@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Flujo de alta — PH y PJ (devs)</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+  body{margin:0;padding:32px;background:#0f1115;color:#e6e8ef;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:22px;font-weight:600;margin:0 0 4px}
+  p.sub{color:#9aa3b2;margin:0 0 20px;font-size:13px}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;background:#171a21;border:1px solid #2a2f3d;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:12px}
+  .legend-item{display:flex;align-items:center;gap:8px;color:#cbd5e1}
+  .shape{width:18px;height:18px;display:inline-block}
+  .shape.rect{background:#1f2937;border:1.5px solid #60a5fa;border-radius:3px}
+  .shape.dec{width:14px;height:14px;background:#3a2e10;border:1.5px solid #fbbf24;transform:rotate(45deg);margin:2px 4px 2px 2px}
+  .shape.input{background:#1c2e26;border:1.5px solid #4ade80;transform:skewX(-18deg);border-radius:2px}
+  .shape.start{background:#0f3a1f;border:1.5px solid #22c55e;border-radius:9px}
+  .shape.end{background:#3a0f0f;border:1.5px solid #f87171;border-radius:9px}
+
+  .actors{background:#171a21;border:1px solid #2a2f3d;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:#cbd5e1}
+  .actors strong{color:#e6e8ef;display:block;margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:0.05em}
+  .actors code{background:#0b0d12;padding:1px 6px;border-radius:3px;color:#7dd3fc;font-size:11px}
+
+  .flow{background:#171a21;border:1px solid #2a2f3d;border-radius:10px;padding:24px;margin-bottom:24px}
+  .flow h2{margin:0 0 8px;font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px}
+  .flow .desc{margin:0 0 16px;color:#9aa3b2;font-size:12px}
+  .tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+  .tag.ph{background:rgba(125,211,252,.15);color:#7dd3fc;border:1px solid rgba(125,211,252,.3)}
+  .tag.pj{background:rgba(196,181,253,.15);color:#c4b5fd;border:1px solid rgba(196,181,253,.3)}
+  .mermaid{display:flex;justify-content:center;overflow-x:auto}
+
+  .tech{margin-top:18px;background:#0f1115;border:1px solid #2a2f3d;border-radius:8px;padding:14px 16px}
+  .tech h3{margin:0 0 10px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:#e6e8ef}
+  .tech table{width:100%;border-collapse:collapse;font-size:12px;color:#cbd5e1}
+  .tech th,.tech td{padding:7px 10px;text-align:left;border-bottom:1px solid #2a2f3d;vertical-align:top}
+  .tech th{color:#9aa3b2;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;background:#171a21}
+  .tech tr:last-child td{border-bottom:0}
+  .tech code{background:#0b0d12;padding:1px 5px;border-radius:3px;font-size:11px;color:#7dd3fc}
+  .tech .na{color:#9aa3b2;font-style:italic}
+  .tech .note{margin-top:10px;font-size:12px;color:#9aa3b2}
+  .tech .note strong{color:#fbbf24}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Flujo de alta de usuario — referencia para desarrollo</h1>
+<p class="sub">Convención de formas + actores + datos. Apunta a que un dev lea de arriba a abajo y sepa qué construir.</p>
+
+<div class="legend">
+  <div class="legend-item"><span class="shape start"></span>Inicio / fin</div>
+  <div class="legend-item"><span class="shape rect"></span>Tarea (sistema u operador)</div>
+  <div class="legend-item"><span class="shape dec"></span>Decisión</div>
+  <div class="legend-item"><span class="shape input"></span>Carga / lectura de datos</div>
+  <div class="legend-item"><span class="shape end"></span>Estado terminal</div>
+</div>
+
+<div class="actors">
+  <strong>Actores y prefijos en los nodos</strong>
+  <code>[Op]</code> operador interno (esta app) ·
+  <code>[Sys]</code> sistema (BE/FE de esta app) ·
+  <code>[Mari]</code> front PSP client-facing donde el usuario carga ·
+  <code>[4i]</code> proveedor externo (OCR DNI + datos) ·
+  <code>[DCAC]</code> base de personas ya existentes en DCAC
+</div>
+
+<div class="flow">
+  <h2><span class="tag ph">PH</span> Persona humana</h2>
+  <p class="desc">Origen del lead: Mari. Datos personales y PEP llegan por API desde Mari + 4i. NSE es el único campo manual del operador.</p>
+  <div class="mermaid">
+flowchart TD
+  S([Inicio · status=solicitud_pendiente]):::start
+  T1["[Sys] GET /clientes?tipo=ph&status=solicitud_pendiente<br/>render tabla: cuit · nombre · tipo · fechaSolicitud"]:::task
+  D1{"[Op] ¿selecciona solicitud?"}:::dec
+  T2["[Sys] POST /alta/:id/iniciar"]:::task
+  I1[/"[Mari + 4i] payload precargado:<br/>nombre · apellido · dni · fechaNac · domicilio<br/>nacionalidad · residencialidad · actividad<br/>pep · cargoPep · organismo · vinculo"/]:::input
+  D2{"[Op] ¿datos completos?"}:::dec
+  I2[/"[Op] edita campos faltantes"/]:::input
+  I3[/"[Op] carga manual:<br/>nse 1-5 (solo PH)<br/>nosisFlag bool<br/>repetFlag bool"/]:::input
+  T3["[Sys] calcula matriz de riesgo<br/>inputs: pep · actividad · nacionalidad · residencialidad<br/>output: riesgoPuntaje · riesgoNivel"]:::task
+  D4{"[Sys] ¿repetFlag=true<br/>o riesgoNivel=alto?"}:::dec
+  T_esc["[Sys] case.requiereRevisionCompliance = true<br/>se muestra alerta en resumen"]:::task
+  T5["[Sys] render resumen consolidado"]:::task
+  D5{"[Op] ¿alta o rechazo?"}:::dec
+  F([status=alta]):::start
+  R([status=rechazado]):::endx
+
+  S --> T1 --> D1
+  D1 -->|no| T1
+  D1 -->|sí| T2 --> I1 --> D2
+  D2 -->|sí| I3
+  D2 -->|no| I2 --> I3
+  I3 --> T3 --> D4
+  D4 -->|sí| T_esc --> T5
+  D4 -->|no| T5
+  T5 --> D5
+  D5 -->|alta| F
+  D5 -->|rechaza| R
+
+  classDef start fill:#0f3a1f,stroke:#22c55e,color:#e6e8ef,stroke-width:1.5px
+  classDef task fill:#1f2937,stroke:#60a5fa,color:#e6e8ef,stroke-width:1.5px
+  classDef dec fill:#3a2e10,stroke:#fbbf24,color:#e6e8ef,stroke-width:1.5px
+  classDef input fill:#1c2e26,stroke:#4ade80,color:#e6e8ef,stroke-width:1.5px
+  classDef endx fill:#3a0f0f,stroke:#f87171,color:#e6e8ef,stroke-width:1.5px
+  </div>
+
+  <div class="tech">
+    <h3>Datos y matriz de riesgo — PH</h3>
+    <table>
+      <thead><tr><th>Campo</th><th>Origen</th><th>Tipo</th><th>Pesa en alta</th></tr></thead>
+      <tbody>
+        <tr><td><code>pep</code> + <code>cargoPep</code> · <code>organismo</code> · <code>vinculo</code></td><td>Mari</td><td>boolean + strings si pep=true</td><td>sí</td></tr>
+        <tr><td><code>actividad</code></td><td>Mari (carga del usuario)</td><td>1-5 (1 ganadera → 5 no ganadera)</td><td>sí</td></tr>
+        <tr><td><code>nacionalidad</code></td><td>4i</td><td>1 / 3 / 5</td><td>sí</td></tr>
+        <tr><td><code>residencialidad</code></td><td>4i</td><td>1 / 3 / 5</td><td>sí</td></tr>
+        <tr><td><code>nse</code></td><td><strong>operador (manual)</strong></td><td>1-5</td><td>sí · solo PH</td></tr>
+        <tr><td><code>nosisFlag</code></td><td>operador (manual)</td><td>boolean</td><td>no calcula matriz · habilita marca compliance si true</td></tr>
+        <tr><td><code>repetFlag</code></td><td>operador (manual)</td><td>boolean</td><td>no calcula matriz · habilita marca compliance si true</td></tr>
+        <tr><td><code>antiguedadPsp</code></td><td>sistema</td><td>—</td><td class="na">no — no hay historial</td></tr>
+        <tr><td><code>materialidad</code></td><td>sistema (monto mensual)</td><td>—</td><td class="na">no — default ALTA primeros 12m</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><strong>Nota screening:</strong> hoy se cargan dos booleanos manuales <code>nosisFlag</code> y <code>repetFlag</code>. <strong>OFAC, ONU, GAFI y UIF no se chequean</strong>. La marca compliance no es terminal: el operador igual decide alta o rechazo en el resumen.</p>
+  </div>
+</div>
+
+<div class="flow">
+  <h2><span class="tag pj">PJ</span> Persona jurídica</h2>
+  <p class="desc">Aplica a SA, SRL, SH y sucesión. Docs los carga el usuario en Mari. El operador revisa y completa datos por documento + trabaja personas en paralelo. Las dos secciones (docs y personas) se pueden alternar libremente desde la UI.</p>
+  <div class="mermaid">
+flowchart TD
+  S([Inicio · status=solicitud_pendiente]):::start
+  T1["[Sys] GET /clientes?tipo=pj&status=solicitud_pendiente<br/>render tabla: cuit · razónSocial · tipo · fechaSolicitud · estadoDocs"]:::task
+  D1{"[Op] ¿despliega fila?"}:::dec
+  T2["[Sys] GET /sociedades/:id/documentos<br/>+ GET /sociedades/:id/personas (UUIDs DCAC)"]:::task
+
+  subgraph Docs[Sección documentos]
+    I1[/"[Op] abre doc N<br/>SA: estatuto · acta · regAccionistas · poder · balance<br/>SRL/SH/sucesión: según tipo"/]:::input
+    D2{"[Op] ¿doc OK?"}:::dec
+    I2[/"[Op] PUT /documentos/:id/revisar<br/>accion: rechazar / observar + motivo<br/>se notifica Mari para re-carga<br/>excepción: operador sube"/]:::input
+    T_load["[Op] visualiza + completa datos del doc<br/>PUT /documentos/:id/datos"]:::task
+    D_more{"[Op] ¿más docs?"}:::dec
+  end
+
+  subgraph Personas[Sección personas]
+    I_pers[/"[Sys] muestra:<br/>UUIDs DCAC ya asociados a la sociedad<br/>+ acción 'crear nueva persona'"/]:::input
+    D_pers{"[Op] ¿UUID existente o nueva?"}:::dec
+    I_exist[/"[Op] selecciona UUID DCAC<br/>POST /sociedades/:id/personas/:uuid/vincular"/]:::input
+    I_new[/"[Op] POST /personas (datos básicos)<br/>genera UUID nuevo<br/>POST /sociedades/:id/personas/:uuid/vincular"/]:::input
+    I4[/"[Op] PUT /personas/:uuid/rol<br/>SA: presidente / accionista / director / gerente / apoderado<br/>SRL: socio / gerente / apoderado<br/>SH: socio / apoderado<br/>Sucesión: heredero / administrador"/]:::input
+    I5[/"[Op] PUT /personas/:uuid/firma<br/>tipo: individual / múltiple / conjunta<br/>si múltiple: alcance por persona (general / limitado)<br/>si conjunta: minFirmantes<br/>regla: rol=presidente_SA fija individual + general"/]:::input
+    I6[/"[Op] PUT /personas/:uuid/checks<br/>esPep · cargoPep · organismo · vinculo · ddjjUrl<br/>nosisFlag · repetFlag"/]:::input
+    D3{"[Op] ¿más personas?"}:::dec
+  end
+
+  T6["[Sys] calcula matriz por sociedad<br/>inputs: pep agregado · actividad · nacionalidad · residencialidad<br/>output: riesgoPuntaje · riesgoNivel"]:::task
+  D4{"[Sys] ¿algún repetFlag=true<br/>o riesgoNivel=alto?"}:::dec
+  T_esc["[Sys] case.requiereRevisionCompliance = true"]:::task
+  T5["[Sys] render resumen consolidado"]:::task
+  D5{"[Op] ¿alta o rechazo?"}:::dec
+  F([status=alta]):::start
+  R([status=rechazado]):::endx
+
+  S --> T1 --> D1
+  D1 -->|no| T1
+  D1 -->|sí| T2
+  T2 --> I1
+  I1 --> D2
+  D2 -->|sí| T_load
+  D2 -->|no| I2
+  I2 --> D_more
+  T_load --> D_more
+  D_more -->|sí| I1
+  D_more -->|no| I_pers
+  I_pers --> D_pers
+  D_pers -->|existente| I_exist
+  D_pers -->|nueva| I_new
+  I_exist --> I4
+  I_new --> I4
+  I4 --> I5
+  I5 --> I6
+  I6 --> D3
+  D3 -->|sí| I_pers
+  D3 -->|no| T6
+  T6 --> D4
+  D4 -->|sí| T_esc
+  T_esc --> T5
+  D4 -->|no| T5
+  T5 --> D5
+  D5 -->|alta| F
+  D5 -->|rechaza| R
+
+  classDef start fill:#0f3a1f,stroke:#22c55e,color:#e6e8ef,stroke-width:1.5px
+  classDef task fill:#1f2937,stroke:#60a5fa,color:#e6e8ef,stroke-width:1.5px
+  classDef dec fill:#3a2e10,stroke:#fbbf24,color:#e6e8ef,stroke-width:1.5px
+  classDef input fill:#1c2e26,stroke:#4ade80,color:#e6e8ef,stroke-width:1.5px
+  classDef endx fill:#3a0f0f,stroke:#f87171,color:#e6e8ef,stroke-width:1.5px
+  </div>
+
+  <div class="tech">
+    <h3>Datos y matriz de riesgo — PJ</h3>
+    <table>
+      <thead><tr><th>Campo</th><th>Origen</th><th>Tipo</th><th>Pesa en alta</th></tr></thead>
+      <tbody>
+        <tr><td><code>esPep</code> por persona vinculada</td><td>operador (manual, una x una)</td><td>boolean + strings si true</td><td>sí · agregado</td></tr>
+        <tr><td><code>actividad</code></td><td>Mari</td><td>1-5</td><td>sí</td></tr>
+        <tr><td><code>nacionalidad</code></td><td>4i</td><td>1 / 3 / 5</td><td>sí</td></tr>
+        <tr><td><code>residencialidad</code></td><td>4i</td><td>1 / 3 / 5</td><td>sí</td></tr>
+        <tr><td><code>nse</code></td><td class="na">—</td><td class="na">—</td><td class="na">no aplica en PJ</td></tr>
+        <tr><td><code>nosisFlag</code> · <code>repetFlag</code> por persona</td><td>operador (manual)</td><td>boolean</td><td>habilita marca compliance si algún true</td></tr>
+        <tr><td><code>antiguedadPsp</code> · <code>materialidad</code></td><td>sistema</td><td>—</td><td class="na">no en alta</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><strong>UUIDs personas:</strong> al desplegar la fila se trae <code>GET /sociedades/:id/personas</code> con los UUIDs DCAC ya asociados. Si la persona ya existe en DCAC se vincula por UUID; si no, <code>POST /personas</code> genera un UUID nuevo y se vincula a la sociedad. Una misma persona puede estar en múltiples sociedades con roles distintos.</p>
+  </div>
+</div>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#171a21',
+      primaryTextColor: '#e6e8ef',
+      lineColor: '#9aa3b2',
+      fontSize: '13px'
+    },
+    flowchart: { curve: 'basis', padding: 18, nodeSpacing: 40, rankSpacing: 50 }
+  });
+</script>
+</body>
+</html>

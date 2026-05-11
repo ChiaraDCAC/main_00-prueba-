@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>User Flow — Alta de Usuario (PH y PJ) — Devs</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1f2330; --line:#2a2f3d;
+    --text:#e6e8ef; --muted:#9aa3b2; --accent:#6aa3ff; --ok:#4ade80;
+    --warn:#fbbf24; --err:#f87171; --info:#60a5fa; --code:#0b0d12;
+    --ph:#7dd3fc; --pj:#c4b5fd; --shared:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;font-size:14px}
+  .container{max-width:1240px;margin:0 auto;padding:32px 24px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px}
+  header h1{margin:0 0 6px;font-size:24px;font-weight:600}
+  header p{margin:0;color:var(--muted);font-size:13px}
+  .meta{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .meta span{padding:4px 10px;background:var(--panel);border-radius:4px;border:1px solid var(--line)}
+
+  nav.tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--line);overflow-x:auto}
+  nav.tabs button{background:transparent;border:0;color:var(--muted);padding:12px 18px;font-size:14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-weight:500}
+  nav.tabs button.active{color:var(--text);border-bottom-color:var(--accent)}
+  nav.tabs button:hover{color:var(--text)}
+  nav.tabs .badge{margin-left:6px;font-size:10px;padding:2px 6px;border-radius:8px;background:var(--panel2)}
+
+  section.tab{display:none}
+  section.tab.active{display:block}
+
+  h2{font-size:18px;font-weight:600;margin:32px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  h3{font-size:15px;font-weight:600;margin:22px 0 10px;color:var(--text)}
+  h4{font-size:13px;font-weight:600;margin:16px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
+  p{margin:6px 0 12px}
+  code{font-family:"JetBrains Mono",Menlo,Consolas,monospace;font-size:12px;background:var(--code);padding:2px 6px;border-radius:3px;color:#cbd5e1;border:1px solid var(--line)}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:14px 16px;overflow-x:auto;font-size:12px;line-height:1.5}
+
+  table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:13px;background:var(--panel)}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--panel2);color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em}
+  tr:last-child td{border-bottom:0}
+  td.method{font-family:"JetBrains Mono",Menlo,monospace;font-weight:600}
+  td.method.GET{color:var(--info)}
+  td.method.POST{color:var(--ok)}
+  td.method.PUT{color:var(--warn)}
+  td.method.DELETE{color:var(--err)}
+
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-right:4px}
+  .pill.ph{background:rgba(125,211,252,.15);color:var(--ph);border:1px solid rgba(125,211,252,.3)}
+  .pill.pj{background:rgba(196,181,253,.15);color:var(--pj);border:1px solid rgba(196,181,253,.3)}
+  .pill.shared{background:rgba(251,191,36,.15);color:var(--shared);border:1px solid rgba(251,191,36,.3)}
+  .pill.ok{background:rgba(74,222,128,.15);color:var(--ok)}
+  .pill.warn{background:rgba(251,191,36,.15);color:var(--warn)}
+  .pill.err{background:rgba(248,113,113,.15);color:var(--err)}
+  .pill.info{background:rgba(96,165,250,.15);color:var(--info)}
+  .pill.muted{background:var(--panel2);color:var(--muted)}
+
+  .flow-wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px;margin:16px 0;overflow-x:auto}
+  .mermaid{background:transparent !important;display:flex;justify-content:center}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}
+  .card h4{margin-top:0}
+  .card.accent-ph{border-left:3px solid var(--ph)}
+  .card.accent-pj{border-left:3px solid var(--pj)}
+  .card.accent-shared{border-left:3px solid var(--shared)}
+
+  ul{margin:6px 0 12px;padding-left:22px}
+  li{margin:4px 0}
+  ul.compact li{margin:2px 0}
+
+  .callout{padding:12px 16px;border-radius:6px;margin:12px 0;font-size:13px;border-left:3px solid var(--accent)}
+  .callout.warn{background:rgba(251,191,36,.08);border-left-color:var(--warn)}
+  .callout.err{background:rgba(248,113,113,.08);border-left-color:var(--err)}
+  .callout.info{background:rgba(96,165,250,.08);border-left-color:var(--info)}
+  .callout.ok{background:rgba(74,222,128,.08);border-left-color:var(--ok)}
+  .callout strong{color:var(--text)}
+
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin-bottom:24px}
+  .toc h4{margin:0 0 8px}
+  .toc ol{margin:0;padding-left:22px;font-size:13px;column-count:2;column-gap:24px}
+  .toc a{color:var(--accent);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+
+  .step-num{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--panel2);color:var(--accent);font-size:12px;font-weight:600;text-align:center;line-height:22px;margin-right:8px}
+
+  hr{border:0;border-top:1px solid var(--line);margin:32px 0}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 14px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px}
+
+  .src{font-size:11px;color:var(--muted);margin-top:4px}
+  .src code{font-size:10px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>User flow — Alta de usuario (Persona Humana y Persona Jurídica)</h1>
+  <p>Especificación end-to-end para el equipo de desarrollo: pantallas, endpoints, estados, validaciones, errores y side-effects.</p>
+  <div class="meta">
+    <span>Repo: <code>compliance-system</code></span>
+    <span>Frontend: <code>/clients/onboarding</code></span>
+    <span>Versión: 1.0</span>
+    <span>Fecha: 2026-05-04</span>
+    <span>Audiencia: devs frontend + backend</span>
+  </div>
+</header>
+
+<div class="toc">
+  <h4>Contenido</h4>
+  <ol>
+    <li><a href="#convenciones">Convenciones</a></li>
+    <li><a href="#arquitectura">Arquitectura general</a></li>
+    <li><a href="#tab-ph">Flujo Persona Humana</a></li>
+    <li><a href="#tab-pj">Flujo Persona Jurídica</a></li>
+    <li><a href="#tab-shared">Componentes compartidos</a></li>
+    <li><a href="#tab-anexos">Anexos: errores, estados, side-effects</a></li>
+  </ol>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button class="active" data-tab="overview">Overview</button>
+  <button data-tab="ph"><span class="pill ph">PH</span> Persona humana</button>
+  <button data-tab="pj"><span class="pill pj">PJ</span> Persona jurídica</button>
+  <button data-tab="shared">Compartido</button>
+  <button data-tab="anexos">Anexos</button>
+</nav>
+
+<!-- ========================= OVERVIEW ========================= -->
+<section class="tab active" id="overview">
+  <h2 id="convenciones">Convenciones</h2>
+  <div class="legend">
+    <span><i style="background:var(--ph)"></i> Persona humana (PH)</span>
+    <span><i style="background:var(--pj)"></i> Persona jurídica (PJ)</span>
+    <span><i style="background:var(--shared)"></i> Compartido</span>
+    <span><i style="background:var(--ok)"></i> Ruta feliz</span>
+    <span><i style="background:var(--err)"></i> Error / rechazo</span>
+  </div>
+  <ul class="compact">
+    <li><strong>PH</strong>: monotributista, responsable inscripto. Documentación llega automática vía 4i.</li>
+    <li><strong>PJ</strong>: SA, SRL, SH, sucesión. Documentación se sube y revisa manualmente.</li>
+    <li><strong>Detección</strong>: <code>isPersonaHumana(entityType)</code> en <code>frontend/src/config/documentRequirements.js</code>.</li>
+    <li><strong>API base</strong>: <code>/api/v1</code>. Auth: JWT en header <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+  </ul>
+
+  <h2 id="arquitectura">Arquitectura general</h2>
+  <div class="flow-wrap">
+    <div class="mermaid">
+flowchart LR
+  ext[Origen externo<br/>4i / formulario web] --> q[(cola de solicitudes<br/>status=pendiente)]
+  q --> ui[/clients/onboarding<br/>wizard 4 pasos/]
+  ui --> svc{altaService}
+  svc --> be[Backend<br/>altaController]
+  be --> db[(Postgres)]
+  be --> nosis[NOSIS API]
+  be --> screen[Screening<br/>OFAC · ONU · GAFI · UIF]
+  be --> _4i[4i — solo PH<br/>OCR DNI + DDJJ PEP]
+  ui --> sb[Sidebar de navegación]
+  classDef ext fill:#1f2330,stroke:#7dd3fc,color:#e6e8ef
+  classDef be fill:#1f2330,stroke:#c4b5fd,color:#e6e8ef
+  classDef ui fill:#1f2330,stroke:#fbbf24,color:#e6e8ef
+  class ext,_4i,nosis,screen ext
+  class be,db be
+  class ui,sb,svc ui
+    </div>
+  </div>
+
+  <h3>Stack y archivos clave</h3>
+  <table>
+    <thead><tr><th>Capa</th><th>Tech</th><th>Archivos</th></tr></thead>
+    <tbody>
+      <tr><td>Frontend</td><td>React + Vite</td><td><code>frontend/src/pages/clients/ClientOnboarding.jsx</code> (3500+ líneas)</td></tr>
+      <tr><td>Servicios FE</td><td>Axios</td><td><code>altaService.js · clientService.js · personaService.js · sociedadService.js · documentService.js</code></td></tr>
+      <tr><td>Config</td><td>JS</td><td><code>frontend/src/config/documentRequirements.js</code></td></tr>
+      <tr><td>Backend</td><td>Node + Express</td><td><code>backend/src/controllers/altaController.js · clientController.js</code></td></tr>
+      <tr><td>DB</td><td>Postgres</td><td>tablas: <code>clientes · sociedades · personas · documentos · alta_estado · alta_historial</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ========================= FLUJO PH ========================= -->
+<section class="tab" id="ph">
+  <h2 id="tab-ph"><span class="pill ph">PH</span> Flujo persona humana — end to end</h2>
+  <p>Aplica a <strong>monotributista</strong> y <strong>responsable inscripto</strong>. La documentación llega automática vía 4i, por eso el paso 0 lista solicitudes (no docs por revisar).</p>
+
+  <h3>Diagrama de flujo</h3>
+  <div class="flow-wrap">
+    <div class="mermaid">
+flowchart TD
+  s0([Solicitud creada<br/>4i / formulario]) --> s1[/clients/onboarding<br/>Paso 0: solicitudes de alta/]
+  s1 -->|GET solicitudes| be0[Backend lista pendientes]
+  be0 --> tbl[Tabla: CUIT · nombre · tipo · fecha solicitud]
+  tbl -->|click continuar carga de datos| s2[Paso 1: datos entidad]
+  s2 -->|fetch persona + docs 4i| auto[Autocompletar datos<br/>desde DNI frente/dorso]
+  s2 -->|fetch tick PEP| pepFlag[Flag PEP sí/no<br/>desde Mari PSP client-facing]
+  auto --> v1{¿campos OCR<br/>completos?}
+  v1 -->|no| fix[Edición manual<br/>de campos]
+  v1 -->|sí| s3[Paso 2: riesgo y perfil]
+  fix --> s3
+  pepFlag --> s3
+  s3 --> nosis[/Trigger NOSIS/]
+  nosis --> screen[/Screening listas<br/>OFAC · ONU · GAFI · UIF/]
+  screen --> nse[Selección NSE 1-5]
+  nse --> mr[Matriz de riesgo]
+  mr --> calc{Puntaje calculado}
+  calc -->|bajo/medio| s4[Paso 3: alta final]
+  calc -->|alto| esc[Escalar a compliance<br/>aprobación manual]
+  esc --> s4
+  s4 -->|POST clientes| ok([Cliente aprobado<br/>status=aprobado])
+  s4 -.docs faltantes.-> pend([status=pendiente])
+  s1 -.error 401/500.-> errAuth([Error de sesión<br/>redirect a /login])
+  s2 -.error OCR.-> errOcr([Reintentar 4i])
+  classDef ok fill:#0f3a1f,stroke:#4ade80,color:#e6e8ef
+  classDef err fill:#3a0f0f,stroke:#f87171,color:#e6e8ef
+  classDef pend fill:#3a2a0f,stroke:#fbbf24,color:#e6e8ef
+  class ok ok
+  class errAuth,errOcr err
+  class pend,esc pend
+    </div>
+  </div>
+
+  <h3><span class="step-num">0</span>Paso 0 — Solicitudes de alta</h3>
+  <div class="grid2">
+    <div class="card accent-ph">
+      <h4>Pantalla</h4>
+      <p>Tabla de solicitudes con búsqueda. Por <strong>fila</strong>: <code>CUIT · Nombre · Tipo · Fecha solicitud alta · [Continuar carga de datos]</code>.</p>
+      <ul class="compact">
+        <li>Sin estado de docs (la docu llega automática)</li>
+        <li>Filtros: tipo (mono / RI), rango de fechas</li>
+        <li>Orden por defecto: fecha desc</li>
+      </ul>
+    </div>
+    <div class="card accent-ph">
+      <h4>Eventos</h4>
+      <ul class="compact">
+        <li><code>onMount</code> → <code>GET /clientes?status=pendiente&amp;tipo=ph</code></li>
+        <li><code>onSearch</code> → debounce 300ms, query string</li>
+        <li><code>onClick(continuar)</code> → router push <code>/clients/onboarding/:id</code> + <code>POST /alta/:id/iniciar</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3><span class="step-num">1</span>Paso 1 — Datos de entidad (autocomplete vía 4i)</h3>
+  <div class="grid2">
+    <div class="card accent-ph">
+      <h4>Carga de datos</h4>
+      <p>El backend recibe el id, llama a 4i y precarga:</p>
+      <ul class="compact">
+        <li>DNI frente: <code>nombre, apellido, dni, fechaNacimiento, sexo</code></li>
+        <li>DNI dorso: <code>fechaEmision, domicilio</code></li>
+        <li>Persona única auto-vinculada (titular)</li>
+        <li>Facultades de firma: <code>individual + general</code> (default monotributista)</li>
+        <li><strong>PEP</strong>: <span class="pill info">tick sí/no</span> que llega desde el front de <strong>Mari (PSP client-facing)</strong>. NO se carga acá ni se sube como documento.</li>
+      </ul>
+    </div>
+    <div class="card accent-ph">
+      <h4>Validaciones</h4>
+      <ul class="compact">
+        <li>CUIT válido (algoritmo módulo 11)</li>
+        <li>DNI 7-8 dígitos numéricos</li>
+        <li>Email formato + único en sistema</li>
+        <li>Flag PEP debe venir definido (true/false) desde Mari</li>
+        <li>Si OCR falla → permitir edición manual</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3><span class="step-num">2</span>Paso 2 — Riesgo y perfil transaccional</h3>
+  <p>Particular de PH: <strong>incluye campo NSE (nivel socioeconómico, 1 a 5)</strong>.</p>
+  <pre>{
+  nosisResultado: 'sin_antecedentes' | 'con_antecedentes',
+  nosisArchivo: File,
+  nseNivel: 1 | 2 | 3 | 4 | 5,
+  nseNotas: string,
+  esPep: boolean,
+  residencia: 'AR' | string,
+  nacionalidad: string,
+  actividad: string,
+  antiguedad: number,
+  materialidad: 'baja' | 'media' | 'alta',
+  riesgoPuntaje: number  // 0-100, calc automático
+}</pre>
+
+  <h3><span class="step-num">3</span>Paso 3 — Alta final</h3>
+  <p>Resumen consolidado, edición inline de cualquier sección. Al confirmar:</p>
+  <ul class="compact">
+    <li><code>POST /clientes</code> con todo el payload acumulado</li>
+    <li>Si todos los docs están OK → <code>status=aprobado</code></li>
+    <li>Si falta algo → <code>status=pendiente</code> + queda en bandeja</li>
+  </ul>
+
+  <h3>Endpoints involucrados</h3>
+  <table>
+    <thead><tr><th>Método</th><th>Endpoint</th><th>Body / params</th><th>Cuándo</th></tr></thead>
+    <tbody>
+      <tr><td class="method GET">GET</td><td><code>/clientes?status=pendiente&amp;tipo=ph</code></td><td>—</td><td>Paso 0: tabla</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/alta/:id/iniciar</code></td><td><code>{ tipo: 'ph' }</code></td><td>Click continuar carga</td></tr>
+      <tr><td class="method GET">GET</td><td><code>/alta/:id/estado</code></td><td>—</td><td>Polling de estado</td></tr>
+      <tr><td class="method GET">GET</td><td><code>/personas/:cuit/4i</code></td><td>—</td><td>Autocomplete DNI</td></tr>
+      <tr><td class="method PUT">PUT</td><td><code>/alta/:id/guardar</code></td><td><code>{ paso, data }</code></td><td>Borrador autosave</td></tr>
+      <tr><td class="method PUT">PUT</td><td><code>/alta/:id/avanzar</code></td><td><code>{ paso }</code></td><td>Click siguiente</td></tr>
+      <tr><td class="method GET">GET</td><td><code>/mari/pep-flag/:cuit</code></td><td>—</td><td>Lee tick PEP del front de Mari</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/screening/:id_persona</code></td><td><code>{ listas: ['ofac','onu','gafi','uif'] }</code></td><td>Paso 2 al cargar</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/nosis/:cuit</code></td><td>—</td><td>Paso 2 manual</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/clientes</code></td><td>payload completo</td><td>Paso 3 dar de alta</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Estados (state machine)</h3>
+  <pre>solicitud_creada → en_carga → revision_riesgo → aprobado
+                              ↘ pendiente (docs incompletos)
+                              ↘ escalado_compliance (riesgo alto)
+                              ↘ rechazado (PEP/screening hit)</pre>
+
+  <h3>Componentes React usados</h3>
+  <ul class="compact">
+    <li><code>ClientOnboarding</code> (wizard padre)</li>
+    <li><code>DocumentForm</code> (form auto-generado desde <code>documentRequirements.js</code>)</li>
+    <li><code>PersonPepUploader</code> (DDJJ PEP)</li>
+    <li><code>RiskAssessment</code> (NSE + matriz)</li>
+    <li><code>SignerConfiguration</code> (oculto en PH, default individual+general)</li>
+  </ul>
+
+  <div class="callout warn"><strong>Side-effect importante:</strong> el primer GET a <code>/personas/:cuit/4i</code> dispara una llamada billable a 4i. Cachear respuesta por 24h en backend.</div>
+</section>
+
+<!-- ========================= FLUJO PJ ========================= -->
+<section class="tab" id="pj">
+  <h2 id="tab-pj"><span class="pill pj">PJ</span> Flujo persona jurídica — end to end</h2>
+  <p>Aplica a <strong>SA, SRL, SH, sucesión</strong>. La documentación se sube y revisa manualmente. Hay múltiples personas vinculadas con roles distintos.</p>
+
+  <h3>Diagrama de flujo</h3>
+  <div class="flow-wrap">
+    <div class="mermaid">
+flowchart TD
+  s0([Solicitud creada]) --> s1[/clients/onboarding<br/>Paso 0: clientes pendientes/]
+  s1 -->|GET pendientes| tbl[Tabla: CUIT · razón social · tipo · fecha solicitud · estado docs]
+  tbl -->|click revisar| s2[Paso 1: datos entidad]
+  s2 --> tabs{Tabs}
+  tabs -->|tab Docs| docs[Lista de docs requeridos<br/>según tipo: SA/SRL/SH/sucesión]
+  docs --> up[Upload de cada doc<br/>PDF/imagen]
+  up --> ocr[/Extracción de campos/]
+  ocr --> rev{Revisor}
+  rev -->|aprobar| docOk[Doc OK]
+  rev -->|rechazar| docRej[Doc rechazado<br/>+ motivo]
+  rev -->|observar| docObs[Solicitar info adicional]
+  docOk --> tabs
+  docRej --> wait[Esperar reupload]
+  wait --> up
+  tabs -->|tab Personas| ppl[Gestión de personas]
+  ppl --> add[Agregar persona<br/>directorio o manual]
+  add --> roles[Asignar roles<br/>presidente · accionista · gerente · apoderado · heredero]
+  roles --> firma[Configurar facultades de firma<br/>individual / múltiple / conjunta]
+  firma --> pep[Cargar condición PEP<br/>uno x uno por persona<br/>sí/no + cargo PEP si aplica]
+  pep --> screen[/Screening por persona<br/>OFAC · ONU · GAFI · UIF/]
+  screen --> hit{¿hit?}
+  hit -->|sí| esc[Escalar compliance]
+  hit -->|no| done1{¿docs OK +<br/>personas con roles +<br/>PEP de c/u?}
+  done1 -->|no| tabs
+  done1 -->|sí| s3[Paso 2: riesgo corporativo]
+  s3 --> nosis[/NOSIS empresa/]
+  nosis --> mat[Matriz de riesgo<br/>+ ventas anuales + materialidad]
+  mat --> calc{Puntaje}
+  calc -->|bajo/medio| s4[Paso 3: alta final]
+  calc -->|alto| esc
+  esc --> s4
+  s4 -->|POST clientes| ok([Cliente aprobado])
+  s4 -.docs incompletos.-> pend([status=pendiente])
+  classDef ok fill:#0f3a1f,stroke:#4ade80,color:#e6e8ef
+  classDef err fill:#3a0f0f,stroke:#f87171,color:#e6e8ef
+  classDef pend fill:#3a2a0f,stroke:#fbbf24,color:#e6e8ef
+  class ok ok
+  class esc,pend pend
+  class docRej err
+    </div>
+  </div>
+
+  <h3><span class="step-num">0</span>Paso 0 — Clientes pendientes de revisión</h3>
+  <div class="grid2">
+    <div class="card accent-pj">
+      <h4>Pantalla</h4>
+      <p>Tabla con: <code>CUIT · Razón social · Tipo · Fecha solicitud alta · Estado docs · [Revisar]</code>.</p>
+      <ul class="compact">
+        <li>Estado docs: <span class="pill warn">3 / 5 docs</span> · <span class="pill info">pendiente revisión</span> · <span class="pill ok">aprobado</span></li>
+        <li>Fecha solicitud: formato <code>dd/mm/yyyy</code>, orden por defecto desc</li>
+        <li>Expandible: muestra checklist de docs por fila</li>
+      </ul>
+    </div>
+    <div class="card accent-pj">
+      <h4>Eventos</h4>
+      <ul class="compact">
+        <li><code>GET /clientes?status=pendiente&amp;tipo=pj</code></li>
+        <li><code>GET /clientes/:id/documentos</code> al expandir fila</li>
+        <li><code>POST /alta/:id/iniciar { tipo: 'pj' }</code> al click revisar</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3><span class="step-num">1</span>Paso 1 — Datos de entidad (manual, dos tabs)</h3>
+
+  <h4>Tab Docs</h4>
+  <table>
+    <thead><tr><th>Tipo</th><th>Documentos requeridos</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SA</strong></td><td>Estatuto · Acta autoridades · Reg. accionistas · Poder admin · Balance</td></tr>
+      <tr><td><strong>SRL</strong></td><td>Contrato social · Acta asamblea · Reg. socios · Poder (opc) · Balance</td></tr>
+      <tr><td><strong>SH</strong></td><td>Contrato privado · DNI socios · DDJJ representante · Balance</td></tr>
+      <tr><td><strong>Sucesión</strong></td><td>Declaratoria herederos · Designación administrador · Solicitud AGJ · Ficha sucesión · DNI herederos</td></tr>
+    </tbody>
+  </table>
+  <p>Por cada doc: split-view con preview PDF a la izquierda y formulario de campos extraídos a la derecha. Botones: <strong>aprobar · rechazar · observar</strong>.</p>
+
+  <h4>Tab Personas</h4>
+  <p>Cards con persona y secciones expandibles:</p>
+  <ul class="compact">
+    <li>Datos básicos · Domicilio</li>
+    <li>Roles según tipo de entidad (mostrados dinámicamente):
+      <ul>
+        <li>SA: <code>esPresidente · esDirector · esGerente · esAccionista · esApoderado</code></li>
+        <li>SRL: <code>esGerente · esSocioSRL · esApoderado</code></li>
+        <li>SH: <code>esSocioSH · esApoderado</code></li>
+        <li>Sucesión: <code>esHeredero · esAdministrador</code></li>
+      </ul>
+    </li>
+    <li>Facultades de firma: individual / múltiple / conjunta (con mínimo de firmantes)</li>
+    <li><strong>Condición PEP</strong>: <span class="pill pj">manual, persona por persona</span>. Por cada persona vinculada el operador carga:
+      <ul>
+        <li><code>esPep: boolean</code></li>
+        <li>Si <code>esPep = true</code>: <code>cargoPep, organismo, fechaDesde, fechaHasta, vinculoPep</code> (ascendente, descendente, cónyuge, etc.)</li>
+        <li>Adjuntar declaración firmada (PDF) cuando aplique</li>
+      </ul>
+    </li>
+    <li>Screening en listas (OFAC · ONU · GAFI · UIF) por persona — independiente del tick PEP</li>
+  </ul>
+  <div class="callout info"><strong>Diferencia con PH:</strong> en PH el PEP es un tick sí/no que viaja desde el front de Mari. En PJ no hay un único tick — cada persona vinculada (presidente, accionistas, gerentes, apoderados, herederos…) tiene su propia condición PEP que se carga manualmente, una a una.</div>
+
+  <h3>Reglas de negocio críticas</h3>
+  <div class="callout warn">
+    <ul class="compact">
+      <li>Solo puede haber <strong>un presidente</strong> por SA.</li>
+      <li>Apoderado: por defecto <code>individual + general</code> (editable).</li>
+      <li>Firma conjunta: requiere <code>minFirmantes ≥ 2</code> y se propaga a participantes seleccionados.</li>
+      <li>Beneficiario final: obligatorio identificarlo en SA/SRL.</li>
+      <li>En sucesión: o admin único O firma conjunta de herederos.</li>
+    </ul>
+  </div>
+
+  <h3><span class="step-num">2</span>Paso 2 — Riesgo y perfil corporativo</h3>
+  <p>Particular de PJ: <strong>NO incluye NSE</strong>; en su lugar materialidad + ventas anuales.</p>
+  <pre>{
+  nosisResultado: 'sin_antecedentes' | 'con_antecedentes',
+  ventasEstimadasAnuales: number,
+  materialidad: 'baja' | 'media' | 'alta',
+  esPep: boolean,
+  residencia: string,
+  actividad: string,
+  antiguedad: number,
+  riesgoPuntaje: number
+}</pre>
+
+  <h3><span class="step-num">3</span>Paso 3 — Alta final</h3>
+  <ul class="compact">
+    <li>Resumen: entidad · personas con roles · documentos aprobados · riesgo</li>
+    <li>Edición inline de cualquier card</li>
+    <li>Comentarios internos del alta</li>
+    <li><code>POST /clientes</code> con payload completo</li>
+  </ul>
+
+  <h3>Endpoints involucrados</h3>
+  <table>
+    <thead><tr><th>Método</th><th>Endpoint</th><th>Body / params</th><th>Cuándo</th></tr></thead>
+    <tbody>
+      <tr><td class="method GET">GET</td><td><code>/clientes?status=pendiente&amp;tipo=pj</code></td><td>—</td><td>Paso 0</td></tr>
+      <tr><td class="method GET">GET</td><td><code>/clientes/:id/documentos</code></td><td>—</td><td>Expandir fila</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/alta/:id/iniciar</code></td><td><code>{ tipo: 'pj' }</code></td><td>Click revisar</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/documentos/upload</code></td><td><code>multipart: file, doc_id, sociedad_id</code></td><td>Tab docs</td></tr>
+      <tr><td class="method PUT">PUT</td><td><code>/documentos/:id/revisar</code></td><td><code>{ accion: 'aprobar'|'rechazar'|'observar', motivo? }</code></td><td>Tab docs</td></tr>
+      <tr><td class="method GET">GET</td><td><code>/personas/directorio?q=</code></td><td>—</td><td>Tab personas (búsqueda)</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/personas</code></td><td>persona payload</td><td>Tab personas (crear)</td></tr>
+      <tr><td class="method PUT">PUT</td><td><code>/personas/:id</code></td><td>persona payload</td><td>Editar</td></tr>
+      <tr><td class="method DELETE">DELETE</td><td><code>/sociedades/:id_soc/personas/:id_tag</code></td><td>—</td><td>Desvincular</td></tr>
+      <tr><td class="method PUT">PUT</td><td><code>/personas/:id/pep</code></td><td><code>{ esPep, cargoPep?, organismo?, fechaDesde?, fechaHasta?, vinculoPep?, archivoDdjj? }</code></td><td>Carga manual de PEP por persona</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/screening/:id_persona</code></td><td><code>{ listas: [...] }</code></td><td>Por persona</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/nosis/:cuit</code></td><td>—</td><td>Paso 2</td></tr>
+      <tr><td class="method PUT">PUT</td><td><code>/alta/:id/guardar</code></td><td><code>{ paso, data }</code></td><td>Autosave</td></tr>
+      <tr><td class="method POST">POST</td><td><code>/clientes</code></td><td>payload completo</td><td>Paso 3</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Estados (state machine)</h3>
+  <pre>solicitud_creada → revision_docs → carga_personas → revision_riesgo → aprobado
+                                                            ↘ pendiente (docs/personas incompletos)
+                                                            ↘ escalado_compliance (riesgo alto / hit screening)
+                                                            ↘ rechazado</pre>
+
+  <h3>Componentes React usados</h3>
+  <ul class="compact">
+    <li><code>ClientOnboarding</code></li>
+    <li><code>DocumentForm</code> · <code>DocumentChecklist</code> · <code>DocumentReviewModal</code> · <code>DocumentViewerModal</code></li>
+    <li><code>SignerConfiguration</code> (firma conjunta, mínimo de firmantes)</li>
+    <li><code>SocietyPepDeclarations</code> · <code>PepDeclarationManager</code></li>
+    <li><code>beneficiary-owners</code> (UBO)</li>
+    <li><code>RiskAssessment</code></li>
+  </ul>
+</section>
+
+<!-- ========================= COMPARTIDO ========================= -->
+<section class="tab" id="shared">
+  <h2 id="tab-shared">Componentes y reglas compartidas</h2>
+
+  <h3>Comparativa rápida PH vs PJ</h3>
+  <table>
+    <thead><tr><th>Aspecto</th><th>Persona humana</th><th>Persona jurídica</th></tr></thead>
+    <tbody>
+      <tr><td>Subtipos</td><td>monotributista, RI</td><td>SA, SRL, SH, sucesión</td></tr>
+      <tr><td>Origen docs</td><td>Automático vía 4i</td><td>Upload manual</td></tr>
+      <tr><td>Personas</td><td>1 (titular)</td><td>N (con roles)</td></tr>
+      <tr><td>Tab personas</td><td>Oculto / autollenado</td><td>Visible / gestión completa</td></tr>
+      <tr><td>Paso 0</td><td>CUIT · nombre · tipo · fecha solicitud · botón continuar carga</td><td>CUIT · razón social · tipo · fecha solicitud · estado docs · botón revisar</td></tr>
+      <tr><td>Paso 2</td><td>NSE 1-5</td><td>Materialidad + ventas anuales</td></tr>
+      <tr><td>Firmas</td><td>Individual + general (default)</td><td>Individual / múltiple / conjunta</td></tr>
+      <tr><td>NOSIS</td><td>Sobre persona</td><td>Sobre empresa</td></tr>
+      <tr><td>Screening</td><td>Sobre titular</td><td>Sobre cada persona vinculada</td></tr>
+      <tr><td>Condición PEP</td><td><span class="pill ph">tick sí/no</span> desde front de Mari (PSP client-facing)</td><td><span class="pill pj">manual, una x una</span> por cada persona vinculada</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Side-effects compartidos</h3>
+  <div class="grid3">
+    <div class="card accent-shared">
+      <h4>4i (solo PH)</h4>
+      <p>OCR de DNI + DDJJ PEP. Llamada billable, cachear 24h.</p>
+      <p class="src">Trigger: GET <code>/personas/:cuit/4i</code></p>
+    </div>
+    <div class="card accent-shared">
+      <h4>NOSIS</h4>
+      <p>Búsqueda de antecedentes financieros. Genera PDF que se adjunta al expediente.</p>
+      <p class="src">Trigger: POST <code>/nosis/:cuit</code></p>
+    </div>
+    <div class="card accent-shared">
+      <h4>Screening</h4>
+      <p>OFAC · ONU · GAFI · UIF Argentina. Marca <code>repetNotas</code> si hay coincidencia.</p>
+      <p class="src">Trigger: POST <code>/screening/:id_persona</code></p>
+    </div>
+  </div>
+
+  <h3>Autosave del wizard</h3>
+  <ul class="compact">
+    <li>Cada cambio dispara <code>PUT /alta/:id/guardar</code> con debounce 1.5s.</li>
+    <li>Backend persiste el borrador en <code>alta_estado.data_json</code>.</li>
+    <li>Si el usuario refresca, el wizard rehidrata desde el último guardado.</li>
+  </ul>
+
+  <h3>Permisos / roles del usuario interno</h3>
+  <table>
+    <thead><tr><th>Rol</th><th>Puede ver</th><th>Puede aprobar</th></tr></thead>
+    <tbody>
+      <tr><td><code>operador</code></td><td>Pasos 0-2</td><td>No (solo guardar borrador)</td></tr>
+      <tr><td><code>compliance</code></td><td>Todos</td><td>Sí (paso 3) y escalado</td></tr>
+      <tr><td><code>admin</code></td><td>Todos</td><td>Sí + auditoría</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ========================= ANEXOS ========================= -->
+<section class="tab" id="anexos">
+  <h2 id="tab-anexos">Anexos</h2>
+
+  <h3>Tabla de errores frontales</h3>
+  <table>
+    <thead><tr><th>Código</th><th>Origen</th><th>Mensaje al usuario</th><th>Acción sugerida</th></tr></thead>
+    <tbody>
+      <tr><td><code>ERR_AUTH_401</code></td><td>JWT vencido</td><td>Tu sesión expiró</td><td>Redirect a /login</td></tr>
+      <tr><td><code>ERR_4I_TIMEOUT</code></td><td>4i &gt; 10s</td><td>No pudimos traer los datos del DNI</td><td>Botón reintentar + edición manual</td></tr>
+      <tr><td><code>ERR_OCR_INCOMPLETE</code></td><td>4i devuelve campos vacíos</td><td>Revisá los campos del DNI</td><td>Modo edición</td></tr>
+      <tr><td><code>ERR_CUIT_INVALID</code></td><td>FE validación</td><td>CUIT inválido</td><td>Bloquear avance</td></tr>
+      <tr><td><code>ERR_CUIT_DUPLICATE</code></td><td>BE</td><td>Ya existe un cliente con ese CUIT</td><td>Mostrar link al cliente existente</td></tr>
+      <tr><td><code>ERR_SCREENING_HIT</code></td><td>OFAC/ONU/GAFI/UIF</td><td>Coincidencia en listas — escalado a compliance</td><td>Bloquear alta · notificar compliance</td></tr>
+      <tr><td><code>ERR_DOC_REJECTED</code></td><td>Revisor</td><td>Documento rechazado: {motivo}</td><td>Solicitar reupload</td></tr>
+      <tr><td><code>ERR_PEP_FLAG_MISSING</code> (PH)</td><td>Mari</td><td>Falta tick PEP del front client-facing</td><td>Solicitar a Mari · bloquear paso 3</td></tr>
+      <tr><td><code>ERR_PEP_PERSONA_MISSING</code> (PJ)</td><td>FE</td><td>Falta condición PEP en una o más personas vinculadas</td><td>Marcar persona pendiente · bloquear paso 3</td></tr>
+      <tr><td><code>ERR_RIESGO_ALTO</code></td><td>BE</td><td>Riesgo alto, requiere aprobación de compliance</td><td>Estado escalado_compliance</td></tr>
+      <tr><td><code>ERR_NOSIS_DOWN</code></td><td>NOSIS API</td><td>NOSIS no disponible</td><td>Permitir adjuntar PDF manual</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Estados unificados del cliente</h3>
+  <table>
+    <thead><tr><th>Estado</th><th>Significado</th><th>Transiciones permitidas</th></tr></thead>
+    <tbody>
+      <tr><td><code>solicitud_creada</code></td><td>Llegó la solicitud, sin trabajar</td><td>→ en_carga / revision_docs</td></tr>
+      <tr><td><code>en_carga</code> (PH)</td><td>Operador completando datos</td><td>→ revision_riesgo / pendiente</td></tr>
+      <tr><td><code>revision_docs</code> (PJ)</td><td>Operador revisando documentación</td><td>→ carga_personas / pendiente / rechazado</td></tr>
+      <tr><td><code>carga_personas</code> (PJ)</td><td>Vinculando personas y firmas</td><td>→ revision_riesgo / pendiente</td></tr>
+      <tr><td><code>revision_riesgo</code></td><td>Evaluando NOSIS, NSE/materialidad, screening</td><td>→ aprobado / escalado_compliance / rechazado</td></tr>
+      <tr><td><code>escalado_compliance</code></td><td>Caso de riesgo alto o hit en listas</td><td>→ aprobado / rechazado</td></tr>
+      <tr><td><code>pendiente</code></td><td>Falta info, queda en bandeja</td><td>→ cualquiera del flujo</td></tr>
+      <tr><td><code>aprobado</code></td><td>Cliente activo en sistema</td><td>(terminal)</td></tr>
+      <tr><td><code>rechazado</code></td><td>No se da de alta</td><td>(terminal)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Schema persona (referencia)</h3>
+  <pre>{
+  apellido, nombre, email, telefono, numeroDocumento, cuit,
+  porcentaje, cargo, facultades, vigenciaPoder,
+  domicilioCalle, domicilioAltura, domicilioPiso,
+  domicilioLocalidad, domicilioProvincia,
+  fechaOtorgamiento, fechaVencimientoPoder,
+  vinculoCausante, tipoAdministrador, aceptoCargo,
+  esBeneficiarioFinal, esPep,
+  esPresidente, esDirector, esGerente, esApoderado,
+  esAccionista, esSocioSRL, esSocioSH, esHeredero, esAdministrador,
+  tipoFirmaRol, alcanceRol, alcanceRolOtro, areaRolInterno,
+  firmaConjuntaParticipantes, firmaConjuntaMinFirmantes,
+  firmaConjuntaPropagada,
+  shPorcentaje, shFirmaPresente, shCargoRol,
+  screeningAbierto, figuraEnRepet, repetNotas,
+  screeningListas, screeningCorriendo
+}</pre>
+
+  <h3>Checklist QA antes de release</h3>
+  <ul class="compact">
+    <li>Autosave funciona refrescando el browser en cada paso</li>
+    <li>Validación de CUIT con casos límite (CUITs falsos, dígito verificador erróneo)</li>
+    <li>Hit en screening bloquea avance y muestra escalado</li>
+    <li>OCR de 4i con DNI escaneado en mal estado → permite edición manual</li>
+    <li>SA con 2 presidentes → error</li>
+    <li>Firma conjunta con minFirmantes &gt; participantes → error</li>
+    <li>Sucesión sin administrador ni herederos → error</li>
+    <li>Rol screen reader (a11y): tabs y stepper navegables por teclado</li>
+    <li>Carga concurrente de docs (10MB cada uno) sin timeout</li>
+    <li>Permiso operador no permite click en "dar de alta"</li>
+  </ul>
+
+  <h3>Open questions para producto</h3>
+  <ul class="compact">
+    <li>¿Qué pasa si el cliente PH ya existía como persona vinculada en una PJ? ¿Se reusa el registro?</li>
+    <li>¿Cuál es el SLA para revisión de docs en PJ? ¿Hay alerta si supera N días?</li>
+    <li>¿Quién recibe notificación al escalar a compliance?</li>
+    <li>¿NSE se recalcula si cambian datos en posteriores actualizaciones?</li>
+    <li>¿Versionado de DDJJ PEP? (renovación anual?)</li>
+  </ul>
+</section>
+
+<hr/>
+<p style="font-size:11px;color:var(--muted);text-align:center">Documento generado para el equipo de desarrollo de compliance-system · v1.0 · 2026-05-04</p>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#171a21',
+      primaryColor: '#1f2330',
+      primaryTextColor: '#e6e8ef',
+      primaryBorderColor: '#6aa3ff',
+      lineColor: '#9aa3b2',
+      secondaryColor: '#2a2f3d',
+      tertiaryColor: '#171a21',
+      fontSize: '13px'
+    },
+    flowchart: { curve: 'basis', padding: 20 }
+  });
+
+  const tabs = document.getElementById('tabs');
+  const sections = document.querySelectorAll('section.tab');
+  tabs.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') return;
+    const id = e.target.dataset.tab;
+    [...tabs.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    sections.forEach(s => s.classList.toggle('active', s.id === id));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+</body>
+</html>
