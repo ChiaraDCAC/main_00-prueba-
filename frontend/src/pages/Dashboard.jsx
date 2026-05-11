@@ -24,9 +24,12 @@ const Dashboard = () => {
     queryFn: () => clientService.list({ status: 'pendiente', limit: 10 }),
   });
 
+  // Clientes que aún no completaron el alta: status === 'pendiente'.
+  // (Antes filtraba por 'en_proceso' que no es un status válido del sistema,
+  //  por eso este panel siempre apareciía vacío.)
   const { data: pendientesAltaData } = useQuery({
-    queryKey: ['clients', { status: 'en_proceso' }],
-    queryFn: () => clientService.list({ status: 'en_proceso', limit: 10 }),
+    queryKey: ['clients', { status: 'pendiente', scope: 'pendientes-alta' }],
+    queryFn: () => clientService.list({ status: 'pendiente', limit: 10 }),
   });
 
   const { data: bloqueadosData } = useQuery({
@@ -59,20 +62,29 @@ const Dashboard = () => {
   };
   const oisToShow = operacionesInusuales.length > 0 ? operacionesInusuales : [exampleOI];
 
+  // Cada stat card lleva un "tone" semántico: brand para info neutral,
+  // negative para clientes bloqueados (estado negativo), notice para
+  // operaciones inusuales (alerta regulatoria que requiere atención).
   const stats = [
-    { label: 'Docs en Revisión',     value: docsEnRevisionCount,        icon: FileText   },
-    { label: 'Pendientes de Alta',   value: pendientesAltaCount,        icon: UserPlus   },
-    { label: 'Clientes Bloqueados',  value: bloqueadosCount,            icon: Ban        },
-    { label: 'Op. Inusuales',        value: operacionesInusualesCount || 1, icon: AlertTriangle },
+    { label: 'Docs en Revisión',         value: docsEnRevisionCount,            icon: FileText,      tone: 'brand'    },
+    { label: 'Pendientes de Alta',       value: pendientesAltaCount,            icon: UserPlus,      tone: 'brand'    },
+    { label: 'Clientes Bloqueados',      value: bloqueadosCount,                icon: Ban,           tone: 'negative' },
+    { label: 'Op. Inusuales',            value: operacionesInusualesCount || 1, icon: AlertTriangle, tone: 'notice'   },
   ];
+
+  const toneClasses = {
+    brand:    { iconBg: 'bg-brand-50',    iconText: 'text-brand-600',    value: 'text-brand-700'    },
+    negative: { iconBg: 'bg-negative-50', iconText: 'text-negative-600', value: 'text-negative-700' },
+    notice:   { iconBg: 'bg-notice-50',   iconText: 'text-notice-600',   value: 'text-notice-700'   },
+  };
 
   const clientRow = (client) => (
     <div key={client.id} className="flex items-center justify-between py-3 px-1">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center shrink-0">
           {client.clientType === 'persona_humana'
-            ? <User className="w-4 h-4 text-[#3879a3]" />
-            : <Building2 className="w-4 h-4 text-[#3879a3]" />}
+            ? <User className="w-4 h-4 text-brand-600" />
+            : <Building2 className="w-4 h-4 text-brand-600" />}
         </div>
         <div className="min-w-0">
           <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
@@ -101,17 +113,18 @@ const Dashboard = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {stats.map((s, i) => {
           const Icon = s.icon;
+          const t = toneClasses[s.tone] || toneClasses.brand;
           return (
             <div key={i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center">
-                  <Icon className="w-4 h-4 text-[#3879a3]" />
+                <div className={`w-8 h-8 rounded-lg ${t.iconBg} flex items-center justify-center`}>
+                  <Icon className={`w-4 h-4 ${t.iconText}`} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-[#3879a3]">{s.value}</p>
+              <p className={`text-2xl font-bold ${t.value}`}>{s.value}</p>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{s.label}</p>
             </div>
           );
@@ -125,11 +138,11 @@ const Dashboard = () => {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <FileText className="w-4 h-4 text-[#3879a3]" />
+              <FileText className="w-4 h-4 text-brand-600" />
               <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Documentación en Revisión</h2>
-              <span className="text-xs font-semibold text-[#3879a3] bg-[#3879a3]/10 px-2 py-0.5 rounded-full">{docsEnRevisionCount}</span>
+              <span className="text-xs font-semibold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">{docsEnRevisionCount}</span>
             </div>
-            <Link to="/clients/onboarding" className="text-xs text-[#3879a3] hover:underline flex items-center gap-1">
+            <Link to="/clients/onboarding" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
               Ver todos <ArrowUpRight size={12} />
             </Link>
           </div>
@@ -142,8 +155,8 @@ const Dashboard = () => {
             ) : docsEnRevision.map((client) => (
               <div key={client.id} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center shrink-0">
-                    {client.clientType === 'persona_humana' ? <User className="w-4 h-4 text-[#3879a3]" /> : <Building2 className="w-4 h-4 text-[#3879a3]" />}
+                  <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center shrink-0">
+                    {client.clientType === 'persona_humana' ? <User className="w-4 h-4 text-brand-600" /> : <Building2 className="w-4 h-4 text-brand-600" />}
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
@@ -152,7 +165,7 @@ const Dashboard = () => {
                     <p className="text-xs text-slate-400 truncate">{client.cuit}</p>
                   </div>
                 </div>
-                <Link to={`/clients/onboarding?clientId=${client.id}`} className="text-xs font-medium text-[#3879a3] hover:underline flex items-center gap-1 shrink-0 ml-3">
+                <Link to={`/clients/onboarding?clientId=${client.id}`} className="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1 shrink-0 ml-3">
                   <Eye size={11} /> Revisar
                 </Link>
               </div>
@@ -164,11 +177,11 @@ const Dashboard = () => {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <UserPlus className="w-4 h-4 text-[#3879a3]" />
+              <UserPlus className="w-4 h-4 text-brand-600" />
               <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Pendientes de Alta</h2>
-              <span className="text-xs font-semibold text-[#3879a3] bg-[#3879a3]/10 px-2 py-0.5 rounded-full">{pendientesAltaCount}</span>
+              <span className="text-xs font-semibold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">{pendientesAltaCount}</span>
             </div>
-            <Link to="/clients" className="text-xs text-[#3879a3] hover:underline flex items-center gap-1">
+            <Link to="/clients" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
               Ver todos <ArrowUpRight size={12} />
             </Link>
           </div>
@@ -181,8 +194,8 @@ const Dashboard = () => {
             ) : pendientesAlta.map((client) => (
               <div key={client.id} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center shrink-0">
-                    {client.clientType === 'persona_humana' ? <User className="w-4 h-4 text-[#3879a3]" /> : <Building2 className="w-4 h-4 text-[#3879a3]" />}
+                  <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center shrink-0">
+                    {client.clientType === 'persona_humana' ? <User className="w-4 h-4 text-brand-600" /> : <Building2 className="w-4 h-4 text-brand-600" />}
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
@@ -191,7 +204,7 @@ const Dashboard = () => {
                     <p className="text-xs text-slate-400 truncate">{client.cuit}</p>
                   </div>
                 </div>
-                <Link to={`/clients/onboarding?clientId=${client.id}`} className="text-xs font-medium text-[#3879a3] hover:underline flex items-center gap-1 shrink-0 ml-3">
+                <Link to={`/clients/onboarding?clientId=${client.id}`} className="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1 shrink-0 ml-3">
                   <Eye size={11} /> Completar
                 </Link>
               </div>
@@ -203,11 +216,11 @@ const Dashboard = () => {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <Ban className="w-4 h-4 text-[#3879a3]" />
+              <Ban className="w-4 h-4 text-negative-600" />
               <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Clientes Bloqueados</h2>
-              <span className="text-xs font-semibold text-[#3879a3] bg-[#3879a3]/10 px-2 py-0.5 rounded-full">{bloqueadosCount}</span>
+              <span className="text-xs font-semibold text-negative-700 bg-negative-50 px-2 py-0.5 rounded-full">{bloqueadosCount}</span>
             </div>
-            <Link to="/clients?status=bloqueado" className="text-xs text-[#3879a3] hover:underline flex items-center gap-1">
+            <Link to="/clients?status=bloqueado" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
               Ver todos <ArrowUpRight size={12} />
             </Link>
           </div>
@@ -220,8 +233,8 @@ const Dashboard = () => {
             ) : bloqueados.map((client) => (
               <div key={client.id} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center shrink-0">
-                    <Ban className="w-4 h-4 text-[#3879a3]" />
+                  <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center shrink-0">
+                    <Ban className="w-4 h-4 text-brand-600" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
@@ -230,7 +243,7 @@ const Dashboard = () => {
                     <p className="text-xs text-slate-400 truncate">{client.blockReason || 'Motivo no especificado'}</p>
                   </div>
                 </div>
-                <Link to={`/clients/${client.id}`} className="text-xs font-medium text-[#3879a3] hover:underline flex items-center gap-1 shrink-0 ml-3">
+                <Link to={`/clients/${client.id}`} className="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1 shrink-0 ml-3">
                   <Search size={11} /> Ver
                 </Link>
               </div>
@@ -242,11 +255,11 @@ const Dashboard = () => {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-[#3879a3]" />
+              <AlertTriangle className="w-4 h-4 text-notice-600" />
               <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Operaciones Inusuales</h2>
-              <span className="text-xs font-semibold text-[#3879a3] bg-[#3879a3]/10 px-2 py-0.5 rounded-full">{operacionesInusualesCount || 1}</span>
+              <span className="text-xs font-semibold text-notice-700 bg-notice-50 px-2 py-0.5 rounded-full">{operacionesInusualesCount || 1}</span>
             </div>
-            <Link to="/unusual-operations" className="text-xs text-[#3879a3] hover:underline flex items-center gap-1">
+            <Link to="/unusual-operations" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
               Ver todas <ArrowUpRight size={12} />
             </Link>
           </div>
@@ -254,8 +267,8 @@ const Dashboard = () => {
             {oisToShow.map((oi) => (
               <div key={oi.id} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center shrink-0">
-                    <FileWarning className="w-4 h-4 text-[#3879a3]" />
+                  <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center shrink-0">
+                    <FileWarning className="w-4 h-4 text-brand-600" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{oi.operationNumber}</p>
@@ -266,7 +279,7 @@ const Dashboard = () => {
                   <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full capitalize">
                     {oi.status}
                   </span>
-                  <Link to="/unusual-operations" className="text-xs font-medium text-[#3879a3] hover:underline flex items-center gap-1">
+                  <Link to="/unusual-operations" className="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1">
                     <Eye size={11} /> Ver
                   </Link>
                 </div>

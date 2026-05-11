@@ -170,7 +170,7 @@ const DocumentForm = ({
                   key={opt}
                   type="button"
                   onClick={() => isControlled ? onChange(opt) : setValue(field.id, opt)}
-                  className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${isActive ? 'bg-[#3879a3] text-white border-[#3879a3]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3879a3] hover:text-[#3879a3]'}`}
+                  className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${isActive ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7] hover:text-[#3179a7]'}`}
                 >
                   {opt}
                 </button>
@@ -274,9 +274,9 @@ const DocumentForm = ({
                     return (
                       <div key={field.id} className="pt-3 pb-1">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-[#3879a3] rounded-full shrink-0" />
-                          <h4 className="text-xs font-bold text-[#3879a3] uppercase tracking-wider">{field.label}</h4>
-                          <div className="flex-1 h-px bg-[#3879a3]/20" />
+                          <div className="w-1 h-4 bg-[#3179a7] rounded-full shrink-0" />
+                          <h4 className="text-xs font-bold text-[#3179a7] uppercase tracking-wider">{field.label}</h4>
+                          <div className="flex-1 h-px bg-[#3179a7]/20" />
                         </div>
                       </div>
                     );

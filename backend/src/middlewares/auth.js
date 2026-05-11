@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { Usuario } = require('../models');
 
 const auth = async (req, res, next) => {
   try {
@@ -15,22 +15,24 @@ const auth = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findByPk(decoded.id);
+    const usuario = await Usuario.findByPk(decoded.id);
 
-    if (!user) {
+    if (!usuario || !usuario.activo) {
       return res.status(401).json({
         success: false,
         message: 'Usuario no autorizado',
       });
     }
 
-    req.user = user;
+    req.user = usuario;
+    req.user.role = decoded.role; // role mapeado en el JWT
     next();
   } catch (error) {
     next(error);
   }
 };
 
+// roles: 'admin' | 'supervisor' | 'analyst' | 'auditor'
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {

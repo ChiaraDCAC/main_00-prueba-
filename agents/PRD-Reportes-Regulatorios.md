@@ -3,9 +3,9 @@
 | Campo | Valor |
 |-------|-------|
 | **Status** | En curso |
-| **Author(s)** | Chiara Giralt |
+| **Author(s)** | Producto |
 | **Stakeholders** | Compliance, Legal, Finanzas, Tecnología, Dirección |
-| **Team** | Dev: Lanfranco Bortolin, Jero Rech |
+| **Team** | Coordinación Técnica (centraliza/coordina) &nbsp;·&nbsp; Desarrollo (ejecuta — a definir) |
 | **Last Updated** | Abril 2026 |
 
 ---
@@ -74,12 +74,13 @@ El incumplimiento en los plazos de presentación o la presentación de informaci
   Selecciona período (AAAAMM)
        |
        v
-[El sistema construye el archivo automáticamente]
-  - Registro 01: Cabecera
-  - Registro 02: Cuentas (CVU/cuentas de pago)
-  - Registro 03: Integrantes (titulares por cuenta)
-  - Registro 04: Movimientos mensuales agregados
-  - Registro 05: Detalle de transferencias (si aplica)
+[El sistema construye el archivo automáticamente — V300]
+  - Registro 01: Cabecera (1 línea, 259 caracteres)
+  - Registro 02: Titular de cuenta (201 caracteres)
+  - Registro 03: Detalle de cuentas asociadas (540 caracteres)
+  - Registro 04: Otros integrantes de cuenta (102 caracteres) — solo si >1 integrante
+  - Registro 05: Movimientos mensuales (34 caracteres)
+  - Registro 06: Detalle de transferencias (36 caracteres) — solo si supera 5% del umbral RG 4614
        |
        v
 [Vista previa del archivo generado]
@@ -190,120 +191,184 @@ El incumplimiento en los plazos de presentación o la presentación de informaci
 
 ---
 
-### Módulo A: ARCA — F.8126
+### Módulo A: ARCA — F.8126 (V300)
+
+> **Versión del manual:** F.8126 V300, vigente para períodos ≥ 202604.
+> **Sujeto informante:** deCampoPagos como **PSP** que actúa **por cuenta y orden de PSAVs**. Esto define el modo de completar el Registro 03 (ver RF-01.4).
+> **Banco sponsor:** Banco Industrial (BIND). Sus CBUs operativos del PSP **no se reportan** — el régimen aplica al PSP, no al banco.
 
 ---
 
-#### CU-01 — Generar archivo F.8126
+#### CU-01 — Generar archivo F.8126 (V300)
 
 | | |
 |---|---|
 | **Actor principal** | Analista de Compliance (Nivel 1 o Nivel 2) |
-| **Precondiciones** | Sesión iniciada. Datos de cuentas, titulares y movimientos del período disponibles en BD. Tablas de códigos ARCA cargadas. |
+| **Precondiciones** | Sesión iniciada. Datos de cuentas, titulares, integrantes y movimientos del período disponibles en BD. Tablas ARCA cargadas (documentos, monedas, países, carácter). Maestro de PSAVs cliente actualizado. |
 | **Frecuencia** | Mensual (cierre de mes) |
 
 **Flujo principal:**
 1. El analista navega a `Reportes Regulatorios > ARCA F.8126`.
 2. Selecciona el período a informar (AAAAMM) y confirma la generación.
-3. El sistema construye el archivo con los 5 tipos de registros y muestra vista previa con conteo por tipo.
+3. El sistema construye el archivo con los **6 tipos de registros V300** y muestra vista previa con conteo por tipo.
 4. El analista revisa y presiona "Validar" (continúa en CU-02).
-5. Sin errores, el botón "Enviar a ARCA (WSM)" se habilita.
+5. Sin errores, el botón "Enviar a ARCA (WS)" se habilita.
 6. El analista confirma el envío (continúa en CU-03).
 
 **Flujo alternativo A — Rectificativa:**
-- Si el período ya tiene una presentación exitosa, el sistema pregunta si se desea rectificar. Si se confirma, la secuencia se incrementa automáticamente (01, 02…).
+- Si el período ya tiene una presentación exitosa, el sistema pregunta si se desea rectificar. Si se confirma, la secuencia se incrementa automáticamente (01, 02, …, máx 99).
 
 **Flujo alternativo B — Errores de validación:**
 - Si el paso 4 devuelve errores, el envío queda bloqueado. El analista corrige los datos y regenera.
+
+**Flujo alternativo C — Sin movimientos:**
+- Si en el período no hay nada que reportar, el archivo contiene **un único Registro 01** con campo "Cantidad de registros de detalle" = `1`.
 
 ---
 
 **Requerimientos:**
 
-- **RF-01.1** Generar Registro 01 (Cabecera, 1 línea, 261 caracteres):
+- **RF-01.0 — Formato general del archivo**
+  - Encoding: `ISO-8859-1`. Sin caracteres de control C0/C1 (excepto `LF` y `CR`).
+  - Alfanuméricos alineados a izquierda, rellenados con espacios a derecha.
+  - Numéricos alineados a derecha, rellenados con ceros a izquierda. Sin separadores de miles ni decimales.
+  - Sin líneas en blanco.
+  - Texto plano `.txt`. Compresión `.zip` o `.gz` recomendada para envío.
+  - Nombre del archivo: `F8126.{CUIT}.{AAAAMM}00.{secuencia4}.txt`. Ej: `F8126.30999999995.20260500.0000.txt`.
 
-  | Campo | Valor / Fuente |
-  |-------|---------------|
-  | Tipo de registro | `01` (fijo) |
-  | CUIT informante | CUIT de deCampoPagos (configuración del sistema) |
-  | Período informado | AAAAMM seleccionado |
-  | Secuencia | `00` original; incremento automático para rectificativas |
-  | Denominación | Razón social de deCampoPagos (configuración) |
-  | Hora | Timestamp HHMMSS de generación |
-  | Código de impuesto | `0103` (fijo) |
-  | Código de concepto | `812` (fijo) |
-  | Número de formulario | `8126` (fijo) |
-  | Versión del aplicativo | `00200` (configurable sin deploy) |
-  | Establecimiento | `00` (fijo) |
-  | Cantidad total de líneas | Calculado al cerrar el archivo |
-  | Cantidad de registros de detalle | Calculado al cerrar el archivo |
+- **RF-01.1 — Generar Registro 01 (Cabecera, 1 línea, 259 caracteres):**
 
-- **RF-01.2** Generar Registro 02 (Cuenta) por cada cuenta activa o con movimientos en el período:
+  | # | Campo | Largo | Pos | Valor / Fuente |
+  |---|-------|-------|-----|---------------|
+  | 0 | Tipo de registro | 2 | 1-2 | `01` (fijo) |
+  | 1 | CUIT informante | 11 | 3-13 | CUIT de deCampoPagos (config sistema, sin guiones) |
+  | 2 | Período informado | 6 | 14-19 | AAAAMM seleccionado (mín `202604`) |
+  | 3 | Secuencia | 2 | 20-21 | `00` original; `>00` rectificativa |
+  | 4 | Denominación informante | 200 | 22-221 | Razón social de deCampoPagos (config) |
+  | 5 | Hora | 6 | 222-227 | Timestamp `HHMMSS` de generación |
+  | 6 | Cód. de impuesto | 4 | 228-231 | `0103` (fijo) |
+  | 7 | Cód. de concepto | 3 | 232-234 | `812` (fijo) |
+  | 8 | Número verificador | 6 | 235-240 | `000000`-`999999` |
+  | 9 | Número de formulario | 4 | 241-244 | `8126` (fijo) |
+  | 10 | Versión | 5 | 245-249 | `00300` (fijo, V300) |
+  | 11 | Cantidad de registros de detalle | 10 | 250-259 | Conteo real de registros 01+02+03+04+05+06 |
 
-  | Campo | Valor / Fuente |
-  |-------|---------------|
-  | Tipo de registro | `02` |
-  | Tipo de cuenta | `01` billetera virtual / `02` otra |
-  | Identificador de cuenta | CVU o ID interno |
-  | Cantidad de integrantes | Conteo de registros 03 vinculados |
-  | Fecha de alta | AAAAMMDD de creación |
-  | Tipo de operación | `01` apertura / `02` cierre / `03` modificación / `04` sin modificación con movimientos |
-  | Fecha del evento | AAAAMMDD |
-  | Signo saldo ARS | `0` positivo / `1` negativo |
-  | Saldo en pesos | Saldo al cierre del período, sin decimales |
-  | Saldo moneda extranjera | Si aplica |
-  | Saldo moneda digital | Si aplica (cripto) |
-  | CVU | 22 dígitos (obligatorio si tipo cuenta = `01`) |
+- **RF-01.2 — Generar Registro 02 (Titular de cuenta, 201 caracteres) por cada usuario informado:**
 
-- **RF-01.3** Generar Registro 03 (Integrante) por cada persona asociada a cada cuenta:
+  | # | Campo | Largo | Pos | Valor / Fuente |
+  |---|-------|-------|-----|---------------|
+  | 0 | Tipo de registro | 2 | 1-2 | `02` |
+  | 1 | Tipo de persona | 1 | 3-3 | `1`=Humana / `2`=Jurídica |
+  | 2 | Nacionalidad | 1 | 4-4 | `N`=Argentina / `E`=Extranjera |
+  | 3 | País de nacionalidad | 3 | 5-7 | Código tabla países ARCA (Argentina = `200`) |
+  | 4 | Tipo de documento | 2 | 8-9 | `80`=CUIT / `86`=CUIL / `87`=CDI / `88`=CIE / `94`=Pasaporte / `99`=NIF |
+  | 5 | CUIT/CUIL/CDI | 11 | 10-20 | Obligatorio si campo 4 ∈ {80,86,87}. Sino, espacios |
+  | 6 | Número otro documento | 20 | 21-40 | Obligatorio si campo 4 ∈ {88,94,99}. Sino, espacios |
+  | 7 | Apellido y nombre / Denominación | 60 | 41-100 | Nombre completo o razón social |
+  | 8 | ID de cuenta / Cliente interno | 50 | 101-150 | Legajo interno. Si no existe, usar CUIT/CUIL/CDI o ID fiscal extranjero |
+  | 9 | Fecha de alta cuenta usuario | 8 | 151-158 | `AAAAMMDD` |
+  | 10 | Tipo de operación | 2 | 159-160 | `01`=Cierre / `02`=Con movimientos / `03`=Sin movimientos |
+  | 11 | Signo saldo en pesos | 1 | 161-161 | `0`=positivo / `1`=negativo |
+  | 12 | Saldo en pesos | 12 | 162-173 | Sumatoria de saldos en ARS del titular, sin decimales |
+  | 13 | Signo saldo M.E. | 1 | 174-174 | `0`/`1` |
+  | 14 | Saldo M.E. en pesos | 12 | 175-186 | Sumatoria por moneda, valuada a pesos, sin decimales |
+  | 15 | Signo saldo cripto | 1 | 187-187 | `0`/`1` |
+  | 16 | Saldo cripto en pesos | 12 | 188-199 | Sumatoria valuada a pesos, sin decimales |
+  | 17 | Cant. cuentas asociadas | 2 | 200-201 | Mín `01`, máx `99`. Debe coincidir con cant. de Registros 03 vinculados |
 
-  | Campo | Valor / Fuente |
-  |-------|---------------|
-  | Tipo de registro | `03` |
-  | Tipo de documento | `80` CUIT / `86` CUIL / `96` DNI / según tabla ARCA |
-  | Número de documento | Sin guiones |
-  | NIF | Si aplica (no residente) |
-  | Apellido y nombre / Denominación | Nombre completo o razón social |
-  | Tipo de persona | `1` Persona Humana / `2` Persona Jurídica |
-  | Residencia | `0` residente / `1` no residente |
-  | País de residencia | Código según tabla (si no residente) |
-  | Carácter | `1` Titular / `2` Cotitular / `3` Apoderado / `4` Rep. Legal / `5` Firmante |
+- **RF-01.3 — Generar Registro 03 (Detalle de cuenta asociada, 540 caracteres) por cada CVU/cuenta del titular:**
 
-- **RF-01.4** Generar Registros 04 (Movimientos mensuales) agrupados por: tipo de operación + tipo de movimiento + moneda:
+  | # | Campo | Largo | Pos | Valor / Fuente |
+  |---|-------|-------|-----|---------------|
+  | 0 | Tipo de registro | 2 | 1-2 | `03` |
+  | 1 | Tipo de cuenta | 2 | 3-4 | `01`=Cuenta de pago / `02`=Otra |
+  | 2 | CVU/CBU | 22 | 5-26 | Obligatorio si tipo cuenta = `01`. CVU emitido por el PSP al usuario |
+  | 3 | Identificador otro tipo cuenta | 50 | 27-76 | Obligatorio si tipo cuenta = `02` |
+  | 4 | Cantidad de integrantes | 2 | 77-78 | Mín `01`, máx `99`. Debe coincidir con Registros 04 vinculados |
+  | 5 | Denominación entidad emisora | 200 | 79-278 | **Vacío** (somos PSP, somos la entidad emisora) |
+  | 6 | Tipo doc. entidad emisora | 2 | 279-280 | **Vacío** |
+  | 7 | Núm. doc. entidad emisora | 20 | 281-300 | **Vacío** |
+  | 8 | Cuenta vinculada por cuenta y orden de terceros | 1 | 301-301 | `1`=Sí (somos PSP por cuenta y orden de PSAV) / `0`=No (cuenta propia del PSP) |
+  | 9 | Denominación comercial del tercero | 200 | 302-501 | **Obligatorio si campo 8 = 1**. Razón social del PSAV cliente (del Maestro de PSAVs) |
+  | 10 | Signo saldo en pesos (cuenta) | 1 | 502-502 | `0`/`1` |
+  | 11 | Saldo en pesos (cuenta) | 12 | 503-514 | Sin decimales |
+  | 12 | Signo saldo M.E. (cuenta) | 1 | 515-515 | `0`/`1` |
+  | 13 | Saldo M.E. en pesos (cuenta) | 12 | 516-527 | Sin decimales |
+  | 14 | Signo saldo cripto (cuenta) | 1 | 528-528 | `0`/`1` |
+  | 15 | Saldo cripto en pesos (cuenta) | 12 | 529-540 | Sin decimales |
 
-  | Campo | Valor / Fuente |
-  |-------|---------------|
-  | Tipo de registro | `04` |
-  | Tipo de operación | `01` Ingreso / `02` Egreso |
-  | Tipo de movimiento | `01` Efectivo / `02` Transf. bancaria / `03` Transf. virtual |
-  | Moneda original | `1` ARS / `2` USD / `14` Bitcoin / según tabla ARCA |
-  | Monto mensual en moneda original | Suma total del grupo, sin decimales |
-  | Monto mensual en pesos | Equivalente en ARS |
+  > **Aclaración crítica para deCampoPagos como PSP por cuenta y orden de PSAV:**
+  > - Campos 5, 6 y 7 quedan **en blanco/espacios** (somos la entidad emisora del CVU).
+  > - Campo 8 = `1`.
+  > - Campo 9 = denominación legal del PSAV cliente.
+  > - **Las CBUs operativas del PSP en BIND NO se reportan**: se filtran en BD vía flag `is_reportable=false`.
 
-- **RF-01.5** Generar Registro 05 (Detalle de transferencias) solo cuando el tipo de movimiento del Registro 04 asociado sea `02` o `03`. No se genera para efectivo:
+- **RF-01.4 — Generar Registro 04 (Otros integrantes de cuenta, 102 caracteres):**
 
-  | Campo | Valor / Fuente |
-  |-------|---------------|
-  | Tipo de registro | `05` |
-  | CBU o CVU destino | 22 dígitos de la cuenta contraparte |
-  | Monto en pesos | Importe individual, sin decimales |
+  Solo se genera si el Registro 03 asociado tiene `Cantidad de integrantes > 1`. Un Registro 04 por cada cotitular/apoderado/firmante adicional.
 
-- **RF-01.6** Mostrar vista previa con conteo de registros por tipo antes de habilitar el envío.
-- **RF-01.7** El nombre del archivo debe seguir el formato definido por ARCA.
+  | # | Campo | Largo | Pos | Valor / Fuente |
+  |---|-------|-------|-----|---------------|
+  | 0 | Tipo de registro | 2 | 1-2 | `04` |
+  | 1 | Tipo de persona | 1 | 3-3 | `1`=Humana / `2`=Jurídica |
+  | 2 | Carácter | 2 | 4-5 | `01`=Titular / `02`=Cotitular / `03`=Apoderado / `04`=Rep. legal / `05`=Firmante / `06`=Otros |
+  | 3 | Nacionalidad | 1 | 6-6 | `N`/`E` |
+  | 4 | País nacionalidad | 3 | 7-9 | Código tabla países |
+  | 5 | Tipo documento | 2 | 10-11 | `80`/`86`/`87`/`88`/`94`/`99` |
+  | 6 | CUIT/CUIL/CDI | 11 | 12-22 | Obligatorio si campo 5 ∈ {80,86,87} |
+  | 7 | Número otro documento | 20 | 23-42 | Obligatorio si campo 5 ∈ {88,94,99} |
+  | 8 | Apellido y nombre / Denominación | 60 | 43-102 | — |
+
+- **RF-01.5 — Generar Registro 05 (Movimientos mensuales, 34 caracteres) agrupados por: tipo de operación + detalle de operación + moneda original:**
+
+  Se informan los movimientos que **modifican el saldo disponible** y son visibles para el usuario. Solo montos positivos, sin decimales.
+
+  | # | Campo | Largo | Pos | Valor / Fuente |
+  |---|-------|-------|-----|---------------|
+  | 0 | Tipo de registro | 2 | 1-2 | `05` |
+  | 1 | Tipo de operación | 2 | 3-4 | `01`=Ingreso / `02`=Egreso |
+  | 2 | Detalle de operación | 2 | 5-6 | `01`=Efectivo / `02`=Transf. a/de terceros (excepto pagos con transf.) / `03`=Transf. propia (entre cuentas del mismo titular) / `04`=Otorgamiento o pago de préstamos / `05`=Rendimientos de inversiones / `06`=Devoluciones / `07`=Compra/venta de M.E. / `08`=Pagos con transferencia (Transf. 3.0, QR, botón de pago, POS) / `09`=Otros (cripto, impuestos, comisiones, etc.) |
+  | 3 | Moneda original | 2 | 7-9 | Tabla monedas ARCA: `1`=ARS, `2`=USD, …, `14`=BTC, etc. |
+  | 4 | Monto mensual en moneda original | 13 | 9-21 | Suma del grupo. Si moneda = `1` (ARS), va en `0` |
+  | 5 | Monto mensual en pesos | 13 | 22-34 | Equivalente en ARS, sin decimales |
+
+- **RF-01.6 — Generar Registro 06 (Detalle de transferencias, 36 caracteres):**
+
+  Se genera **solo si** el Registro 05 asociado cumple **todas estas condiciones**:
+  1. Campo "Detalle de operación" del Reg. 05 ∈ {`02`, `03`} (transferencias, propias o de terceros).
+  2. Campo "Moneda original" del Reg. 05 ∈ {`01`-`13`} (fiduciaria).
+  3. El monto agrupado por **CBU/CVU contraparte** supera el **5% del umbral** del 2° párrafo art. 3° RG 4614.
+
+  | # | Campo | Largo | Pos | Valor / Fuente |
+  |---|-------|-------|-----|---------------|
+  | 0 | Tipo de registro | 2 | 1-2 | `06` |
+  | 1 | CBU o CVU contraparte | 22 | 3-24 | CBU si transf. bancaria, CVU si transf. virtual |
+  | 2 | Monto en pesos | 12 | 25-36 | Sin decimales |
+
+- **RF-01.7 — Estructura jerárquica del archivo (nodos):**
+  El archivo respeta la concatenación: `01 → 02 → (03 + opcional 04* + opcional 05* + opcional 06*) → siguiente 03 → … → siguiente 02 → …`. No se agrupan todos los 03 al final ni todos los 05 al final.
+
+- **RF-01.8** Mostrar vista previa con conteo de registros por tipo (01, 02, 03, 04, 05, 06) antes de habilitar el envío.
+
+- **RF-01.9** El generador debe respetar el flag `is_reportable=false` en cuentas operativas del PSP (CBUs en BIND). Estas cuentas se excluyen del archivo.
 
 **Criterios de Aceptación:**
 
-- **CA-01.1** El Registro 01 aparece una sola vez y es la primera línea del archivo.
-- **CA-01.2** Los campos de longitud fija cumplen exactamente el largo especificado; los cortos se rellenan con espacios o ceros según la especificación ARCA.
-- **CA-01.3** El campo "cantidad total de líneas" coincide con el número real de líneas del archivo.
-- **CA-01.4** El campo "cantidad de registros de detalle" coincide con el conteo real de registros 02+03+04+05.
-- **CA-01.5** El CVU está presente en todos los registros 02 con tipo de cuenta = `01`.
-- **CA-01.6** Para una rectificativa, la secuencia del Registro 01 es mayor en 1 respecto a la última presentación exitosa del mismo período.
-- **CA-01.7** La vista previa muestra el conteo correcto por tipo de registro antes de confirmar el envío.
+- **CA-01.1** El Registro 01 aparece una sola vez y es la primera línea del archivo. Versión = `00300`.
+- **CA-01.2** Cada registro cumple su largo exacto V300: 01=259, 02=201, 03=540, 04=102, 05=34, 06=36.
+- **CA-01.3** Encoding `ISO-8859-1`. Sin caracteres de control C0/C1.
+- **CA-01.4** El campo "Cantidad de registros de detalle" del Reg. 01 coincide con el conteo real (01+02+03+04+05+06).
+- **CA-01.5** El CVU está presente en todos los Registros 03 con tipo de cuenta = `01`.
+- **CA-01.6** Para todo Registro 03 con campo 8 = `1`, el campo 9 (denominación del PSAV) está completo y coincide con el Maestro de PSAVs.
+- **CA-01.7** Los campos 5/6/7 del Registro 03 están vacíos (somos PSP emisor de la cuenta).
+- **CA-01.8** Las CBUs operativas del PSP en BIND no aparecen en ningún Registro 03.
+- **CA-01.9** Para rectificativa, la secuencia del Registro 01 es mayor en 1 respecto a la última presentación exitosa del mismo período.
+- **CA-01.10** La vista previa muestra el conteo correcto por tipo de registro antes de confirmar el envío.
+- **CA-01.11** Para presentación sin movimientos, el archivo contiene exclusivamente un Registro 01 con "Cantidad de registros de detalle" = `1`.
 
 ---
 
-#### CU-02 — Validar integridad del archivo F.8126
+#### CU-02 — Validar integridad del archivo F.8126 (V300)
 
 | | |
 |---|---|
@@ -312,8 +377,8 @@ El incumplimiento en los plazos de presentación o la presentación de informaci
 | **Disparador** | El analista presiona "Validar" en la vista previa. |
 
 **Flujo principal:**
-1. El sistema ejecuta el conjunto completo de validaciones de integridad.
-2. Si no hay errores: habilita el botón "Enviar a ARCA (WSM)" con indicador verde.
+1. El sistema ejecuta el conjunto completo de validaciones de integridad V300.
+2. Si no hay errores: habilita el botón "Enviar a ARCA (WS)" con indicador verde.
 3. Si hay errores: muestra listado con descripción y registro afectado. El botón de envío permanece deshabilitado.
 
 **Flujo alternativo — Corrección y revalidación:**
@@ -323,19 +388,31 @@ El incumplimiento en los plazos de presentación o la presentación de informaci
 
 **Requerimientos:**
 
-- **RF-02.1** Ejecutar automáticamente las siguientes validaciones:
-  - Registro 01 presente y único.
-  - Cantidad total de líneas del Registro 01 coincide con el conteo real del archivo.
-  - Cantidad de registros de detalle coincide con el conteo de 02+03+04+05.
-  - Cada Registro 02 tiene al menos 1 Registro 03 vinculado.
-  - La cantidad de integrantes declarada en el 02 coincide con los registros 03 asociados.
-  - Solo 1 integrante con carácter = `1` (titular) por cuenta.
-  - CVU presente en todas las cuentas de tipo `01`.
-  - Registros 05 solo presentes cuando el tipo de movimiento del 04 asociado es `02` o `03`.
-  - Todos los campos de longitud fija cumplen el largo especificado.
+- **RF-02.1 — Validaciones estructurales:**
+  - Registro 01 presente, único y primera línea.
+  - El CUIT del Registro 01 coincide con el CUIT en el nombre del archivo.
+  - El período del Registro 01 coincide con el período en el nombre del archivo.
+  - "Cantidad de registros de detalle" del Reg. 01 = conteo real (01+02+03+04+05+06).
+  - Largo exacto por tipo: 01=259, 02=201, 03=540, 04=102, 05=34, 06=36.
 
-- **RF-02.2** Mostrar listado de errores con: tipo de error, número de registro afectado y descripción accionable.
-- **RF-02.3** El botón "Enviar a ARCA (WSM)" debe permanecer deshabilitado mientras existan errores sin resolver.
+- **RF-02.2 — Validaciones jerárquicas (nodos):**
+  - Debajo del Reg. 01, debe venir un Reg. 02 (excepto sin movimientos).
+  - Debajo de cada Reg. 02, uno o más Reg. 03.
+  - Debajo de un Reg. 03 con `Cantidad de integrantes > 1`, deben venir Registros 04 hasta completar la cantidad declarada.
+  - La cantidad de Reg. 03 vinculados a un Reg. 02 = campo 17 ("Cant. cuentas asociadas") del Reg. 02.
+  - Cada Reg. 06 está precedido por un Reg. 05 con detalle ∈ {`02`, `03`} y moneda ∈ {`01`-`13`}.
+
+- **RF-02.3 — Validaciones de datos:**
+  - Si nacionalidad = `N`, país = `200` (Argentina) y tipo doc ∈ {80, 86, 87}.
+  - Si nacionalidad = `E`, país = código extranjero válido y tipo doc ∈ {80, 86, 87, 88, 94, 99}.
+  - Si tipo doc ∈ {80, 86, 87}, el número se valida contra Registro Único Tributario (cuando esté disponible).
+  - CVU/CBU válido (largo y dígito verificador) en Reg. 03 campo 2 y Reg. 06 campo 1.
+  - Solo 1 integrante con carácter = `01` (Titular) por cuenta (entre Reg. 02 + Reg. 04).
+  - Si Reg. 03 campo 8 = `1`, entonces Reg. 03 campo 9 (denominación PSAV) no está vacío.
+  - Si Reg. 03 campo 1 = `01` (cuenta de pago), entonces campo 2 (CVU/CBU) tiene contenido.
+
+- **RF-02.4** Mostrar listado de errores con: tipo de error, número de línea/registro afectado y descripción accionable.
+- **RF-02.5** El botón "Enviar a ARCA (WS)" debe permanecer deshabilitado mientras existan errores sin resolver.
 
 **Criterios de Aceptación:**
 
@@ -343,22 +420,23 @@ El incumplimiento en los plazos de presentación o la presentación de informaci
 - **CA-02.2** Con errores → listado visible con número de línea o registro afectado y descripción clara.
 - **CA-02.3** El envío no puede forzarse si la última validación tuvo errores.
 - **CA-02.4** Tras corregir y regenerar, la validación puede ejecutarse nuevamente sin restricciones.
+- **CA-02.5** Las validaciones jerárquicas detectan archivos donde los Reg. 03 no están agrupados con sus 04/05/06.
 
 ---
 
-#### CU-03 — Enviar F.8126 vía WSM a ARCA
+#### CU-03 — Enviar F.8126 vía Web Services a ARCA
 
 | | |
 |---|---|
 | **Actor principal** | Analista de Compliance (Nivel 1) |
-| **Precondiciones** | Archivo validado sin errores (CU-02). Credenciales WSM ARCA configuradas y homologadas. |
-| **Disparador** | El analista presiona "Enviar a ARCA (WSM)" y confirma el diálogo. |
+| **Precondiciones** | Archivo validado sin errores (CU-02). Certificado digital ARCA (homologación o producción según ambiente) instalado y vinculado al servicio "Presentación de DDJJ". |
+| **Disparador** | El analista presiona "Enviar a ARCA (WS)" y confirma el diálogo. |
 
 **Flujo principal:**
-1. El sistema establece la conexión WSM con ARCA usando las credenciales configuradas.
-2. Envía el archivo y espera la respuesta.
-3. ARCA devuelve código de respuesta y mensaje.
-4. El sistema registra la presentación como `Enviada` con la respuesta completa y notifica al analista.
+1. El sistema solicita un Token+Sign al **WSAA** firmando un TRA con la clave privada del certificado.
+2. Una vez obtenido el TA (válido ~12h, cacheable), el sistema llama al **WS Presentación de DDJJ** enviando el archivo (preferentemente comprimido `.zip` o `.gz`).
+3. ARCA devuelve un archivo `response` con número de transacción y estado.
+4. El sistema registra la presentación como `Enviada` con la respuesta completa, persiste el archivo + hash + acuse, y notifica al analista.
 
 **Flujo alternativo — Fallo de conexión o rechazo:**
 - El sistema reintenta automáticamente hasta 3 veces (intervalo: 5 minutos).
@@ -369,20 +447,23 @@ El incumplimiento en los plazos de presentación o la presentación de informaci
 
 **Requerimientos:**
 
-- **RF-03.1** El envío debe realizarse vía WSM con las credenciales configuradas en el backoffice.
-- **RF-03.2** Registrar la respuesta completa de ARCA: código, mensaje, timestamp de envío y de respuesta.
-- **RF-03.3** Reintentar automáticamente hasta 3 veces ante fallos de conexión (intervalo: 5 min).
-- **RF-03.4** El historial de presentaciones debe incluir: período, secuencia, fecha/hora, usuario, estado y respuesta de ARCA.
-- **RF-03.5** Un archivo enviado exitosamente no puede reenviarse como original; solo puede generarse una rectificativa.
+- **RF-03.1** El envío utiliza la cadena WSAA → WS Presentación de DDJJ con el certificado configurado para el ambiente activo (homologación / producción).
+- **RF-03.2** El TA obtenido del WSAA se cachea hasta su vencimiento (~12h) y se reutiliza para llamadas posteriores en la ventana.
+- **RF-03.3** Registrar la respuesta completa de ARCA: número de transacción, código, mensaje, timestamp de envío y de respuesta.
+- **RF-03.4** Reintentar automáticamente hasta 3 veces ante fallos de conexión o errores transitorios (intervalo: 5 min).
+- **RF-03.5** El historial de presentaciones debe incluir: período, secuencia, fecha/hora, usuario, estado, número de transacción ARCA, archivo enviado y acuse.
+- **RF-03.6** Un archivo enviado exitosamente no puede reenviarse como original; solo puede generarse una rectificativa (secuencia `>00`, máx 99).
+- **RF-03.7** La clave privada del certificado se custodia en KMS/HSM. Nunca se persiste en logs ni en el archivo plano del repositorio.
 
 **Criterios de Aceptación:**
 
-- **CA-03.1** Envío exitoso → estado `Enviada` con respuesta de confirmación de ARCA visible en el historial.
+- **CA-03.1** Envío exitoso → estado `Enviada` con número de transacción ARCA visible en el historial.
 - **CA-03.2** Envío fallido → estado `Error en envío` con detalle técnico visible para el analista.
 - **CA-03.3** El analista puede reintentar desde el historial sin necesidad de regenerar el archivo.
 - **CA-03.4** Para rectificativa, el sistema incrementa la secuencia automáticamente en el Registro 01.
 - **CA-03.5** El historial es de solo lectura; no puede modificarse ni eliminarse.
-- **CA-03.6** El archivo enviado puede descargarse desde cada entrada del historial.
+- **CA-03.6** El archivo enviado y el acuse pueden descargarse desde cada entrada del historial.
+- **CA-03.7** Un certificado próximo a vencer dispara una alerta a Operaciones con al menos 30 días de anticipación.
 
 ---
 
@@ -653,113 +734,4 @@ El incumplimiento en los plazos de presentación o la presentación de informaci
 - **RF-09.1** Mostrar vencimientos de todos los reportes activos:
   - F.8126 ARCA: mensual, configurable.
   - Base Padrón BCRA: mensual, configurable.
-  - UIF Apartados A y B: día 22 del mes siguiente (o día hábil posterior).
-  - UIF Apartado C: trimestral, configurable.
-- **RF-09.2** Resaltar en amarillo los reportes con vencimiento ≤ 5 días hábiles.
-- **RF-09.3** Resaltar en rojo los reportes vencidos sin presentación registrada.
-- **RF-09.4** El dashboard debe incluir el indicador de "Próximos vencimientos regulatorios" sin necesidad de navegar al módulo.
-- **RF-09.5** Cada item del calendario debe ser clickeable y navegar al módulo correspondiente.
-
-**Criterios de Aceptación:**
-
-- **CA-09.1** El calendario muestra correctamente todos los vencimientos del mes actual y del siguiente.
-- **CA-09.2** Un reporte con estado `Enviado` para el período vigente no aparece en rojo aunque la fecha haya pasado.
-- **CA-09.3** Un reporte sin `Enviado` con fecha vencida aparece en rojo con indicación del retraso en días.
-- **CA-09.4** El indicador del dashboard muestra en tiempo real el conteo de vencimientos próximos y vencidos.
-- **CA-09.5** Las fechas de vencimiento son configurables por el Oficial de Cumplimiento sin requerir deploy.
-
----
-
-## Fuera de Alcance (Out of Scope)
-
-- **Integración directa con el portal de presentación de la UIF** — En V1 el envío de Apartados A, B y C es manual (export `.txt` + carga en plataforma UIF); la integración automática queda para V2.
-- **Integración con RUNOR BCRA para envío automático del Base Padrón** — En V1 el envío es manual; se evalúa integración en V2.
-- **Generación del informe del auditor externo (Apartado C)** — La herramienta genera el template; el informe final es responsabilidad del auditor externo.
-- **Soporte multi-período simultáneo (generar varios meses en paralelo)** — En V1 se genera de a un período por vez.
-- **Generación automática programada (cron job mensual)** — En V1 el analista dispara la generación manualmente; la generación automática queda para V2.
-- **Validación en tiempo real contra el Web Service de ARCA previo a la generación** — En V1 la validación es local contra las reglas del sistema.
-
----
-
-## Riesgos
-
-### Técnicos
-- **Las especificaciones de formato del F.8126 (longitud fija de campos, tablas de códigos) pueden cambiar por nuevas versiones del aplicativo ARCA.**
-  - Mitigación: La versión del aplicativo (`00200`) debe ser configurable por el Oficial de Cumplimiento sin deploy. Registrar la versión utilizada en cada presentación.
-
-- **La conexión WSM con ARCA puede estar no disponible en el momento de envío.**
-  - Mitigación: Implementar reintentos automáticos (hasta 3 intentos) con intervalo configurable. El analista puede reintentar manualmente desde el historial.
-
-- **Los datos de saldos y movimientos deben estar consolidados y correctos al momento de generar el reporte; si hay transacciones pendientes de conciliación, el reporte puede ser incorrecto.**
-  - Mitigación: Mostrar advertencia antes de generar si existen transacciones del período sin conciliar.
-
-- **El Apartado B requiere agregar movimientos por combinaciones de tipo + método + moneda, lo que implica queries de agregación sobre la tabla de transacciones.**
-  - Mitigación: Crear vistas o índices específicos para estas consultas antes del desarrollo. Testear performance con volúmenes reales.
-
-### Regulatorios
-- **Las tablas de códigos de ARCA (tipos de documento, monedas, métodos de iniciación) pueden actualizarse.**
-  - Mitigación: Las tablas de códigos deben ser configurables por el Oficial de Cumplimiento desde el backoffice del sistema.
-
-- **La fecha de primer vencimiento (Apartados A y B) se activa a partir del certificado de inscripción en el Registro de PSPCP de la SEFyC.**
-  - Mitigación: El sistema debe permitir configurar la fecha de inicio de obligación de presentación por tipo de reporte.
-
-### De Adopción
-- **Si el equipo no confía en que los datos generados son correctos, puede seguir usando la construcción manual en paralelo.**
-  - Mitigación: Incluir el control de razonabilidad del Apartado B como validación visible y exportable. Generar reportes de revisión previos al envío.
-
-### De Timeline
-- **La integración WSM con ARCA requiere homologación previa con el organismo, lo que puede tomar tiempo.**
-  - Mitigación: Iniciar el proceso de homologación con ARCA en paralelo con el desarrollo. En caso de demora, ofrecer exportación del archivo para envío manual como fallback.
-
----
-
-## Dependencias
-
-| Dependencia | Estado | Impacto si no está lista |
-|-------------|--------|--------------------------|
-| Módulo de Clientes (Alta Usuario) | En desarrollo | Bloqueante — los registros 02, 03 y Base Padrón usan datos de clientes |
-| Datos de transacciones y saldos disponibles en BD | Pendiente de definición | Bloqueante para registros 04, 05 y Apartados A y B |
-| Credenciales WSM ARCA configuradas y homologadas | Pendiente | Bloqueante para envío automático F.8126 |
-| Tablas de códigos ARCA cargadas en el sistema | Pendiente | Bloqueante para validación y generación del F.8126 |
-| Generación de archivos `.txt` | Pendiente de definición | Bloqueante para exportación de reportes BCRA y UIF |
-| Migración a PostgreSQL | Pendiente | Necesaria antes de salida a producción |
-
----
-
-## Tracking / Eventos
-
-| Evento | Dónde | Event Category | Event Action | Event Name | Negocio | Producto | Placement |
-|--------|-------|----------------|--------------|------------|---------|----------|-----------|
-| Iniciar generación F.8126 | Módulo ARCA | Interacción | IniciarGeneracionF8126 | Iniciar F.8126 | dCP | Compliance | CTA General |
-| Validar archivo F.8126 | Módulo ARCA | Interacción | ValidarArchivoF8126 | Validar F.8126 | dCP | Compliance | CTA General |
-| Enviar F.8126 vía WSM | Módulo ARCA | Interacción | EnviarF8126WSM | Enviar F.8126 WSM | dCP | Compliance | CTA General |
-| Error en envío WSM | Módulo ARCA | Navegación | ErrorEnvioWSM | Error envío ARCA WSM | dCP | Compliance | - |
-| Generar Base Padrón BCRA | Módulo BCRA | Interacción | GenerarBasePadron | Generar Base Padrón | dCP | Compliance | CTA General |
-| Exportar Base Padrón .txt | Módulo BCRA | Interacción | ExportarBasePadronTXT | Exportar Base Padrón .txt | dCP | Compliance | CTA General |
-| Generar Apartado A UIF | Módulo UIF | Interacción | GenerarApartadoA | Generar Apartado A UIF | dCP | Compliance | CTA General |
-| Generar Apartado B UIF | Módulo UIF | Interacción | GenerarApartadoB | Generar Apartado B UIF | dCP | Compliance | CTA General |
-| Generar Apartado C UIF | Módulo UIF | Interacción | GenerarApartadoC | Generar Apartado C UIF | dCP | Compliance | CTA General |
-| Exportar Apartado A .txt | Módulo UIF | Interacción | ExportarApartadoATXT | Exportar Apartado A .txt | dCP | Compliance | CTA General |
-| Exportar Apartado B .txt | Módulo UIF | Interacción | ExportarApartadoBTXT | Exportar Apartado B .txt | dCP | Compliance | CTA General |
-| Control razonabilidad aprobado | Módulo UIF | Navegación | RazonabilidadOK | Razonabilidad Apt. B OK | dCP | Compliance | - |
-| Control razonabilidad con diferencia | Módulo UIF | Navegación | RazonabilidadError | Razonabilidad Apt. B con diferencia | dCP | Compliance | - |
-| Marcar presentación como enviada | Historial reportes | Interacción | MarcarPresentacionEnviada | Marcar presentación enviada | dCP | Compliance | CTA Particular |
-| Ver calendario vencimientos | Dashboard | Navegación | VerCalendarioVencimientos | Ver calendario vencimientos regulatorios | dCP | Compliance | - |
-
----
-
-## Agenda / Plan de Desarrollo
-
-| Instancia | Status | Fecha | Notas |
-|-----------|--------|-------|-------|
-| Kickoff | | | Incluir representante de ARCA/BCRA/UIF si posible |
-| Desarrollo experiencia (UX) | | | Pendiente diseño en Figma — priorizar flujo F.8126 |
-| Iteración experiencia | | | |
-| Proceso de homologación WSM con ARCA | | | Iniciar en paralelo con desarrollo |
-| Alineación con negocio | | | Confirmar fecha de primer vencimiento regulatorio |
-| Desarrollo — Base Padrón BCRA | | | Primer módulo recomendado (más simple, sin WSM) |
-| Desarrollo — UIF Apartados A y B | | | Depende de datos de transacciones en BD |
-| Desarrollo — F.8126 ARCA (sin WSM) | | | Generación del archivo + validaciones |
-| Desarrollo — Integración WSM ARCA | | | Depende de homologación con ARCA |
-| Desarrollo — UIF Apartado C | | | Menor prioridad (trimestral, template manual) |
-| Salida a PROD | | | Bloqueado por migración a PostgreSQL y homologación WSM |
+  - UIF Apartados A y B: día 22 del mes siguiente (o día hábil 

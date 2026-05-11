@@ -20,8 +20,9 @@ app.use(morgan('combined', { stream: { write: message => logger.info(message.tri
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files for uploads
+// Static files for uploads (accessible desde el frontend via /api/uploads)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 app.use('/api', routes);
@@ -39,9 +40,6 @@ const startServer = async () => {
   try {
     await sequelize.authenticate();
     logger.info('Database connection established successfully');
-
-    await sequelize.sync();
-    logger.info('Database synchronized');
 
     app.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);

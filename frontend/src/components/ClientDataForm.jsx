@@ -32,7 +32,9 @@ const ENTITY_FIELDS = {
           { id: 'vicepresidente', label: 'Vicepresidente', type: 'text', required: false },
           { id: 'directores', label: 'Directores (nombre - cargo)', type: 'textarea', required: false },
           { id: 'sindico', label: 'Síndico', type: 'text', required: false },
-          { id: 'vigencia_mandato', label: 'Vigencia del Mandato', type: 'text', required: true },
+          { id: 'fecha_designacion', label: 'Fecha de Designación', type: 'date', required: true },
+          { id: 'fecha_vencimiento_mandato', label: 'Fecha de Vencimiento del Mandato', type: 'date', required: true, helpText: 'Por estatuto el mandato tiene duración de 1 año desde la fecha de designación. Ej: designado el 30/08/2024 → vence el 30/08/2025.' },
+          { id: 'mandato_vigente', label: '¿Mandato vigente?', type: 'select', options: ['Sí', 'No'], required: true },
         ],
       },
       {

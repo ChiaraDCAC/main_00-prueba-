@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "marked": "^17.0.6"
+    "marked": "^17.0.6",
+    "xlsx": "^0.18.5"
   }
 }

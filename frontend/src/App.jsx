@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './context/authStore';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -17,17 +18,24 @@ import Reports from './pages/reports/Reports';
 import DueDiligence from './pages/due-diligence/DueDiligence';
 import Users from './pages/users/Users';
 
-// DEMO MODE - bypass authentication
-const DEMO_MODE = false;
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
 
 const App = () => {
   return (
     <Routes>
-      {/* In demo mode, redirect login to dashboard */}
-      <Route path="/login" element={DEMO_MODE ? <Navigate to="/" /> : <Login />} />
+      <Route path="/login" element={<Login />} />
 
-      {/* All routes accessible in demo mode */}
-      <Route path="/" element={<Layout />}>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Dashboard />} />
 
         {/* Clientes */}
@@ -57,7 +65,10 @@ const App = () => {
         {/* Usuarios */}
         <Route path="users" element={<Users />} />
       </Route>
-    </Routes >
+
+      {/* Cualquier ruta desconocida → dashboard */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 };
 

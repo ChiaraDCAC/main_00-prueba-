@@ -1,66 +1,88 @@
 const { Op } = require('sequelize');
 const {
-  Client,
-  BeneficialOwner,
-  Signatory,
-  Attorney,
-  Authority,
-  Document,
-  RiskAssessment,
-  ScreeningResult,
+  SociedadTag,
+  UsuarioSociedad,
+  UsuarioSociedadTag,
+  DocumentoCliente,
+  DocumentoVersion,
+  LogAccion,
 } = require('../models');
-const auditLogger = require('../utils/auditLogger');
-const riskService = require('../services/riskService');
-const screeningService = require('../services/screeningService');
-const validationService = require('../services/validationService');
+
+// Mapeo BD → formato frontend
+const mapCliente = (s) => {
+  const isHumana = !['SA','SRL','SH','sucesion'].includes(s.tipo_sociedad);
+  let firstName = '', lastName = '';
+  if (isHumana && s.razon_social) {
+    const parts = s.razon_social.trim().split(' ');
+    lastName = parts[parts.length - 1];
+    firstName = parts.slice(0, -1).join(' ');
+  }
+  return {
+    id: String(s.id_sociedad),
+    legalName: s.razon_social,
+    firstName,
+    lastName,
+    cuit: s.cuit_cuil,
+    legalForm: s.tipo_sociedad,
+    clientType: isHumana ? 'persona_humana' : 'persona_juridica',
+    status: s.estado,
+    riskLevel: 'medio',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+const mapPersona = (v) => {
+  const p = v.UsuarioSociedad;
+  return {
+    id: v.id_usuario_sociedad,
+    rol: v.rol,
+    firstName: p?.nombre || '',
+    lastName: p?.apellido || '',
+    dni: p?.nro_documento || '',
+    cuit: p?.cuit || '',
+    email: p?.correo_electronico || '',
+    telefono: p?.telefono || '',
+    domicilio: p?.domicilio || '',
+    position: p?.cargo_societario || '',
+    tipo_firma: p?.tipo_firma || '',
+    es_pep: p?.es_pep || false,
+    ownershipPercentage: null,
+    powerType: null,
+  };
+};
 
 const clientController = {
-  // Listar clientes con filtros
+
   async list(req, res, next) {
     try {
-      const {
-        page = 1,
-        limit = 20,
-        status,
-        clientType,
-        riskLevel,
-        search,
-        sortBy = 'createdAt',
-        sortOrder = 'DESC',
-      } = req.query;
-
+      const { page = 1, limit = 20, status, clientType, legalForm, riskLevel, search } = req.query;
       const where = {};
-      if (status) where.status = status;
-      if (clientType) where.clientType = clientType;
-      if (riskLevel) where.riskLevel = riskLevel;
+
       if (search) {
-        // Use Op.like for SQLite compatibility (case insensitive by default in SQLite)
         where[Op.or] = [
-          { cuit: { [Op.like]: `%${search}%` } },
-          { legalName: { [Op.like]: `%${search}%` } },
-          { tradeName: { [Op.like]: `%${search}%` } },
-          { firstName: { [Op.like]: `%${search}%` } },
-          { lastName: { [Op.like]: `%${search}%` } },
+          { razon_social: { [Op.iLike]: `%${search}%` } },
+          { cuit_cuil: { [Op.iLike]: `%${search}%` } },
         ];
       }
+      if (status) where.estado = status;
+      if (legalForm) where.tipo_sociedad = legalForm;
+      if (clientType === 'persona_humana') where.tipo_sociedad = 'monotributista';
+      if (clientType === 'persona_juridica') {
+        where.tipo_sociedad = { [Op.in]: ['SA','SRL','SH','sucesion'] };
+      }
 
-      const { count, rows } = await Client.findAndCountAll({
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+      const { count, rows } = await SociedadTag.findAndCountAll({
         where,
         limit: parseInt(limit),
-        offset: (parseInt(page) - 1) * parseInt(limit),
-        order: [[sortBy, sortOrder]],
-        include: [
-          'creator',
-          { model: BeneficialOwner, as: 'beneficialOwners' },
-          { model: Signatory, as: 'signatories' },
-          { model: Attorney, as: 'attorneys' },
-          { model: Authority, as: 'authorities' },
-        ],
+        offset,
+        order: [['razon_social', 'ASC']],
       });
 
       res.json({
         success: true,
-        data: rows,
+        data: rows.map(mapCliente),
         pagination: {
           total: count,
           page: parseInt(page),
@@ -73,295 +95,208 @@ const clientController = {
     }
   },
 
-  // Obtener cliente por ID con toda la información
   async getById(req, res, next) {
     try {
-      const client = await Client.findByPk(req.params.id, {
-        include: [
-          { model: BeneficialOwner, as: 'beneficialOwners' },
-          { model: Signatory, as: 'signatories' },
-          { model: Attorney, as: 'attorneys' },
-          { model: Authority, as: 'authorities' },
-          { model: Document, as: 'documents' },
-          { model: RiskAssessment, as: 'riskAssessments', limit: 5, order: [['createdAt', 'DESC']] },
-          { model: ScreeningResult, as: 'screeningResults', limit: 5, order: [['createdAt', 'DESC']] },
-        ],
-      });
-
-      if (!client) {
-        return res.status(404).json({
-          success: false,
-          message: 'Cliente no encontrado',
-        });
+      const sociedad = await SociedadTag.findByPk(req.params.id);
+      if (!sociedad) {
+        return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
       }
 
-      await auditLogger.log({
-        entityType: 'Client',
-        entityId: client.id,
-        action: 'view',
-        userId: req.user.id,
-        req,
+      // Personas: query directa sin includes para evitar problemas de alias
+      let personas = [];
+      try {
+        const tags = await UsuarioSociedadTag.findAll({
+          where: { id_sociedad: req.params.id, activo: true },
+          attributes: ['id', 'id_usuario_sociedad', 'rol'],
+        });
+        const personaIds = tags.map(t => t.id_usuario_sociedad);
+        const personasData = personaIds.length > 0
+          ? await UsuarioSociedad.findAll({ where: { id: personaIds } })
+          : [];
+        const personaMap = Object.fromEntries(personasData.map(p => [p.id, p]));
+        personas = tags.map(t => mapPersona({ ...t.toJSON(), UsuarioSociedad: personaMap[t.id_usuario_sociedad] }));
+      } catch (e) {
+        console.error('Error cargando personas:', e.message);
+      }
+
+      // Documentos
+      const documentos = await DocumentoCliente.findAll({
+        where: { id_sociedad: req.params.id },
       });
+
+      const docsMap = {};
+      for (const doc of documentos) {
+        let ver = null;
+        if (doc.version_activa) {
+          ver = await DocumentoVersion.findByPk(doc.version_activa);
+        }
+        docsMap[doc.id_documento] = {
+          id: doc.id,
+          versionId: ver?.id || null,
+          nombre: doc.nombre_documento,
+          categoria: doc.categoria,
+          esObligatorio: doc.es_obligatorio,
+          estado: ver ? ver.estado : 'sin_version',
+          datos: ver?.datos_formulario || null,
+          url: ver?.url_archivo || null,
+          motivoRechazo: ver?.motivo_rechazo || null,
+          observaciones: ver?.observaciones || null,
+        };
+      }
 
       res.json({
         success: true,
-        data: client,
+        data: {
+          ...mapCliente(sociedad),
+          personas,
+          authorities: personas.filter(p => ['presidente','director','vicepresidente','gerente'].includes(p.position)),
+          beneficialOwners: personas,
+          signatories: personas.filter(p => p.tipo_firma && p.tipo_firma !== 'ninguna'),
+          attorneys: personas.filter(p => p.rol === 'apoderado'),
+          documents: docsMap,
+        },
       });
     } catch (error) {
       next(error);
     }
   },
 
-  // Crear nuevo cliente (Alta)
   async create(req, res, next) {
     try {
-      const clientData = req.body;
-      clientData.createdBy = req.user.id;
-      clientData.status = 'pendiente';
-
-      const client = await Client.create(clientData);
-
-      // Ejecutar screening inicial
-      await screeningService.performScreening(client.id, 'alta');
-
-      // Calcular riesgo inicial
-      await riskService.calculateRisk(client.id, 'inicial', req.user.id);
-
-      await auditLogger.log({
-        entityType: 'Client',
-        entityId: client.id,
-        action: 'create',
-        changes: clientData,
-        userId: req.user.id,
-        req,
+      const { legalName, cuit, legalForm, clientType, status } = req.body;
+      const sociedad = await SociedadTag.create({
+        razon_social: legalName,
+        cuit_cuil: cuit,
+        tipo_sociedad: legalForm,
+        estado: status || 'pendiente',
       });
-
-      res.status(201).json({
-        success: true,
-        message: 'Cliente creado exitosamente',
-        data: client,
+      await LogAccion.create({
+        id_sociedad: sociedad.id_sociedad,
+        id_usuario_interno: req.user.id,
+        tipo_accion: 'alta_iniciada',
+        estado_nuevo: sociedad.estado,
+        direccion_ip: req.ip,
       });
+      res.status(201).json({ success: true, message: 'Cliente creado exitosamente', data: mapCliente(sociedad) });
     } catch (error) {
       next(error);
     }
   },
 
-  // Actualizar cliente (Modificación)
   async update(req, res, next) {
     try {
-      const client = await Client.findByPk(req.params.id);
-
-      if (!client) {
-        return res.status(404).json({
-          success: false,
-          message: 'Cliente no encontrado',
+      const sociedad = await SociedadTag.findByPk(req.params.id);
+      if (!sociedad) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
+      const estadoAnterior = sociedad.estado;
+      const updates = {};
+      if (req.body.legalName) updates.razon_social = req.body.legalName;
+      if (req.body.cuit) updates.cuit_cuil = req.body.cuit;
+      if (req.body.status) updates.estado = req.body.status;
+      if (req.body.legalForm) updates.tipo_sociedad = req.body.legalForm;
+      await sociedad.update(updates);
+      if (updates.estado && updates.estado !== estadoAnterior) {
+        await LogAccion.create({
+          id_sociedad: parseInt(req.params.id),
+          id_usuario_interno: req.user.id,
+          tipo_accion: 'datos_modificados',
+          estado_anterior: estadoAnterior,
+          estado_nuevo: updates.estado,
+          direccion_ip: req.ip,
         });
       }
-
-      const { reason, ...updateData } = req.body;
-      const previousData = client.toJSON();
-
-      await client.update(updateData);
-
-      // Ejecutar screening si hay modificaciones relevantes
-      const relevantFields = ['cuit', 'firstName', 'lastName', 'legalName'];
-      const hasRelevantChanges = relevantFields.some(field => updateData[field]);
-      if (hasRelevantChanges) {
-        await screeningService.performScreening(client.id, 'modificacion');
-      }
-
-      await auditLogger.log({
-        entityType: 'Client',
-        entityId: client.id,
-        action: 'update',
-        changes: { previous: previousData, new: updateData },
-        reason,
-        userId: req.user.id,
-        req,
-      });
-
-      res.json({
-        success: true,
-        message: 'Cliente actualizado exitosamente',
-        data: client,
-      });
+      res.json({ success: true, message: 'Cliente actualizado', data: mapCliente(sociedad) });
     } catch (error) {
       next(error);
     }
   },
 
-  // Dar de baja cliente
   async deactivate(req, res, next) {
     try {
-      const client = await Client.findByPk(req.params.id);
-
-      if (!client) {
-        return res.status(404).json({
-          success: false,
-          message: 'Cliente no encontrado',
-        });
-      }
-
-      const { reason } = req.body;
-
-      await client.update({
-        status: 'baja',
-        notes: reason,
+      const sociedad = await SociedadTag.findByPk(req.params.id);
+      if (!sociedad) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
+      const estadoAnterior = sociedad.estado;
+      await sociedad.update({ estado: 'baja' });
+      await LogAccion.create({
+        id_sociedad: parseInt(req.params.id),
+        id_usuario_interno: req.user.id,
+        tipo_accion: 'datos_modificados',
+        estado_anterior: estadoAnterior,
+        estado_nuevo: 'baja',
+        motivo: req.body.reason,
+        direccion_ip: req.ip,
       });
-
-      await auditLogger.log({
-        entityType: 'Client',
-        entityId: client.id,
-        action: 'update',
-        changes: { status: 'baja' },
-        reason,
-        userId: req.user.id,
-        req,
-      });
-
-      res.json({
-        success: true,
-        message: 'Cliente dado de baja exitosamente',
-      });
+      res.json({ success: true, message: 'Cliente dado de baja exitosamente' });
     } catch (error) {
       next(error);
     }
   },
 
-  // Aprobar cliente
   async approve(req, res, next) {
     try {
-      const client = await Client.findByPk(req.params.id);
-
-      if (!client) {
-        return res.status(404).json({
-          success: false,
-          message: 'Cliente no encontrado',
-        });
-      }
-
-      // Validate documents before approval
-      const validation = await validationService.validateClientDocuments(client.id);
-
-      if (!validation.isValid) {
-        return res.status(400).json({
-          success: false,
-          message: 'No se puede aprobar el cliente. Faltan documentos obligatorios.',
-          missingDocuments: validation.missingDocuments
-        });
-      }
-
-      await client.update({
-        status: 'aprobado',
-        approvedBy: req.user.id,
-        approvedAt: new Date(),
+      const sociedad = await SociedadTag.findByPk(req.params.id);
+      if (!sociedad) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
+      const estadoAnterior = sociedad.estado;
+      await sociedad.update({ estado: 'aprobado' });
+      await LogAccion.create({
+        id_sociedad: parseInt(req.params.id),
+        id_usuario_interno: req.user.id,
+        tipo_accion: 'alta_completada',
+        estado_anterior: estadoAnterior,
+        estado_nuevo: 'aprobado',
+        direccion_ip: req.ip,
       });
-
-      await auditLogger.log({
-        entityType: 'Client',
-        entityId: client.id,
-        action: 'approve',
-        changes: { status: 'aprobado' },
-        userId: req.user.id,
-        req,
-      });
-
-      res.json({
-        success: true,
-        message: 'Cliente aprobado exitosamente',
-        data: client,
-      });
+      res.json({ success: true, message: 'Cliente aprobado exitosamente', data: mapCliente(sociedad) });
     } catch (error) {
       next(error);
     }
   },
 
-  // Rechazar cliente
   async reject(req, res, next) {
     try {
-      const client = await Client.findByPk(req.params.id);
-
-      if (!client) {
-        return res.status(404).json({
-          success: false,
-          message: 'Cliente no encontrado',
-        });
-      }
-
-      const { reason } = req.body;
-
-      await client.update({
-        status: 'rechazado',
-        rejectionReason: reason,
+      const sociedad = await SociedadTag.findByPk(req.params.id);
+      if (!sociedad) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
+      const estadoAnterior = sociedad.estado;
+      await sociedad.update({ estado: 'rechazado' });
+      await LogAccion.create({
+        id_sociedad: parseInt(req.params.id),
+        id_usuario_interno: req.user.id,
+        tipo_accion: 'alta_excepcion_docs',
+        estado_anterior: estadoAnterior,
+        estado_nuevo: 'rechazado',
+        motivo: req.body.reason,
+        direccion_ip: req.ip,
       });
-
-      await auditLogger.log({
-        entityType: 'Client',
-        entityId: client.id,
-        action: 'reject',
-        changes: { status: 'rechazado' },
-        reason,
-        userId: req.user.id,
-        req,
-      });
-
-      res.json({
-        success: true,
-        message: 'Cliente rechazado',
-      });
+      res.json({ success: true, message: 'Cliente rechazado' });
     } catch (error) {
       next(error);
     }
   },
 
-  // Marcar flag de fraude
   async setFraudFlag(req, res, next) {
     try {
-      const client = await Client.findByPk(req.params.id);
-
-      if (!client) {
-        return res.status(404).json({
-          success: false,
-          message: 'Cliente no encontrado',
-        });
-      }
-
+      const sociedad = await SociedadTag.findByPk(req.params.id);
+      if (!sociedad) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
       const { hasFraudFlag, reason } = req.body;
-
-      await client.update({
-        hasFraudFlag,
-        fraudFlagReason: reason,
-        fraudFlagDate: hasFraudFlag ? new Date() : null,
+      await LogAccion.create({
+        id_sociedad: parseInt(req.params.id),
+        id_usuario_interno: req.user.id,
+        tipo_accion: 'datos_modificados',
+        motivo: `Flag de fraude ${hasFraudFlag ? 'activado' : 'desactivado'}: ${reason}`,
+        direccion_ip: req.ip,
       });
-
-      await auditLogger.log({
-        entityType: 'Client',
-        entityId: client.id,
-        action: 'update',
-        changes: { hasFraudFlag, fraudFlagReason: reason },
-        reason: `Flag de fraude ${hasFraudFlag ? 'activado' : 'desactivado'}`,
-        userId: req.user.id,
-        req,
-      });
-
-      res.json({
-        success: true,
-        message: `Flag de fraude ${hasFraudFlag ? 'activado' : 'desactivado'}`,
-      });
+      res.json({ success: true, message: `Flag de fraude ${hasFraudFlag ? 'activado' : 'desactivado'}` });
     } catch (error) {
       next(error);
     }
   },
 
-  // Obtener historial de auditoría del cliente
   async getAuditHistory(req, res, next) {
     try {
-      const history = await auditLogger.getHistory('Client', req.params.id);
-
-      res.json({
-        success: true,
-        data: history,
+      const logs = await LogAccion.findAll({
+        where: { id_sociedad: req.params.id },
+        order: [['created_at', 'DESC']],
       });
+      res.json({ success: true, data: logs });
     } catch (error) {
       next(error);
     }

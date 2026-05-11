@@ -25,10 +25,11 @@ const SociedadTag = sequelize.define('SociedadTag', {
     primaryKey: true,
     autoIncrement: true,
   },
-  razon_social: { type: DataTypes.STRING(255) },
-  cuit_cuil:    { type: DataTypes.STRING(20) },
-  tipo_sociedad:{ type: DataTypes.STRING(50) },
-  estado:       { type: DataTypes.STRING(50) },
+  razon_social:  { type: DataTypes.STRING(255) },
+  cuit_cuil:     { type: DataTypes.STRING(20) },
+  tipo_sociedad: { type: DataTypes.STRING(50) },
+  estado:        { type: DataTypes.STRING(50) },
+  nivel_riesgo:  { type: DataTypes.STRING(10) },
 }, {
   tableName: 'sociedades_tag',
   timestamps: false,
@@ -364,7 +365,129 @@ const LogAccion = sequelize.define('LogAccion', {
   underscored: true,
 });
 
-// ─── 10. ALERTAS ──────────────────────────────────────────────
+// ─── 10. OPERACIONES INUSUALES ───────────────────────────────
+const OperacionInusual = sequelize.define('OperacionInusual', {
+  id:               { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  codigo:           { type: DataTypes.STRING(20), allowNull: false, unique: true },
+  id_sociedad:      { type: DataTypes.INTEGER },
+  monto:            { type: DataTypes.DECIMAL(18, 2) },
+  moneda:           { type: DataTypes.STRING(10), defaultValue: 'ARS' },
+  descripcion:      { type: DataTypes.TEXT },
+  fecha_operacion:  { type: DataTypes.DATEONLY },
+  estado:           { type: DataTypes.STRING(20), defaultValue: 'nueva' },
+  asignado_a:       { type: DataTypes.INTEGER },
+  comentario_cierre:{ type: DataTypes.TEXT },
+  cerrado_por:      { type: DataTypes.INTEGER },
+  cerrado_en:       { type: DataTypes.DATE },
+  origen:           { type: DataTypes.STRING(50), defaultValue: 'sistema_externo' },
+  datos_externos:   { type: DataTypes.JSONB },
+}, { tableName: 'operaciones_inusuales', underscored: true });
+
+const OIComentario = sequelize.define('OIComentario', {
+  id:         { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_oi:      { type: DataTypes.INTEGER, allowNull: false },
+  id_usuario: { type: DataTypes.INTEGER, allowNull: false },
+  texto:      { type: DataTypes.TEXT, allowNull: false },
+}, { tableName: 'oi_comentarios', underscored: true, updatedAt: false });
+
+const OIAdjunto = sequelize.define('OIAdjunto', {
+  id:             { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_oi:          { type: DataTypes.INTEGER, allowNull: false },
+  id_usuario:     { type: DataTypes.INTEGER, allowNull: false },
+  nombre_archivo: { type: DataTypes.STRING(255), allowNull: false },
+  url_archivo:    { type: DataTypes.STRING(500), allowNull: false },
+  mime_type:      { type: DataTypes.STRING(100) },
+}, { tableName: 'oi_adjuntos', underscored: true, updatedAt: false });
+
+// ─── 11. RIESGO_SOCIEDAD ─────────────────────────────────────
+const RiesgoSociedad = sequelize.define('RiesgoSociedad', {
+  id:           { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_sociedad:  { type: DataTypes.INTEGER, allowNull: false },
+  es_pep:       { type: DataTypes.BOOLEAN, defaultValue: false },
+  residencia:   { type: DataTypes.SMALLINT, allowNull: false },
+  nacionalidad: { type: DataTypes.SMALLINT, allowNull: false },
+  actividad:    { type: DataTypes.SMALLINT, allowNull: false },
+  antiguedad:   { type: DataTypes.SMALLINT, allowNull: false },
+  materialidad: { type: DataTypes.SMALLINT, allowNull: false },
+  puntaje:      { type: DataTypes.DECIMAL(4, 2), allowNull: false },
+  nivel_riesgo: { type: DataTypes.STRING(10), allowNull: false },
+  evaluado_por: { type: DataTypes.INTEGER },
+  observaciones:{ type: DataTypes.TEXT },
+}, {
+  tableName: 'riesgo_sociedad',
+  underscored: true,
+});
+
+// ─── 12. ALTAS PENDIENTES — PERSONA HUMANA ────────────────────
+// Borradores de alta de persona humana (natural) en curso.
+// Permite arrancar el proceso aunque falten datos/documentos.
+const AltaPendientePersona = sequelize.define('AltaPendientePersona', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  // — Datos básicos —
+  apellido:           { type: DataTypes.STRING(100), allowNull: false },
+  nombre:             { type: DataTypes.STRING(100), allowNull: false },
+  tipo_documento: {
+    type: DataTypes.STRING(20),
+    defaultValue: 'DNI',
+    validate: { isIn: [['DNI','LE','LC','PASAPORTE','CI', null]] },
+  },
+  nro_documento:      { type: DataTypes.STRING(20) },
+  cuit:               { type: DataTypes.STRING(20) },
+  fecha_nacimiento:   { type: DataTypes.DATEONLY },
+  nacionalidad:       { type: DataTypes.STRING(100) },
+  correo_electronico: { type: DataTypes.STRING(255) },
+  telefono:           { type: DataTypes.STRING(50) },
+  domicilio:          { type: DataTypes.TEXT },
+  es_pep:             { type: DataTypes.BOOLEAN, defaultValue: false },
+
+  // — Vínculo con sociedad / rol —
+  id_sociedad:        { type: DataTypes.INTEGER },
+  rol: {
+    type: DataTypes.STRING(50),
+    validate: { isIn: [[
+      'beneficiario_final','accionista','socio','autoridad',
+      'apoderado','heredero','administrador_justicia','firmante',
+      'cliente_persona_humana', null,
+    ]] },
+  },
+
+  // — Gestión / seguimiento —
+  id_responsable:     { type: DataTypes.INTEGER }, // Usuario interno asignado
+  fecha_limite:       { type: DataTypes.DATEONLY },
+  estado: {
+    type: DataTypes.STRING(20),
+    defaultValue: 'pendiente',
+    validate: { isIn: [['pendiente','en_proceso','completada','cancelada']] },
+  },
+
+  // — Documentación faltante —
+  // Estructura: [{ tipo: 'dni_frente', nombre: 'DNI Frente', recibido: false, observaciones: '' }, ...]
+  documentos_requeridos: {
+    type: DataTypes.JSONB,
+    defaultValue: [
+      { tipo: 'dni_frente',           nombre: 'DNI Frente',                   recibido: false },
+      { tipo: 'dni_dorso',            nombre: 'DNI Dorso',                    recibido: false },
+      { tipo: 'constancia_cuit',      nombre: 'Constancia de CUIT/CUIL',      recibido: false },
+      { tipo: 'comprobante_domicilio',nombre: 'Comprobante de domicilio',     recibido: false },
+      { tipo: 'ddjj_pep',             nombre: 'DDJJ PEP',                     recibido: false },
+    ],
+  },
+
+  observaciones:      { type: DataTypes.TEXT },
+
+  // — Cierre —
+  completada_en:      { type: DataTypes.DATE },
+  id_usuario_sociedad_creado: { type: DataTypes.UUID }, // Si al completar generó UsuarioSociedad
+}, {
+  tableName: 'altas_pendientes_persona',
+  underscored: true,
+});
+
+// ─── 11. ALERTAS ──────────────────────────────────────────────
 const Alerta = sequelize.define('Alerta', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   id_sociedad:          { type: DataTypes.INTEGER, allowNull: false },
@@ -450,11 +573,36 @@ LogAccion.belongsTo(UsuarioSociedad, { foreignKey: 'id_usuario_sociedad' });
 DocumentoCliente.hasMany(LogAccion, { foreignKey: 'id_documento' });
 LogAccion.belongsTo(DocumentoCliente, { foreignKey: 'id_documento' });
 
+// Operaciones Inusuales
+SociedadTag.hasMany(OperacionInusual, { foreignKey: 'id_sociedad' });
+OperacionInusual.belongsTo(SociedadTag, { foreignKey: 'id_sociedad' });
+Usuario.hasMany(OperacionInusual, { foreignKey: 'asignado_a' });
+OperacionInusual.hasMany(OIComentario, { foreignKey: 'id_oi' });
+OIComentario.belongsTo(OperacionInusual, { foreignKey: 'id_oi' });
+OIComentario.belongsTo(Usuario, { foreignKey: 'id_usuario' });
+OperacionInusual.hasMany(OIAdjunto, { foreignKey: 'id_oi' });
+OIAdjunto.belongsTo(OperacionInusual, { foreignKey: 'id_oi' });
+OIAdjunto.belongsTo(Usuario, { foreignKey: 'id_usuario' });
+
+// Riesgo
+SociedadTag.hasMany(RiesgoSociedad, { foreignKey: 'id_sociedad' });
+RiesgoSociedad.belongsTo(SociedadTag, { foreignKey: 'id_sociedad' });
+Usuario.hasMany(RiesgoSociedad, { foreignKey: 'evaluado_por' });
+RiesgoSociedad.belongsTo(Usuario, { foreignKey: 'evaluado_por' });
+
 // Alertas
 SociedadTag.hasMany(Alerta, { foreignKey: 'id_sociedad' });
 Alerta.belongsTo(SociedadTag, { foreignKey: 'id_sociedad' });
 UsuarioSociedad.hasMany(Alerta, { foreignKey: 'id_usuario_sociedad' });
 Alerta.belongsTo(UsuarioSociedad, { foreignKey: 'id_usuario_sociedad' });
+
+// Altas Pendientes — Persona Humana
+SociedadTag.hasMany(AltaPendientePersona, { foreignKey: 'id_sociedad', as: 'altasPendientes' });
+AltaPendientePersona.belongsTo(SociedadTag, { foreignKey: 'id_sociedad', as: 'sociedad' });
+Usuario.hasMany(AltaPendientePersona, { foreignKey: 'id_responsable', as: 'altasAsignadas' });
+AltaPendientePersona.belongsTo(Usuario, { foreignKey: 'id_responsable', as: 'responsable' });
+UsuarioSociedad.hasOne(AltaPendientePersona, { foreignKey: 'id_usuario_sociedad_creado', as: 'altaOrigen' });
+AltaPendientePersona.belongsTo(UsuarioSociedad, { foreignKey: 'id_usuario_sociedad_creado', as: 'usuarioCreado' });
 
 // ─── EXPORTS ──────────────────────────────────────────────────
 
@@ -482,4 +630,9 @@ module.exports = {
   FormDDJJPep,
   LogAccion,
   Alerta,
+  RiesgoSociedad,
+  OperacionInusual,
+  OIComentario,
+  OIAdjunto,
+  AltaPendientePersona,
 };

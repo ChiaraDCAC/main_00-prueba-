@@ -44,7 +44,7 @@ const ClientHistoryModal = ({ client, onClose }) => {
         <title>Ficha Cliente - ${client.legalName || client.lastName}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-          h1 { color: #3879a3; border-bottom: 2px solid #3879a3; padding-bottom: 10px; }
+          h1 { color: #3179a7; border-bottom: 2px solid #3179a7; padding-bottom: 10px; }
           h2 { color: #2d6285; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
           .section { margin-bottom: 20px; }
           .field { margin: 8px 0; }
@@ -106,7 +106,7 @@ const ClientHistoryModal = ({ client, onClose }) => {
         className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-[#3879a3] to-[#4a8bb8] text-white flex items-center justify-between">
+        <div className="px-6 py-4 bg-gradient-to-r from-[#3179a7] to-[#4a8bb8] text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-lg">
               <History size={20} />
@@ -448,8 +448,8 @@ const ClientList = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-9 h-9 rounded-xl bg-[#3879a3]/10 flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-[#3879a3]" />
+          <div className="w-9 h-9 rounded-xl bg-[#3179a7]/10 flex items-center justify-center">
+            <Building2 className="w-5 h-5 text-[#3179a7]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Gestión de Clientes</h1>
@@ -459,7 +459,7 @@ const ClientList = () => {
         {can(user?.role, 'alta_usuario') && (
           <Link
             to="/clients/onboarding"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3879a3] hover:bg-[#2d6a8a] text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-[#3879a3]/20"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3179a7] hover:bg-[#235677] text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-[#3179a7]/20"
           >
             <Plus size={18} />
             Cargar Documentación
@@ -473,14 +473,14 @@ const ClientList = () => {
           onClick={() => handleTabChange('pendientes')}
           className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-all ${
             activeTab === 'pendientes'
-              ? 'border-[#3879a3] text-[#3879a3] dark:text-[#6aadd5]'
+              ? 'border-[#3179a7] text-[#3179a7] dark:text-[#6aadd5]'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           <Clock size={18} />
           Clientes Pendientes
           {pendingCount > 0 && (
-            <span className="px-2 py-0.5 bg-[#3879a3]/10 dark:bg-[#3879a3]/20 text-[#3879a3] dark:text-[#6aadd5] rounded-full text-xs font-bold">
+            <span className="px-2 py-0.5 bg-[#3179a7]/10 dark:bg-[#3179a7]/20 text-[#3179a7] dark:text-[#6aadd5] rounded-full text-xs font-bold">
               {pendingCount}
             </span>
           )}
@@ -489,14 +489,14 @@ const ClientList = () => {
           onClick={() => handleTabChange('activos')}
           className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-all ${
             activeTab === 'activos'
-              ? 'border-[#3879a3] text-[#3879a3] dark:text-[#6aadd5]'
+              ? 'border-[#3179a7] text-[#3179a7] dark:text-[#6aadd5]'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           <CheckCircle size={18} />
           Clientes Activos
           {activeCount > 0 && (
-            <span className="px-2 py-0.5 bg-[#3879a3]/10 dark:bg-[#3879a3]/20 text-[#3879a3] dark:text-[#6aadd5] rounded-full text-xs font-bold">
+            <span className="px-2 py-0.5 bg-[#3179a7]/10 dark:bg-[#3179a7]/20 text-[#3179a7] dark:text-[#6aadd5] rounded-full text-xs font-bold">
               {activeCount}
             </span>
           )}
@@ -563,8 +563,8 @@ const ClientList = () => {
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {isLoading ? (
             <div className="px-6 py-12 text-center">
-              <div className="w-12 h-12 rounded-xl bg-[#3879a3]/10 flex items-center justify-center mx-auto mb-3 animate-pulse">
-                <Building2 className="w-6 h-6 text-[#3879a3]" />
+              <div className="w-12 h-12 rounded-xl bg-[#3179a7]/10 flex items-center justify-center mx-auto mb-3 animate-pulse">
+                <Building2 className="w-6 h-6 text-[#3179a7]" />
               </div>
               <p className="text-muted-foreground">Cargando clientes...</p>
             </div>
@@ -616,7 +616,7 @@ const ClientList = () => {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-foreground truncate group-hover:text-[#3879a3] transition-colors">
+                      <p className="font-semibold text-foreground truncate group-hover:text-[#3179a7] transition-colors">
                         {clientName || 'Sin nombre'}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -665,7 +665,7 @@ const ClientList = () => {
                       can(user?.role, 'edit') ? (
                         <Link
                           to={`/clients/onboarding?clientId=${client.id}`}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-[#3879a3] hover:bg-[#2d6a8a] text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-[#3879a3]/20 hover:scale-[1.02] active:scale-[0.98]"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-[#3179a7] hover:bg-[#235677] text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-[#3179a7]/20 hover:scale-[1.02] active:scale-[0.98]"
                         >
                           <Edit size={16} />
                           Continuar
@@ -679,7 +679,7 @@ const ClientList = () => {
                     ) : (
                       <button
                         onClick={() => navigate(`/clients/${client.id}`)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#3879a3] hover:bg-[#2d6a8a] text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-[#3879a3]/20 hover:scale-[1.02] active:scale-[0.98]"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#3179a7] hover:bg-[#235677] text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-[#3179a7]/20 hover:scale-[1.02] active:scale-[0.98]"
                       >
                         <Eye size={16} />
                         Ver más

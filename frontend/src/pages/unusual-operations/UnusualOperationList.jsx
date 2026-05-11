@@ -120,7 +120,7 @@ function SolicitarDocModal({ op, onClose, onResolve }) {
             </label>
             <textarea
               className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 resize-none focus:outline-none focus:ring-2 transition-all
-                ${error ? 'border-rose-400 dark:border-rose-500 focus:ring-rose-400/30' : 'border-slate-200 dark:border-slate-600 focus:ring-[#3879a3]/30 focus:border-[#3879a3] dark:focus:border-sky-500'}`}
+                ${error ? 'border-rose-400 dark:border-rose-500 focus:ring-rose-400/30' : 'border-slate-200 dark:border-slate-600 focus:ring-[#3179a7]/30 focus:border-[#3179a7] dark:focus:border-sky-500'}`}
               rows={3}
               placeholder="Describí el análisis realizado, la documentación recibida o el motivo de la resolución..."
               value={notas}
@@ -145,12 +145,12 @@ function SolicitarDocModal({ op, onClose, onResolve }) {
               onDrop={handleFileDrop}
               onClick={() => document.getElementById('file-upload-op').click()}
               className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all
-                ${dragOver ? 'border-[#3879a3] bg-[#3879a3]/5 dark:bg-sky-500/10' : 'border-slate-200 dark:border-slate-600 hover:border-[#3879a3]/50 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+                ${dragOver ? 'border-[#3179a7] bg-[#3179a7]/5 dark:bg-sky-500/10' : 'border-slate-200 dark:border-slate-600 hover:border-[#3179a7]/50 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
             >
               <input id="file-upload-op" type="file" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
               <Upload size={22} className="mx-auto mb-2 text-slate-300 dark:text-slate-500" />
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                Arrastrá archivos o <span className="text-[#3879a3] dark:text-sky-400">hacé clic para seleccionar</span>
+                Arrastrá archivos o <span className="text-[#3179a7] dark:text-sky-400">hacé clic para seleccionar</span>
               </p>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">PDF, JPG, PNG, DOCX — múltiples archivos</p>
             </div>
@@ -160,7 +160,7 @@ function SolicitarDocModal({ op, onClose, onResolve }) {
               <div className="mt-2 space-y-1.5 max-h-36 overflow-y-auto pr-1">
                 {archivos.map((f) => (
                   <div key={f.id} className="flex items-center gap-3 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <Paperclip size={14} className="text-[#3879a3] dark:text-sky-400 flex-shrink-0" />
+                    <Paperclip size={14} className="text-[#3179a7] dark:text-sky-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">{f.name}</p>
                       <p className="text-[10px] text-slate-400">{formatSize(f.size)}</p>
@@ -406,7 +406,7 @@ function VerMasModal({ op, onClose, onSolicitar }) {
           {op.status === 'pendiente' && (
             <button
               onClick={() => { onClose(); onSolicitar(op); }}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#3879a3] hover:bg-[#2d6a8a] text-white font-bold rounded-xl text-sm transition-all"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#3179a7] hover:bg-[#235677] text-white font-bold rounded-xl text-sm transition-all"
             >
               <Send size={15} /> Solicitar Documentación
             </button>
@@ -474,7 +474,7 @@ const KanbanCard = ({ op, onDragStart, onDragEnd, isDragging, onVerMas }) => {
           </span>
           <button
             onClick={(e) => { e.stopPropagation(); onVerMas(op); }}
-            className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 hover:text-[#3879a3] dark:hover:text-sky-400 transition-colors"
+            className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 hover:text-[#3179a7] dark:hover:text-sky-400 transition-colors"
           >
             <Eye size={11} /> Ver más
           </button>
@@ -715,7 +715,7 @@ const UnusualOperationList = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3879a3]" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3179a7]" />
       </div>
     );
   }

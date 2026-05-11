@@ -1,14 +1,36 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
-const auditLogger = require('../utils/auditLogger');
+const { Usuario } = require('../models');
+
+// Mapeo nivel DB <-> role frontend
+const nivelToRole = {
+  nivel_1: 'admin',      // Oficial de Cumplimiento
+  nivel_2: 'supervisor', // Analista
+  nivel_3: 'analyst',    // Sin acceso a dashboard
+};
+const roleToNivel = {
+  admin: 'nivel_1',
+  supervisor: 'nivel_2',
+  analyst: 'nivel_3',
+  auditor: 'nivel_3',
+};
+
+const formatUser = (u) => ({
+  id: u.id,
+  email: u.email,
+  firstName: u.nombre,
+  lastName: u.apellido,
+  role: nivelToRole[u.nivel] || u.nivel,
+  isActive: u.activo,
+  createdAt: u.created_at,
+});
 
 const authController = {
   async register(req, res, next) {
     try {
       const { email, password, firstName, lastName, role } = req.body;
 
-      const existingUser = await User.findOne({ where: { email } });
+      const existingUser = await Usuario.findOne({ where: { email } });
       if (existingUser) {
         return res.status(409).json({
           success: false,
@@ -16,35 +38,21 @@ const authController = {
         });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 12);
+      const password_hash = await bcrypt.hash(password, 12);
+      const nivel = roleToNivel[role] || 'nivel_1';
 
-      const user = await User.create({
+      const usuario = await Usuario.create({
         email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        role: role || 'analyst',
-      });
-
-      await auditLogger.log({
-        entityType: 'User',
-        entityId: user.id,
-        action: 'create',
-        changes: { email, firstName, lastName, role },
-        userId: req.user?.id,
-        req,
+        password_hash,
+        nombre: firstName,
+        apellido: lastName,
+        nivel,
       });
 
       res.status(201).json({
         success: true,
         message: 'Usuario creado exitosamente',
-        data: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-        },
+        data: formatUser(usuario),
       });
     } catch (error) {
       next(error);
@@ -55,28 +63,27 @@ const authController = {
     try {
       const { email, password } = req.body;
 
-      const user = await User.findOne({ where: { email } });
+      const usuario = await Usuario.findOne({ where: { email } });
 
-      if (!user) {
+      if (!usuario || !usuario.activo) {
         return res.status(401).json({
           success: false,
           message: 'Credenciales inválidas',
         });
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
-
-      if (!isValidPassword) {
+      const isValid = await bcrypt.compare(password, usuario.password_hash);
+      if (!isValid) {
         return res.status(401).json({
           success: false,
           message: 'Credenciales inválidas',
         });
       }
 
-      await user.update({ lastLogin: new Date() });
+      const role = nivelToRole[usuario.nivel] || 'analyst';
 
       const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
+        { id: usuario.id, email: usuario.email, role },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
       );
@@ -86,13 +93,7 @@ const authController = {
         message: 'Login exitoso',
         data: {
           token,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role: user.role,
-          },
+          user: formatUser(usuario),
         },
       });
     } catch (error) {
@@ -102,13 +103,10 @@ const authController = {
 
   async getProfile(req, res, next) {
     try {
-      const user = await User.findByPk(req.user.id, {
-        attributes: { exclude: ['password'] },
-      });
-
+      const usuario = await Usuario.findByPk(req.user.id);
       res.json({
         success: true,
-        data: user,
+        data: formatUser(usuario),
       });
     } catch (error) {
       next(error);
@@ -117,13 +115,12 @@ const authController = {
 
   async getUsers(req, res, next) {
     try {
-      const users = await User.findAll({
-        attributes: { exclude: ['password'] },
-        order: [['createdAt', 'DESC']],
+      const usuarios = await Usuario.findAll({
+        order: [['created_at', 'DESC']],
       });
       res.json({
         success: true,
-        data: users,
+        data: usuarios.map(formatUser),
       });
     } catch (error) {
       next(error);
@@ -135,37 +132,21 @@ const authController = {
       const { id } = req.params;
       const { role, isActive } = req.body;
 
-      const user = await User.findByPk(id);
-      if (!user) {
+      const usuario = await Usuario.findByPk(id);
+      if (!usuario) {
         return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
       }
 
       const updates = {};
-      if (role !== undefined) updates.role = role;
-      if (isActive !== undefined) updates.isActive = isActive;
+      if (role !== undefined) updates.nivel = roleToNivel[role] || role;
+      if (isActive !== undefined) updates.activo = isActive;
 
-      await user.update(updates);
-
-      await auditLogger.log({
-        entityType: 'User',
-        entityId: user.id,
-        action: 'update',
-        changes: updates,
-        userId: req.user.id,
-        req,
-      });
+      await usuario.update(updates);
 
       res.json({
         success: true,
         message: 'Usuario actualizado',
-        data: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          isActive: user.isActive,
-        },
+        data: formatUser(usuario),
       });
     } catch (error) {
       next(error);
@@ -175,44 +156,29 @@ const authController = {
   async updateProfile(req, res, next) {
     try {
       const { firstName, lastName, currentPassword, newPassword } = req.body;
-      const user = await User.findByPk(req.user.id);
+      const usuario = await Usuario.findByPk(req.user.id);
 
       const updates = {};
-      if (firstName) updates.firstName = firstName;
-      if (lastName) updates.lastName = lastName;
+      if (firstName) updates.nombre = firstName;
+      if (lastName) updates.apellido = lastName;
 
       if (newPassword) {
-        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
-        if (!isValidPassword) {
+        const isValid = await bcrypt.compare(currentPassword, usuario.password_hash);
+        if (!isValid) {
           return res.status(400).json({
             success: false,
             message: 'Contraseña actual incorrecta',
           });
         }
-        updates.password = await bcrypt.hash(newPassword, 12);
+        updates.password_hash = await bcrypt.hash(newPassword, 12);
       }
 
-      await user.update(updates);
-
-      await auditLogger.log({
-        entityType: 'User',
-        entityId: user.id,
-        action: 'update',
-        changes: { firstName, lastName, passwordChanged: !!newPassword },
-        userId: req.user.id,
-        req,
-      });
+      await usuario.update(updates);
 
       res.json({
         success: true,
         message: 'Perfil actualizado',
-        data: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-        },
+        data: formatUser(usuario),
       });
     } catch (error) {
       next(error);

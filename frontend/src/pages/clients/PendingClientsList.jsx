@@ -154,8 +154,8 @@ const PendingClientsList = () => {
                                             <td className="px-4 py-3">
                                                 {(() => {
                                                   const cfg = {
-                                                    sa:            { label: 'SA',            cls: 'bg-[#3879a3]/10 text-[#3879a3] border-[#3879a3]/25' },
-                                                    srl:           { label: 'SRL',           cls: 'bg-[#2d6a8a]/10 text-[#2d6a8a] border-[#2d6a8a]/25' },
+                                                    sa:            { label: 'SA',            cls: 'bg-[#3179a7]/10 text-[#3179a7] border-[#3179a7]/25' },
+                                                    srl:           { label: 'SRL',           cls: 'bg-[#235677]/10 text-[#235677] border-[#235677]/25' },
                                                     sh:            { label: 'SH',            cls: 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600' },
                                                     sucesion:      { label: 'Sucesión',      cls: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800' },
                                                     monotributista:{ label: 'Monotrib.',     cls: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-800' },

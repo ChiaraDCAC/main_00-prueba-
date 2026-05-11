@@ -243,7 +243,7 @@ const UnusualOperationForm = () => {
           {formData.client ? (
             <div className="bg-white rounded-2xl p-6 flex items-center justify-between border border-blue-100 shadow-xl shadow-blue-500/5">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-[#3879a3]/10 flex items-center justify-center text-[#3879a3] font-bold text-lg">
+                <div className="w-10 h-10 rounded-xl bg-[#3179a7]/10 flex items-center justify-center text-[#3179a7] font-bold text-lg">
                   {formData.client.legalName?.[0] || formData.client.firstName?.[0]}
                 </div>
                 <div>

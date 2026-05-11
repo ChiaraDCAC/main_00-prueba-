@@ -65,8 +65,8 @@ const ClientDetail = () => {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#3879a3]/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <Loader2 className="w-8 h-8 animate-spin text-[#3879a3]" />
+          <div className="w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
           </div>
           <p className="text-muted-foreground">Cargando cliente...</p>
         </div>
@@ -84,7 +84,7 @@ const ClientDetail = () => {
           <p className="text-lg font-medium text-slate-600">Cliente no encontrado</p>
           <button
             onClick={() => navigate('/clients')}
-            className="mt-4 px-4 py-2 bg-[#3879a3] text-white rounded-lg hover:bg-[#2d6a8a] transition-colors"
+            className="mt-4 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
             Volver a la lista
           </button>
@@ -98,10 +98,30 @@ const ClientDetail = () => {
     ? `${client.lastName}, ${client.firstName}`
     : client.legalName;
 
+  // riskConfig \u2014 cada nivel trae las clases Tailwind (DCaC tokens) ya armadas
+  // para que no haya class names construidos din\u00e1micamente (Tailwind JIT no los detecta).
   const riskConfig = {
-    bajo: { label: 'BAJO', color: 'emerald', icon: TrendingDown, ddType: 'DDS', ddName: 'Simplificada' },
-    medio: { label: 'MEDIO', color: 'amber', icon: Minus, ddType: 'DDM', ddName: 'Media' },
-    alto: { label: 'ALTO', color: 'red', icon: TrendingUp, ddType: 'DDR', ddName: 'Reforzada' },
+    bajo:  {
+      label: 'BAJO',  icon: TrendingDown, ddType: 'DDS', ddName: 'Simplificada',
+      bg:   'bg-positive-50 dark:bg-positive-900/20',
+      border:'border-positive-200 dark:border-positive-800',
+      text: 'text-positive-700 dark:text-positive-400',
+      iconText: 'text-positive-600 dark:text-positive-400',
+    },
+    medio: {
+      label: 'MEDIO', icon: Minus,        ddType: 'DDM', ddName: 'Media',
+      bg:   'bg-warning-50 dark:bg-warning-900/20',
+      border:'border-warning-200 dark:border-warning-800',
+      text: 'text-warning-700 dark:text-warning-400',
+      iconText: 'text-warning-600 dark:text-warning-400',
+    },
+    alto:  {
+      label: 'ALTO',  icon: TrendingUp,   ddType: 'DDR', ddName: 'Reforzada',
+      bg:   'bg-negative-50 dark:bg-negative-900/20',
+      border:'border-negative-200 dark:border-negative-800',
+      text: 'text-negative-700 dark:text-negative-400',
+      iconText: 'text-negative-600 dark:text-negative-400',
+    },
   };
   const risk = riskConfig[client.riskLevel] || riskConfig.medio;
   const RiskIcon = risk.icon;
@@ -130,7 +150,7 @@ const ClientDetail = () => {
     return isEditing ? (
       <div className="flex items-center gap-3 ml-auto">
         <button onClick={() => { saveHandler(); setEditingModule(null); }}
-          className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+          className="flex items-center gap-1.5 text-xs font-medium text-positive-600 hover:text-positive-700 transition-colors">
           <Save className="w-3.5 h-3.5" /> Guardar
         </button>
         <span className="text-muted-foreground text-xs">|</span>
@@ -141,7 +161,7 @@ const ClientDetail = () => {
       </div>
     ) : (
       <button onClick={() => { setEditingModule(moduleId); setEditBuf({ ...initData }); }}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-[#3879a3] transition-colors ml-auto">
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand-600 transition-colors ml-auto">
         <Pencil className="w-3.5 h-3.5" /> Editar
       </button>
     );
@@ -193,9 +213,9 @@ const ClientDetail = () => {
     return (
       <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${hasDoc || isPepResolved ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-slate-100 dark:bg-slate-700'}`}>
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${hasDoc || isPepResolved ? 'bg-positive-100 dark:bg-positive-900/30' : 'bg-slate-100 dark:bg-slate-700'}`}>
             {hasDoc || isPepResolved ? (
-              <FileCheck className="w-4 h-4 text-emerald-600" />
+              <FileCheck className="w-4 h-4 text-positive-600" />
             ) : (
               <FileX className="w-4 h-4 text-slate-400" />
             )}
@@ -203,7 +223,7 @@ const ClientDetail = () => {
           <div>
             <p className="text-sm font-medium text-foreground">{label}</p>
             {pepStatus !== undefined && pepStatus !== null && (
-              <p className={`text-xs ${pepStatus ? 'text-amber-600' : 'text-emerald-600'}`}>
+              <p className={`text-xs ${pepStatus ? 'text-warning-600' : 'text-positive-600'}`}>
                 {pepStatus ? 'Es PEP' : 'No es PEP'}
               </p>
             )}
@@ -216,7 +236,7 @@ const ClientDetail = () => {
             rel="noopener noreferrer"
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
-            <Eye className="w-4 h-4 text-[#3879a3]" />
+            <Eye className="w-4 h-4 text-brand-600" />
           </a>
         ) : (
           <span className="text-xs text-muted-foreground">Sin archivo</span>
@@ -227,28 +247,25 @@ const ClientDetail = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#3879a3] via-[#4a8ab5] to-[#2d6a8a] text-white">
+      {/* Header \u2014 sin gradiente, color de marca s\u00f3lido (DCaC) */}
+      <div className="bg-brand text-white">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => navigate('/clients')}
-              className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+              className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center hover:bg-white/25 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <span className="text-white/60 text-sm">Clientes Activos</span>
-            <ChevronRight className="w-4 h-4 text-white/40" />
+            <span className="text-white/70 text-sm">Clientes Activos</span>
+            <ChevronRight className="w-4 h-4 text-white/50" />
             <span className="text-sm">Detalle</span>
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-center gap-5">
-              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-xl ${
-                isHuman
-                  ? 'bg-gradient-to-br from-blue-400 to-blue-600'
-                  : 'bg-gradient-to-br from-purple-400 to-purple-600'
-              }`}>
+              {/* Avatar \u2014 sin gradiente, fondo translucido sobre brand */}
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white/15 border border-white/30">
                 {isHuman ? (
                   <User className="w-10 h-10 text-white" />
                 ) : (
@@ -258,11 +275,11 @@ const ClientDetail = () => {
               <div>
                 <h1 className="text-2xl font-bold">{clientName || 'Sin nombre'}</h1>
                 <div className="flex items-center gap-3 mt-2">
-                  <span className="font-mono text-white/80 bg-white/20 px-3 py-1 rounded-lg text-sm">
+                  <span className="font-mono text-white/90 bg-white/15 px-3 py-1 rounded-lg text-sm">
                     {client.cuit || '-'}
                   </span>
                   {client.clientNumber && (
-                    <span className="bg-emerald-500/30 text-emerald-100 px-3 py-1 rounded-lg text-sm font-medium">
+                    <span className="bg-white/15 text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/25">
                       {client.clientNumber}
                     </span>
                   )}
@@ -270,13 +287,13 @@ const ClientDetail = () => {
               </div>
             </div>
 
-            {/* Status & Risk Badges */}
+            {/* Status & Risk Badges \u2014 estados sem\u00e1nticos */}
             <div className="flex items-center gap-3">
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-${status.color}-500/20 border border-${status.color}-400/30`}>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/15 border border-white/25">
                 <StatusIcon className="w-5 h-5" />
                 <span className="font-semibold">{status.label}</span>
               </div>
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-${risk.color}-500/20 border border-${risk.color}-400/30`}>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/15 border border-white/25">
                 <RiskIcon className="w-5 h-5" />
                 <span className="font-semibold">Riesgo {risk.label}</span>
               </div>
@@ -285,13 +302,14 @@ const ClientDetail = () => {
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats \u2014 4 stat cards informativas. Sin color decorativo: todas neutrales,
+           el icono va en brand subtle ya que es info de marca, no estado funcional. */}
       <div className="max-w-7xl mx-auto px-6 -mt-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <Briefcase className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
+                <Briefcase className="w-6 h-6 text-brand-600 dark:text-brand-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase">Tipo Entidad</p>
@@ -300,10 +318,10 @@ const ClientDetail = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-brand-600 dark:text-brand-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase">Debida Diligencia</p>
@@ -312,10 +330,10 @@ const ClientDetail = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-brand-600 dark:text-brand-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase">Fecha Solicitud Alta</p>
@@ -324,10 +342,10 @@ const ClientDetail = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <Users className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
+                <Users className="w-6 h-6 text-brand-600 dark:text-brand-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase">Personas</p>
@@ -352,7 +370,7 @@ const ClientDetail = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
                     isActive
-                      ? 'bg-[#3879a3] text-white shadow-lg'
+                      ? 'bg-brand text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -372,56 +390,136 @@ const ClientDetail = () => {
               {/* Datos Identificatorios */}
               <section>
                 <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center">
-                    <CreditCard className="w-4 h-4 text-[#3879a3]" />
+                  <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-brand-600" />
                   </div>
                   Datos Identificatorios
+                  {moduleActions('identificatorios', {
+                    legalName: client.legalName,
+                    firstName: client.firstName,
+                    lastName: client.lastName,
+                    cuit: client.cuit,
+                    email: client.email,
+                    phone: client.phone,
+                  }, () => {
+                    clientService.update(id, editBuf)
+                      .then(() => queryClient.invalidateQueries({ queryKey: ['client', id] }));
+                    toast.success('Datos identificatorios guardados');
+                  })}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[
-                    { label: 'Razón Social', value: clientName, icon: Building2 },
-                    { label: 'CUIT', value: client.cuit, icon: CreditCard, mono: true },
-                    { label: 'Tipo Cliente', value: isHuman ? 'Persona Humana' : 'Persona Jurídica', icon: User },
-                    { label: 'Tipo Entidad', value: ENTITY_TYPE_LABELS[client.legalForm] || client.legalForm, icon: Briefcase },
-                    { label: 'Email', value: client.email, icon: Mail },
-                    { label: 'Teléfono', value: client.phone, icon: Phone },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                {editingModule === 'identificatorios' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {(isHuman
+                      ? [
+                          { key: 'lastName', label: 'Apellido' },
+                          { key: 'firstName', label: 'Nombre' },
+                          { key: 'cuit', label: 'CUIT / CUIL', mono: true },
+                          { key: 'email', label: 'Email', type: 'email' },
+                          { key: 'phone', label: 'Teléfono' },
+                        ]
+                      : [
+                          { key: 'legalName', label: 'Razón Social' },
+                          { key: 'cuit', label: 'CUIT', mono: true },
+                          { key: 'email', label: 'Email', type: 'email' },
+                          { key: 'phone', label: 'Teléfono' },
+                        ]
+                    ).map(({ key, label, type, mono }) => (
+                      <div key={key} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{label}</label>
+                        <input type={type || 'text'} value={editBuf[key] || ''}
+                          onChange={e => setEditBuf(prev => ({ ...prev, [key]: e.target.value }))}
+                          className={`w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand ${mono ? 'font-mono' : ''}`} />
+                      </div>
+                    ))}
+                    {/* Campos derivados, no editables */}
+                    <div className="flex items-start gap-3 p-4 bg-slate-100 dark:bg-slate-800/40 rounded-xl opacity-70">
                       <div className="w-10 h-10 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
-                        <item.icon className="w-5 h-5 text-[#3879a3]" />
+                        <User className="w-5 h-5 text-brand-600" />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase">{item.label}</p>
-                        <p className={`font-medium text-foreground ${item.mono ? 'font-mono' : ''}`}>
-                          {item.value || '-'}
-                        </p>
+                        <p className="text-xs text-muted-foreground uppercase">Tipo Cliente</p>
+                        <p className="font-medium text-foreground">{isHuman ? 'Persona Humana' : 'Persona Jurídica'}</p>
+                        <p className="text-[10px] text-muted-foreground italic mt-0.5">No editable</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-start gap-3 p-4 bg-slate-100 dark:bg-slate-800/40 rounded-xl opacity-70">
+                      <div className="w-10 h-10 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                        <Briefcase className="w-5 h-5 text-brand-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase">Tipo Entidad</p>
+                        <p className="font-medium text-foreground">{ENTITY_TYPE_LABELS[client.legalForm] || client.legalForm}</p>
+                        <p className="text-[10px] text-muted-foreground italic mt-0.5">No editable</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: 'Razón Social', value: clientName, icon: Building2 },
+                      { label: 'CUIT', value: client.cuit, icon: CreditCard, mono: true },
+                      { label: 'Tipo Cliente', value: isHuman ? 'Persona Humana' : 'Persona Jurídica', icon: User },
+                      { label: 'Tipo Entidad', value: ENTITY_TYPE_LABELS[client.legalForm] || client.legalForm, icon: Briefcase },
+                      { label: 'Email', value: client.email, icon: Mail },
+                      { label: 'Teléfono', value: client.phone, icon: Phone },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                        <div className="w-10 h-10 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                          <item.icon className="w-5 h-5 text-brand-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase">{item.label}</p>
+                          <p className={`font-medium text-foreground ${item.mono ? 'font-mono' : ''}`}>
+                            {item.value || '-'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Domicilio */}
               <section>
                 <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-[#3879a3]" />
+                  <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-brand-600" />
                   </div>
                   Domicilio Legal
+                  {moduleActions('domicilio', { domicilioLegal: domicilioLegal || '' }, () => {
+                    const nuevo = (editBuf.domicilioLegal || '').trim();
+                    clientService.update(id, {
+                      datosSociedad: { ...datosSociedad, domicilioLegal: nuevo },
+                    })
+                      .then(() => queryClient.invalidateQueries({ queryKey: ['client', id] }));
+                    toast.success('Domicilio guardado');
+                  })}
                 </h3>
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
-                  <p className="font-medium text-foreground">
-                    {domicilioLegal || 'No especificado'}
-                  </p>
-                </div>
+                {editingModule === 'domicilio' ? (
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                    <textarea
+                      value={editBuf.domicilioLegal || ''}
+                      onChange={e => setEditBuf(prev => ({ ...prev, domicilioLegal: e.target.value }))}
+                      rows={2}
+                      placeholder="Ingresá el domicilio legal completo..."
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand"
+                    />
+                  </div>
+                ) : (
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                    <p className="font-medium text-foreground">
+                      {domicilioLegal || 'No especificado'}
+                    </p>
+                  </div>
+                )}
               </section>
 
               {/* Datos de la Entidad — from onboarding */}
-              {(domicilioLegal || datosSociedad.actividadPrincipal || allFormData.actividadPrincipal || datosSociedad.capitalSocial || datosSociedad.objetoSocial || editingModule === 'general') && (
+              {!isHuman && (
                 <section>
                   <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#3879a3]/10 flex items-center justify-center">
-                      <Building2 className="w-4 h-4 text-[#3879a3]" />
+                    <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
+                      <Building2 className="w-4 h-4 text-brand-600" />
                     </div>
                     Datos de la Entidad
                     {moduleActions('general', datosSociedad, () => {
@@ -446,7 +544,7 @@ const ClientDetail = () => {
                           <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{label}</label>
                           <input type="text" value={editBuf[key] || ''}
                             onChange={e => setEditBuf(prev => ({ ...prev, [key]: e.target.value }))}
-                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]" />
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand" />
                         </div>
                       ))}
                     </div>
@@ -472,21 +570,21 @@ const ClientDetail = () => {
                 </section>
               )}
 
-              {/* PEP Warning */}
+              {/* PEP Warning \u2014 estado de notice (riesgo de cumplimiento, no error) */}
               {client.isPep && (
-                <section className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5">
+                <section className="bg-notice-50 dark:bg-notice-900/20 border border-notice-200 dark:border-notice-800 rounded-2xl p-5">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                      <AlertTriangle className="w-6 h-6 text-amber-600" />
+                    <div className="w-12 h-12 rounded-xl bg-notice-100 dark:bg-notice-900/40 flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6 text-notice-600" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-amber-800 dark:text-amber-300">Persona Expuesta Políticamente (PEP)</h4>
-                      <p className="text-amber-700 dark:text-amber-400 mt-1">
+                      <h4 className="font-bold text-notice-800 dark:text-notice-300">Persona Expuesta Pol\u00edticamente (PEP)</h4>
+                      <p className="text-notice-700 dark:text-notice-400 mt-1">
                         <strong>Cargo:</strong> {client.pepPosition || 'No especificado'}
                       </p>
                       {client.pepRelationship && (
-                        <p className="text-amber-700 dark:text-amber-400">
-                          <strong>Relación:</strong> {client.pepRelationship}
+                        <p className="text-notice-700 dark:text-notice-400">
+                          <strong>Relaci\u00f3n:</strong> {client.pepRelationship}
                         </p>
                       )}
                     </div>
@@ -508,23 +606,24 @@ const ClientDetail = () => {
                 </div>
               ) : (
                 <>
-                  {/* Summary Cards */}
+                  {/* Summary Cards \u2014 conteos. Solo PEP tiene carga sem\u00e1ntica (riesgo regulatorio).
+                       El resto son neutros, todos en brand subtle. */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{beneficiarios.length}</p>
-                      <p className="text-sm text-blue-600 dark:text-blue-300">Beneficiarios Finales</p>
+                    <div className="p-4 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-200 dark:border-brand-800">
+                      <p className="text-2xl font-bold text-brand-700 dark:text-brand-400">{beneficiarios.length}</p>
+                      <p className="text-sm text-brand-600 dark:text-brand-300">Beneficiarios Finales</p>
                     </div>
-                    <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
-                      <p className="text-2xl font-bold text-purple-700 dark:text-purple-400">{peps.length}</p>
-                      <p className="text-sm text-purple-600 dark:text-purple-300">PEPs</p>
+                    <div className="p-4 bg-notice-50 dark:bg-notice-900/20 rounded-xl border border-notice-200 dark:border-notice-800">
+                      <p className="text-2xl font-bold text-notice-700 dark:text-notice-400">{peps.length}</p>
+                      <p className="text-sm text-notice-600 dark:text-notice-300">PEPs</p>
                     </div>
-                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-                      <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{autoridades.length}</p>
-                      <p className="text-sm text-amber-600 dark:text-amber-300">Autoridades</p>
+                    <div className="p-4 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-200 dark:border-brand-800">
+                      <p className="text-2xl font-bold text-brand-700 dark:text-brand-400">{autoridades.length}</p>
+                      <p className="text-sm text-brand-600 dark:text-brand-300">Autoridades</p>
                     </div>
-                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                      <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{firmantes.length}</p>
-                      <p className="text-sm text-emerald-600 dark:text-emerald-300">Firmantes</p>
+                    <div className="p-4 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-200 dark:border-brand-800">
+                      <p className="text-2xl font-bold text-brand-700 dark:text-brand-400">{firmantes.length}</p>
+                      <p className="text-sm text-brand-600 dark:text-brand-300">Firmantes</p>
                     </div>
                   </div>
 
@@ -543,7 +642,7 @@ const ClientDetail = () => {
                             onClick={() => setExpandedPersonaIdx(isExpanded ? null : idx)}
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-[#3879a3]/20 flex items-center justify-center text-[#3879a3] font-bold">
+                              <div className="w-12 h-12 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-700 dark:text-brand-400 font-bold">
                                 {persona.apellido?.[0]}{persona.nombre?.[0]}
                               </div>
                               <div>
@@ -556,21 +655,36 @@ const ClientDetail = () => {
                             <div className="flex items-center gap-2">
                               <div className="flex flex-wrap gap-2 justify-end">
                                 {persona.esBeneficiarioFinal && (
-                                  <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-semibold rounded-lg">
+                                  <span className="px-2 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-xs font-semibold rounded-lg">
                                     BF {persona.porcentaje && `${persona.porcentaje}%`}
                                   </span>
                                 )}
                                 {persona.esPep && (
-                                  <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-semibold rounded-lg">PEP</span>
+                                  <span className="px-2 py-1 bg-notice-100 dark:bg-notice-900/30 text-notice-700 dark:text-notice-400 text-xs font-semibold rounded-lg">PEP</span>
                                 )}
                                 {persona.esAutoridad && (
-                                  <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold rounded-lg">{persona.cargo || 'Autoridad'}</span>
+                                  <span className="px-2 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-xs font-semibold rounded-lg">{persona.cargo || 'Autoridad'}</span>
                                 )}
                                 {persona.esFirmante && (
-                                  <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold rounded-lg">Firmante</span>
+                                  <span className="px-2 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-xs font-semibold rounded-lg">Firmante</span>
                                 )}
                                 {persona.esApoderado && (
-                                  <span className="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 text-xs font-semibold rounded-lg">Apoderado</span>
+                                  <span className="px-2 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-xs font-semibold rounded-lg">Apoderado</span>
+                                )}
+                                {persona.esAccionista && (
+                                  <span className="px-2 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-xs font-semibold rounded-lg">
+                                    Accionista{persona.porcentaje ? ` ${persona.porcentaje}%` : ''}
+                                  </span>
+                                )}
+                                {persona.esSocioSH && (
+                                  <span className="px-2 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-xs font-semibold rounded-lg">
+                                    Socio{persona.porcentaje ? ` ${persona.porcentaje}%` : ''}
+                                  </span>
+                                )}
+                                {persona.esHeredero && (
+                                  <span className="px-2 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-xs font-semibold rounded-lg">
+                                    Heredero{persona.vinculo ? ` \u00b7 ${persona.vinculo}` : ''}
+                                  </span>
                                 )}
                               </div>
                               {isExpanded ? (
@@ -589,19 +703,19 @@ const ClientDetail = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                   {persona.email && (
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Mail className="w-4 h-4 shrink-0 text-[#3879a3]" />
+                                      <Mail className="w-4 h-4 shrink-0 text-brand-600" />
                                       <span className="truncate">{persona.email}</span>
                                     </div>
                                   )}
                                   {persona.telefono && (
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Phone className="w-4 h-4 shrink-0 text-[#3879a3]" />
+                                      <Phone className="w-4 h-4 shrink-0 text-brand-600" />
                                       <span>{persona.telefono}</span>
                                     </div>
                                   )}
                                   {persona.domicilio && (
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <MapPin className="w-4 h-4 shrink-0 text-[#3879a3]" />
+                                      <MapPin className="w-4 h-4 shrink-0 text-brand-600" />
                                       <span className="truncate">{persona.domicilio}</span>
                                     </div>
                                   )}
@@ -711,15 +825,15 @@ const ClientDetail = () => {
                     const hasAnyData = hasFile || hasFormData;
                     return (
                       <div key={doc.id} className="flex items-center gap-4 px-5 py-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${hasFile ? 'bg-emerald-100 dark:bg-emerald-900/30' : hasFormData ? 'bg-[#3879a3]/10' : doc.required ? 'bg-red-50 dark:bg-red-900/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                          <FileText className={`w-5 h-5 ${hasFile ? 'text-emerald-600' : hasFormData ? 'text-[#3879a3]' : doc.required ? 'text-red-400' : 'text-slate-400'}`} />
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${hasFile ? 'bg-positive-100 dark:bg-positive-900/30' : hasFormData ? 'bg-brand-50' : doc.required ? 'bg-negative-50 dark:bg-negative-900/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                          <FileText className={`w-5 h-5 ${hasFile ? 'text-positive-600' : hasFormData ? 'text-brand-600' : doc.required ? 'text-negative-400' : 'text-slate-400'}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground">{doc.name}</p>
                           {hasFile
-                            ? <p className="text-xs text-emerald-600 mt-0.5">{stored.name}</p>
+                            ? <p className="text-xs text-positive-600 mt-0.5">{stored.name}</p>
                             : hasFormData
-                              ? <p className="text-xs text-[#3879a3] mt-0.5">Datos cargados en onboarding</p>
+                              ? <p className="text-xs text-brand-600 mt-0.5">Datos cargados en onboarding</p>
                               : <p className="text-xs text-muted-foreground mt-0.5">{doc.required ? 'Obligatorio — sin archivo' : 'Opcional — sin archivo'}</p>
                           }
                         </div>
@@ -727,20 +841,20 @@ const ClientDetail = () => {
                           {/* Ver button — shown when file or form data exists */}
                           {hasFile && (
                             <button onClick={() => setViewingDoc({ name: stored.name, dataUrl: stored.dataUrl })}
-                              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[#3879a3]/30 text-[#3879a3] hover:bg-[#3879a3]/10 transition-colors">
+                              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-brand-300 text-brand-600 hover:bg-brand-50 transition-colors">
                               <Eye className="w-3.5 h-3.5" /> Ver
                             </button>
                           )}
                           {hasFormData && (
                             <button onClick={() => setViewingDoc({ name: doc.name, formFields })}
-                              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[#3879a3]/30 text-[#3879a3] hover:bg-[#3879a3]/10 transition-colors">
+                              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-brand-300 text-brand-600 hover:bg-brand-50 transition-colors">
                               <Eye className="w-3.5 h-3.5" /> Ver datos
                             </button>
                           )}
                           {/* Upload button — always shown */}
                           <label className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors border
                             border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400
-                            hover:border-[#3879a3] hover:text-[#3879a3] hover:bg-[#3879a3]/5">
+                            hover:border-brand hover:text-brand-600 hover:bg-brand-50">
                             <Upload className="w-3.5 h-3.5" /> {hasFile ? 'Reemplazar' : 'Subir'}
                             <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
                               onChange={e => {
@@ -769,13 +883,13 @@ const ClientDetail = () => {
             <div className="p-6 space-y-6">
               {/* Risk Summary */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-6 rounded-2xl bg-gradient-to-br from-${risk.color}-50 to-${risk.color}-100/50 dark:from-${risk.color}-900/30 dark:to-${risk.color}-900/10 border border-${risk.color}-200 dark:border-${risk.color}-800 text-center`}>
-                  <RiskIcon className={`w-10 h-10 mx-auto mb-3 text-${risk.color}-600 dark:text-${risk.color}-400`} />
-                  <p className={`text-3xl font-bold text-${risk.color}-700 dark:text-${risk.color}-400`}>{risk.label}</p>
+                <div className={`p-6 rounded-2xl border text-center ${risk.bg} ${risk.border}`}>
+                  <RiskIcon className={`w-10 h-10 mx-auto mb-3 ${risk.iconText}`} />
+                  <p className={`text-3xl font-bold ${risk.text}`}>{risk.label}</p>
                   <p className="text-sm text-muted-foreground">Nivel de Riesgo</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center">
-                  <Shield className="w-10 h-10 mx-auto mb-3 text-[#3879a3]" />
+                  <Shield className="w-10 h-10 mx-auto mb-3 text-brand-600" />
                   <p className="text-3xl font-bold text-foreground">{risk.ddType}</p>
                   <p className="text-sm text-muted-foreground">DD {risk.ddName}</p>
                 </div>
@@ -784,8 +898,8 @@ const ClientDetail = () => {
               {/* NSE + Ventas + Edit */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                    <BarChart3 className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
+                    <BarChart3 className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                   </div>
                   <h4 className="font-bold text-foreground">Perfil Transaccional</h4>
                   {moduleActions('riesgo', { nivelRiesgo: dd.nivelRiesgo || client.riskLevel, nseNivel: dd.nseNivel, nseNotas: dd.nseNotas, ventasEstimadasAnuales: dd.ventasEstimadasAnuales }, () => {
@@ -799,7 +913,7 @@ const ClientDetail = () => {
                     <div>
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Nivel de Riesgo</label>
                       <select value={editBuf.nivelRiesgo || ''} onChange={e => setEditBuf(prev => ({ ...prev, nivelRiesgo: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]">
+                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand">
                         <option value="">Seleccione...</option>
                         <option value="bajo">Bajo</option>
                         <option value="medio">Medio</option>
@@ -809,7 +923,7 @@ const ClientDetail = () => {
                     <div>
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">NSE</label>
                       <select value={editBuf.nseNivel || ''} onChange={e => setEditBuf(prev => ({ ...prev, nseNivel: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]">
+                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand">
                         <option value="">Seleccione...</option>
                         <option value="ABC1">ABC1 — Alto</option>
                         <option value="C2">C2 — Medio-Alto</option>
@@ -823,20 +937,20 @@ const ClientDetail = () => {
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Ventas Est. Anuales</label>
                       <input type="number" value={editBuf.ventasEstimadasAnuales || ''} onChange={e => setEditBuf(prev => ({ ...prev, ventasEstimadasAnuales: e.target.value }))}
                         placeholder="Monto en $..."
-                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]" />
+                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand" />
                     </div>
                     <div>
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Notas NSE</label>
                       <input type="text" value={editBuf.nseNotas || ''} onChange={e => setEditBuf(prev => ({ ...prev, nseNotas: e.target.value }))}
                         placeholder="Observaciones..."
-                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]" />
+                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand" />
                     </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-5 rounded-2xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 text-center">
+                    <div className="p-5 rounded-2xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-center">
                       <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">NSE</p>
-                      <p className="text-3xl font-bold text-violet-700 dark:text-violet-400">{dd.nseNivel || '-'}</p>
+                      <p className="text-3xl font-bold text-brand-700 dark:text-brand-400">{dd.nseNivel || '-'}</p>
                       {dd.nseNotas && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{dd.nseNotas}</p>}
                     </div>
                     <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center">
@@ -857,7 +971,7 @@ const ClientDetail = () => {
               {/* DD Schedule */}
               <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
                 <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-[#3879a3]" />
+                  <Calendar className="w-5 h-5 text-brand-600" />
                   Cronograma de Debida Diligencia
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -886,8 +1000,8 @@ const ClientDetail = () => {
               <div className="space-y-4">
                 {/* Fecha Solicitud */}
                 <div className="flex items-center gap-4 p-5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                  <div className="w-11 h-11 rounded-xl bg-[#3879a3]/10 flex items-center justify-center shrink-0">
-                    <UserCheck className="w-5 h-5 text-[#3879a3]" />
+                  <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
+                    <UserCheck className="w-5 h-5 text-brand-600" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fecha Solicitud</p>
@@ -900,20 +1014,20 @@ const ClientDetail = () => {
                 {/* Fecha Alta */}
                 <div className={`flex items-center gap-4 p-5 rounded-2xl border ${
                   client.status === 'aprobado'
-                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                    ? 'bg-positive-50 dark:bg-positive-900/20 border-positive-200 dark:border-positive-800'
                     : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700'
                 }`}>
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
                     client.status === 'aprobado'
-                      ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                      ? 'bg-positive-100 dark:bg-positive-900/40'
                       : 'bg-slate-100 dark:bg-slate-800'
                   }`}>
-                    <CheckCircle className={`w-5 h-5 ${client.status === 'aprobado' ? 'text-emerald-600' : 'text-slate-400'}`} />
+                               <CheckCircle className={`w-5 h-5 ${client.status === 'aprobado' ? 'text-positive-600' : 'text-slate-400'}`} />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fecha Alta</p>
                     {client.status === 'aprobado' ? (
-                      <p className="text-base font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                      <p className="text-base font-bold text-positive-700 dark:text-positive-400 mt-0.5">
                         {formatDate(client.aprobadoAt || client.updatedAt || client.createdAt)}
                       </p>
                     ) : (

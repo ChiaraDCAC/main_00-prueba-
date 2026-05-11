@@ -2,6 +2,7 @@
 
 export const ENTITY_TYPES = {
   MONOTRIBUTISTA: 'monotributista',
+  RESPONSABLE_INSCRIPTO: 'responsable_inscripto',
   SA: 'sa',
   SRL: 'srl',
   SH: 'sh',
@@ -10,10 +11,17 @@ export const ENTITY_TYPES = {
 
 export const ENTITY_TYPE_LABELS = {
   [ENTITY_TYPES.MONOTRIBUTISTA]: 'Monotributista',
+  [ENTITY_TYPES.RESPONSABLE_INSCRIPTO]: 'Responsable Inscripto',
   [ENTITY_TYPES.SA]: 'Sociedad Anónima (SA)',
   [ENTITY_TYPES.SRL]: 'Sociedad de Responsabilidad Limitada (SRL)',
   [ENTITY_TYPES.SH]: 'Sociedad de Hecho (SH)',
   [ENTITY_TYPES.SUCESION]: 'Sucesión / Sucesión Indivisa',
+};
+
+// Persona Humana: documentación viene por 4i, no se revisa manualmente
+export const isPersonaHumana = (entityType) => {
+  const normalized = entityType?.toLowerCase();
+  return normalized === ENTITY_TYPES.MONOTRIBUTISTA || normalized === ENTITY_TYPES.RESPONSABLE_INSCRIPTO;
 };
 
 // Documentos requeridos por tipo de entidad
@@ -85,6 +93,13 @@ export const DOCUMENT_REQUIREMENTS = {
       required: true,
       fields: ['poder_verificado', 'poder_observaciones'],
     },
+    {
+      id: 'balance',
+      name: 'Balance / Estados Contables',
+      description: 'Último balance o estados contables de la empresa',
+      required: true,
+      fields: ['balance_fecha_cierre', 'balance_nro_venta', 'balance_observaciones'],
+    },
   ],
 
   [ENTITY_TYPES.SRL]: [
@@ -124,6 +139,13 @@ export const DOCUMENT_REQUIREMENTS = {
       required: false,
       conditionalText: 'Obligatorio si la sociedad opera con apoderados',
       fields: ['poder_verificado', 'poder_observaciones'],
+    },
+    {
+      id: 'balance',
+      name: 'Balance / Estados Contables',
+      description: 'Último balance o estados contables de la empresa',
+      required: true,
+      fields: ['balance_fecha_cierre', 'balance_nro_venta', 'balance_observaciones'],
     },
   ],
 
@@ -167,6 +189,13 @@ export const DOCUMENT_REQUIREMENTS = {
         'sh_ddjj_sociedad_representa', 'sh_ddjj_sociedad_cuit', 'sh_ddjj_caracter_invocado',
         'sh_ddjj_fecha', 'sh_ddjj_facultades', 'sh_ddjj_firma_otorgantes', 'sh_ddjj_certificacion_firma'
       ],
+    },
+    {
+      id: 'balance',
+      name: 'Balance / Estados Contables',
+      description: 'Último balance o estados contables de la empresa',
+      required: true,
+      fields: ['balance_fecha_cierre', 'balance_nro_venta', 'balance_observaciones'],
     },
   ],
 
@@ -356,8 +385,8 @@ export const FORM_FIELDS = {
 
   // VIGENCIA DE AUTORIDADES
   mandato_vigente: { label: '¿Mandato Vigente?', type: 'select', options: ['Sí', 'No', 'Próximo a vencer'] },
-  periodo_mandato_inicio: { label: 'Año Inicio Mandato', type: 'select', options: ['2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029', '2030'] },
-  periodo_mandato_fin: { label: 'Año Fin Mandato', type: 'select', options: ['2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'] },
+  periodo_mandato_inicio: { label: 'Fecha de la Asamblea', type: 'date', helpText: 'Fecha exacta en que se celebró la asamblea donde se designaron las autoridades' },
+  periodo_mandato_fin: { label: 'Fecha de Fin del Mandato', type: 'date', helpText: 'Por estatuto el mandato dura 1 año desde la fecha de la asamblea. Ej: asamblea 30/08/2024 → vence 30/08/2025' },
 
   // FIRMA / AUTORIDAD DEL ACTA
   quien_preside_reunion: { label: 'Quién Preside la Reunión', type: 'text' },
@@ -1020,6 +1049,18 @@ export const FORM_FIELDS = {
     placeholder: 'Describir las diferencias encontradas...',
     condition: { field: 'arca_coincide', value: 'No' }
   },
+
+  // Balance / Estados Contables (SA, SRL, SH)
+  balance_ejercicio: { label: 'Ejercicio', type: 'text', placeholder: 'Ej: 2024' },
+  balance_fecha_cierre: { label: 'Fecha de Cierre del Ejercicio', type: 'date' },
+  balance_nro_venta: { label: 'Monto de Ventas Netas (sin IVA)', type: 'text', placeholder: 'Ej: $5.000.000', important: true },
+  balance_certificado: {
+    label: '¿Balance certificado por Contador Público?',
+    type: 'select',
+    options: ['Sí', 'No', 'En trámite'],
+    important: true
+  },
+  balance_observaciones: { label: 'Observaciones', type: 'textarea', placeholder: 'Notas sobre el balance...' },
 
   // DDJJ Beneficiarios Finales
   ddjj_bf_fecha: { label: 'Fecha de la Declaración', type: 'date' },

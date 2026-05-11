@@ -148,7 +148,7 @@ const RiskAssessment = ({
   return (
     <div className="space-y-8">
       {/* Header con efecto glassmorphism */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#3879a3] via-[#4a8ab5] to-[#2d6a8a] p-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#3179a7] via-[#5a94b9] to-[#235677] p-8">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtNi42MjcgMC0xMiA1LjM3My0xMiAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMi01LjM3My0xMi0xMi0xMnoiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -293,7 +293,7 @@ const RiskAssessment = ({
                   flex-1 py-4 rounded-xl font-semibold flex items-center justify-center gap-3 transition-all duration-300
                   ${ddCompleted
                     ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-600 hover:bg-gray-50'
-                    : 'bg-white dark:bg-gray-800 text-[#3879a3] border-2 border-[#3879a3] hover:bg-[#3879a3]/5'
+                    : 'bg-white dark:bg-gray-800 text-[#3179a7] border-2 border-[#3179a7] hover:bg-[#3179a7]/5'
                   }
                 `}
               >
@@ -337,7 +337,7 @@ const RiskAssessment = ({
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-[#3879a3] to-[#2d6a8a]">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-[#3179a7] to-[#235677]">
               <div className="flex items-center gap-3">
                 <ClipboardCheck className="w-6 h-6 text-white" />
                 <div>
@@ -402,7 +402,7 @@ const RiskAssessment = ({
                 {/* Verificación de Identidad */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                    <UserCheck className="w-4 h-4 text-[#3879a3]" />
+                    <UserCheck className="w-4 h-4 text-[#3179a7]" />
                     Verificación de Identidad
                   </h3>
                   <div className="space-y-3">
@@ -417,7 +417,7 @@ const RiskAssessment = ({
                           onClick={() => setDdData(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
                           className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                             ddData[item.key]
-                              ? 'bg-[#3879a3] text-white'
+                              ? 'bg-[#3179a7] text-white'
                               : 'bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
                           }`}
                         >
@@ -432,7 +432,7 @@ const RiskAssessment = ({
                 {/* Verificación PEP */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-[#3879a3]" />
+                    <Shield className="w-4 h-4 text-[#3179a7]" />
                     Verificación PEP
                   </h3>
                   <div className="space-y-3">
@@ -442,7 +442,7 @@ const RiskAssessment = ({
                         onClick={() => setDdData(prev => ({ ...prev, consultaPEP: !prev.consultaPEP }))}
                         className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                           ddData.consultaPEP
-                            ? 'bg-[#3879a3] text-white'
+                            ? 'bg-[#3179a7] text-white'
                             : 'bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
                         }`}
                       >
@@ -468,7 +468,7 @@ const RiskAssessment = ({
                 {/* Verificación Listas */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-[#3879a3]" />
+                    <Globe className="w-4 h-4 text-[#3179a7]" />
                     Verificación Listas Restrictivas
                   </h3>
                   <div className="space-y-3">
@@ -483,7 +483,7 @@ const RiskAssessment = ({
                           onClick={() => setDdData(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
                           className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                             ddData[item.key]
-                              ? 'bg-[#3879a3] text-white'
+                              ? 'bg-[#3179a7] text-white'
                               : 'bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
                           }`}
                         >
@@ -510,7 +510,7 @@ const RiskAssessment = ({
                 {/* Verificación Actividad */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-[#3879a3]" />
+                    <Briefcase className="w-4 h-4 text-[#3179a7]" />
                     Verificación de Actividad
                   </h3>
                   <div className="space-y-3">
@@ -525,7 +525,7 @@ const RiskAssessment = ({
                           onClick={() => setDdData(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
                           className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                             ddData[item.key]
-                              ? 'bg-[#3879a3] text-white'
+                              ? 'bg-[#3179a7] text-white'
                               : 'bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
                           }`}
                         >
@@ -550,7 +550,7 @@ const RiskAssessment = ({
               </button>
               <button
                 onClick={handleCompletarDD}
-                className="px-5 py-2.5 bg-[#3879a3] text-white rounded-xl hover:bg-[#2d6a8a] transition-colors font-medium flex items-center gap-2"
+                className="px-5 py-2.5 bg-[#3179a7] text-white rounded-xl hover:bg-[#235677] transition-colors font-medium flex items-center gap-2"
               >
                 <CheckCircle className="w-5 h-5" />
                 Completar DD

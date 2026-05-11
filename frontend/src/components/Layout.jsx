@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   ChevronLeft,
   ChevronRight,
+  UserPlus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { ThemeToggle } from './theme-toggle';
@@ -58,11 +59,11 @@ const Layout = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 bg-[#3879a3] dark:bg-slate-950 transform transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-30 bg-[#3179a7] dark:bg-slate-950 transform transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-56'} w-56`}
       >
         {/* Header with Logo */}
-        <div className={`flex items-center h-16 bg-[#2d6a8a] dark:bg-slate-900 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'}`}>
+        <div className={`flex items-center h-16 bg-[#235677] dark:bg-slate-900 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'}`}>
           {!sidebarCollapsed ? (
             <div className="flex items-center gap-2">
               <img
@@ -106,7 +107,7 @@ const Layout = () => {
               to={item.to}
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-2 rounded-lg mb-0.5 transition-colors ${isActive
-                  ? 'text-white bg-[#3879a3]'
+                  ? 'text-white bg-[#3179a7]'
                   : 'text-white/80 hover:bg-white/10 dark:text-slate-300 dark:hover:bg-slate-800'
                 } ${sidebarCollapsed ? 'justify-center' : ''}`
               }
@@ -124,7 +125,7 @@ const Layout = () => {
           {!sidebarCollapsed ? (
             <>
               <div className="flex items-center gap-2 mb-2 px-1">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0" style={{ backgroundColor: '#3879a3' }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0" style={{ backgroundColor: '#3179a7' }}>
                   {user?.firstName?.[0]}{user?.lastName?.[0]}
                 </div>
                 <div className="min-w-0">
@@ -144,7 +145,7 @@ const Layout = () => {
             </>
           ) : (
             <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium" style={{ backgroundColor: '#3879a3' }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium" style={{ backgroundColor: '#3179a7' }}>
                 {user?.firstName?.[0]}{user?.lastName?.[0]}
               </div>
               <button

@@ -195,16 +195,19 @@ erDiagram
         TEXTO cuit
         TEXTO correo_electronico "GET"
         TEXTO telefono "GET"
-        TEXTO domicilio
+        TEXTO domicilio_calle
+        TEXTO domicilio_altura
+        TEXTO domicilio_piso "opcional"
+        TEXTO domicilio_localidad
+        TEXTO domicilio_provincia
         BOOLEANO es_pep
         BOOLEANO figura_en_repet
         OPCIONES cargo_societario "presidente / gerente / director / apoderado / ninguno"
-        TEXTO rol_interno
         JSON alcance_actos "general / credito / pagos / compras / bancos / alta_cvu / ninguno"
         OPCIONES limite_tipo "sin_limite / hasta_x / rango_x_a_y"
         DECIMAL limite_monto_hasta
         DECIMAL limite_monto_desde
-        OPCIONES tipo_firma "individual / conjunta / obligatoria_casos / ninguna"
+        OPCIONES tipo_firma "individual / multiple / ninguna"
         TEXTOLARGO tipo_firma_casos
         BOOLEANO activo
         FECHAHORA fecha_creacion

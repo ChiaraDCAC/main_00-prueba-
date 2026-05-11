@@ -113,9 +113,9 @@ function EmployeeCombobox({ onSelect }) {
           ) : (
             filtered.map((emp) => (
               <button key={emp.id} type="button" onClick={() => handleSelect(emp)}
-                className={`w-full text-left px-4 py-3 flex items-center justify-between gap-3 border-b border-gray-50 dark:border-slate-700 last:border-0 transition-colors hover:bg-[#3879a3]/5 cursor-pointer ${selected?.id === emp.id ? 'bg-[#3879a3]/5' : ''}`}>
+                className={`w-full text-left px-4 py-3 flex items-center justify-between gap-3 border-b border-gray-50 dark:border-slate-700 last:border-0 transition-colors hover:bg-[#3179a7]/5 cursor-pointer ${selected?.id === emp.id ? 'bg-[#3179a7]/5' : ''}`}>
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-[#3879a3] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[#3179a7] text-white flex items-center justify-center text-xs font-bold shrink-0">
                     {emp.firstName[0]}{emp.lastName[0]}
                   </div>
                   <div className="min-w-0">
@@ -124,7 +124,7 @@ function EmployeeCombobox({ onSelect }) {
                     <p className="text-xs text-muted-foreground truncate">{emp.position} · {emp.department}</p>
                   </div>
                 </div>
-                {selected?.id === emp.id && <Check size={16} className="text-[#3879a3] shrink-0" />}
+                {selected?.id === emp.id && <Check size={16} className="text-[#3179a7] shrink-0" />}
               </button>
             ))
           )}
@@ -191,7 +191,7 @@ function NuevoUsuarioModal({ onClose, onCreated, existingUsers }) {
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800 z-10">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#3879a3] rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#3179a7] rounded-lg flex items-center justify-center">
               <Plus size={16} className="text-white" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">Nuevo usuario</h2>
@@ -202,7 +202,7 @@ function NuevoUsuarioModal({ onClose, onCreated, existingUsers }) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
-          <div className="p-4 bg-[#3879a3]/5 border border-[#3879a3]/20 rounded-xl">
+          <div className="p-4 bg-[#3179a7]/5 border border-[#3179a7]/20 rounded-xl">
             <EmployeeCombobox onSelect={handleEmployeeSelect} />
           </div>
 
@@ -303,7 +303,7 @@ function EditarUsuarioModal({ user, onClose, onUpdated }) {
               <p className="text-xs text-muted-foreground">{form.isActive ? 'Activo en el sistema' : 'Inactivo — sin acceso'}</p>
             </div>
             <button type="button" onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}
-              className={`w-12 h-6 rounded-full transition-all relative ${form.isActive ? 'bg-[#3879a3]' : 'bg-slate-300 dark:bg-slate-600'}`}>
+              className={`w-12 h-6 rounded-full transition-all relative ${form.isActive ? 'bg-[#3179a7]' : 'bg-slate-300 dark:bg-slate-600'}`}>
               <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${form.isActive ? 'left-6' : 'left-0.5'}`} />
             </button>
           </div>
@@ -356,7 +356,7 @@ function UserRow({ user, onEdit }) {
       {/* Acción */}
       <div className="col-span-1 flex justify-end">
         <button type="button" onClick={() => onEdit(user)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3879a3] hover:bg-[#3879a3]/10 rounded-lg transition-colors">
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3179a7] hover:bg-[#3179a7]/10 rounded-lg transition-colors">
           <Pencil size={13} />
           Editar
         </button>
@@ -423,15 +423,15 @@ const Users = () => {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-9 h-9 rounded-xl bg-[#3879a3]/10 flex items-center justify-center">
-            <UsersIcon className="w-5 h-5 text-[#3879a3]" />
+          <div className="w-9 h-9 rounded-xl bg-[#3179a7]/10 flex items-center justify-center">
+            <UsersIcon className="w-5 h-5 text-[#3179a7]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Usuarios</h1>
             <p className="text-muted-foreground text-sm">Gestión de accesos al sistema de compliance</p>
           </div>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3879a3] hover:bg-[#2d6a8a] text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-[#3879a3]/20"
+        <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3179a7] hover:bg-[#235677] text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg hover:shadow-[#3179a7]/20"
           onClick={() => setShowModal(true)}>
           <Plus size={18} />
           Nuevo Usuario
@@ -466,7 +466,7 @@ const Users = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <RefreshCw size={24} className="animate-spin text-[#3879a3]" />
+            <RefreshCw size={24} className="animate-spin text-[#3179a7]" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">

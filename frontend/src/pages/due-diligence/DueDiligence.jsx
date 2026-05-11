@@ -229,8 +229,8 @@ const DueDiligence = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-9 h-9 rounded-xl bg-[#3879a3]/10 flex items-center justify-center flex-shrink-0">
-            <Shield className="w-5 h-5 text-[#3879a3]" />
+          <div className="w-9 h-9 rounded-xl bg-[#3179a7]/10 flex items-center justify-center flex-shrink-0">
+            <Shield className="w-5 h-5 text-[#3179a7]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Debida Diligencia</h1>
@@ -244,7 +244,7 @@ const DueDiligence = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { key: 'todos',      label: 'Total',      sub: 'clientes',        num: 'text-slate-700 dark:text-slate-200',      bg: 'bg-white dark:bg-slate-800',          border: 'border-slate-200 dark:border-slate-700',      activeBorder: 'border-[#3879a3] ring-2 ring-[#3879a3]/20', activeBg: 'bg-[#3879a3]/5 dark:bg-[#3879a3]/10' },
+          { key: 'todos',      label: 'Total',      sub: 'clientes',        num: 'text-slate-700 dark:text-slate-200',      bg: 'bg-white dark:bg-slate-800',          border: 'border-slate-200 dark:border-slate-700',      activeBorder: 'border-[#3179a7] ring-2 ring-[#3179a7]/20', activeBg: 'bg-[#3179a7]/5 dark:bg-[#3179a7]/10' },
           { key: 'completa',   label: 'Completa',   sub: 'verificadas',     num: 'text-emerald-600 dark:text-emerald-400',  bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-emerald-100 dark:border-emerald-900/30', activeBorder: 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-900', activeBg: '' },
           { key: 'en_proceso', label: 'En Proceso', sub: 'en revisión',     num: 'text-blue-600 dark:text-blue-400',        bg: 'bg-blue-50 dark:bg-blue-950/20',       border: 'border-blue-100 dark:border-blue-900/30',      activeBorder: 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900', activeBg: '' },
           { key: 'pendiente',  label: 'Pendiente',  sub: 'sin iniciar',     num: 'text-amber-600 dark:text-amber-400',      bg: 'bg-amber-50 dark:bg-amber-950/20',     border: 'border-amber-100 dark:border-amber-900/30',    activeBorder: 'border-amber-500 ring-2 ring-amber-200 dark:ring-amber-900', activeBg: '' },
@@ -275,7 +275,7 @@ const DueDiligence = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700
-            bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]
+            bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]
             text-sm transition-all outline-none"
         />
       </div>
@@ -327,7 +327,7 @@ const DueDiligence = () => {
                           : <Building2 className="w-4 h-4 text-white" />}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-foreground text-sm truncate group-hover:text-[#3879a3] transition-colors">
+                        <p className="font-semibold text-foreground text-sm truncate group-hover:text-[#3179a7] transition-colors">
                           {client.clientType === 'persona_humana'
                             ? `${client.lastName}, ${client.firstName}`
                             : client.legalName}
@@ -374,8 +374,8 @@ const DueDiligence = () => {
                         onClick={(e) => { e.stopPropagation(); setExpandedClient(isExpanded ? null : client.id); }}
                         className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
                           isExpanded
-                            ? 'bg-[#3879a3] text-white'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-[#3879a3]/10 hover:text-[#3879a3]'
+                            ? 'bg-[#3179a7] text-white'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-[#3179a7]/10 hover:text-[#3179a7]'
                         }`}
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -390,7 +390,7 @@ const DueDiligence = () => {
                         {/* Cronograma */}
                         <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
                           <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-[#3879a3]" />
+                            <Calendar className="w-3.5 h-3.5 text-[#3179a7]" />
                             Cronograma
                           </h4>
                           <div className="space-y-2">
@@ -411,7 +411,7 @@ const DueDiligence = () => {
                         {/* Acciones */}
                         <div className="md:col-span-3 bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
                           <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                            <Shield className="w-3.5 h-3.5 text-[#3879a3]" />
+                            <Shield className="w-3.5 h-3.5 text-[#3179a7]" />
                             Acciones
                           </h4>
                           <div className="flex flex-wrap gap-2.5">
@@ -433,7 +433,7 @@ const DueDiligence = () => {
                                   observaciones: '', resultado: 'pendiente',
                                 });
                               }}
-                              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3879a3] hover:bg-[#2d6a8a] text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow-md"
+                              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3179a7] hover:bg-[#235677] text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow-md"
                             >
                               <Play className="w-4 h-4" />
                               Iniciar Debida Diligencia
@@ -477,7 +477,7 @@ const DueDiligence = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-[#3879a3] to-[#2d6a8a]">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-[#3179a7] to-[#235677]">
               <div className="flex items-center gap-3">
                 <History className="w-6 h-6 text-white" />
                 <div>
@@ -519,7 +519,7 @@ const DueDiligence = () => {
                     {/* DD Futuras (Programadas) */}
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                        <ArrowRight className="w-4 h-4 text-[#3879a3]" />
+                        <ArrowRight className="w-4 h-4 text-[#3179a7]" />
                         Próximas Revisiones Programadas
                       </h3>
                       <div className="space-y-2">
@@ -562,7 +562,7 @@ const DueDiligence = () => {
                     {/* DD Pasadas (Historial) */}
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                        <History className="w-4 h-4 text-[#3879a3]" />
+                        <History className="w-4 h-4 text-[#3179a7]" />
                         Revisiones Anteriores
                       </h3>
                       <div className="overflow-x-auto">
@@ -630,7 +630,7 @@ const DueDiligence = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-[#3879a3] to-[#2d6a8a]">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-[#3179a7] to-[#235677]">
               <div className="flex items-center gap-3">
                 <Shield className="w-6 h-6 text-white" />
                 <div>
@@ -658,7 +658,7 @@ const DueDiligence = () => {
                 {/* Datos del Cliente (Pre-filled) */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                    <User className="w-4 h-4 text-[#3879a3]" />
+                    <User className="w-4 h-4 text-[#3179a7]" />
                     Datos del Cliente
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -740,7 +740,7 @@ const DueDiligence = () => {
                   {/* Verificación de Identidad */}
                   <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 text-[#3879a3]" />
+                      <UserCheck className="w-4 h-4 text-[#3179a7]" />
                       Verificación de Identidad
                     </h3>
                     <div className="space-y-3">
@@ -755,7 +755,7 @@ const DueDiligence = () => {
                             onClick={() => setReviewData(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
                             className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                               reviewData[item.key]
-                                ? 'bg-[#3879a3] text-white'
+                                ? 'bg-[#3179a7] text-white'
                                 : 'bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
                             }`}
                           >
@@ -770,7 +770,7 @@ const DueDiligence = () => {
                   {/* Verificación PEP */}
                   <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-[#3879a3]" />
+                      <Shield className="w-4 h-4 text-[#3179a7]" />
                       Verificación PEP
                     </h3>
                     <div className="space-y-3">
@@ -780,7 +780,7 @@ const DueDiligence = () => {
                           onClick={() => setReviewData(prev => ({ ...prev, consultaPEP: !prev.consultaPEP }))}
                           className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                             reviewData.consultaPEP
-                              ? 'bg-[#3879a3] text-white'
+                              ? 'bg-[#3179a7] text-white'
                               : 'bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
                           }`}
                         >
@@ -818,7 +818,7 @@ const DueDiligence = () => {
                   {/* Verificación Actividad */}
                   <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                      <Briefcase className="w-4 h-4 text-[#3879a3]" />
+                      <Briefcase className="w-4 h-4 text-[#3179a7]" />
                       Verificación de Actividad
                     </h3>
                     <div className="space-y-3">
@@ -833,7 +833,7 @@ const DueDiligence = () => {
                             onClick={() => setReviewData(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
                             className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                               reviewData[item.key]
-                                ? 'bg-[#3879a3] text-white'
+                                ? 'bg-[#3179a7] text-white'
                                 : 'bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
                             }`}
                           >
@@ -849,7 +849,7 @@ const DueDiligence = () => {
                 {/* Evaluación de Riesgo */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                    <AlertOctagon className="w-4 h-4 text-[#3879a3]" />
+                    <AlertOctagon className="w-4 h-4 text-[#3179a7]" />
                     Evaluación de Riesgo
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -883,7 +883,7 @@ const DueDiligence = () => {
                 {/* Observaciones */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-[#3879a3]" />
+                    <FileText className="w-4 h-4 text-[#3179a7]" />
                     Observaciones
                   </h3>
                   <textarea
@@ -898,12 +898,12 @@ const DueDiligence = () => {
                 {/* Resultado Final */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                    <CheckSquare className="w-4 h-4 text-[#3879a3]" />
+                    <CheckSquare className="w-4 h-4 text-[#3179a7]" />
                     Resultado de la DD
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {[
-                      { value: 'aprobado', label: 'Aprobado', color: 'bg-[#3879a3] hover:bg-[#2d6a8a]' },
+                      { value: 'aprobado', label: 'Aprobado', color: 'bg-[#3179a7] hover:bg-[#235677]' },
                       { value: 'requiere_info', label: 'Requiere más información', color: 'bg-amber-500 hover:bg-amber-600' },
                       { value: 'rechazado', label: 'Rechazado', color: 'bg-red-500 hover:bg-red-600' },
                     ].map((option) => (
@@ -951,7 +951,7 @@ const DueDiligence = () => {
                     console.log('Finalizando revisión:', reviewData);
                     setReviewModal({ open: false, client: null });
                   }}
-                  className="px-4 py-2 bg-[#3879a3] text-white rounded-lg hover:bg-[#2d6a8a] transition-colors text-sm font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-[#3179a7] text-white rounded-lg hover:bg-[#235677] transition-colors text-sm font-medium flex items-center gap-2"
                 >
                   <CheckCircle className="w-4 h-4" />
                   Finalizar DD

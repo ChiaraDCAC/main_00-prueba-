@@ -1,300 +1,180 @@
-const { Op } = require('sequelize');
-const { UnusualOperation, Client, SuspiciousReport, Alert } = require('../models');
+const { Op, literal } = require('sequelize');
+const { OperacionInusual, OIComentario, OIAdjunto, SociedadTag, Usuario, sequelize } = require('../models');
 const auditLogger = require('../utils/auditLogger');
+const path = require('path');
+const fs = require('fs');
 
 const unusualOperationController = {
-  // Listar operaciones inusuales
+
+  // GET /api/unusual-operations
   async list(req, res, next) {
     try {
-      const {
-        page = 1,
-        limit = 20,
-        status,
-        clientId,
-        dateFrom,
-        dateTo,
-        sortBy = 'detectionDate',
-        sortOrder = 'DESC',
-      } = req.query;
+      const { page = 1, limit = 20, status, clientId, dateFrom, dateTo } = req.query;
 
       const where = {};
-      if (status) where.status = status;
-      if (clientId) where.clientId = clientId;
+      if (status) where.estado = status;
+      if (clientId) where.id_sociedad = clientId;
       if (dateFrom || dateTo) {
-        where.detectionDate = {};
-        if (dateFrom) where.detectionDate[Op.gte] = new Date(dateFrom);
-        if (dateTo) where.detectionDate[Op.lte] = new Date(dateTo);
+        where.fecha_operacion = {};
+        if (dateFrom) where.fecha_operacion[Op.gte] = dateFrom;
+        if (dateTo)   where.fecha_operacion[Op.lte] = dateTo;
       }
 
-      const { count, rows } = await UnusualOperation.findAndCountAll({
+      const { count, rows } = await OperacionInusual.findAndCountAll({
         where,
         limit: parseInt(limit),
         offset: (parseInt(page) - 1) * parseInt(limit),
-        order: [[sortBy, sortOrder]],
+        order: [['created_at', 'DESC']],
         include: [
-          { model: Client, attributes: ['id', 'cuit', 'legalName', 'firstName', 'lastName'] },
-          { model: SuspiciousReport, as: 'suspiciousReport' },
+          { model: SociedadTag, attributes: ['id_sociedad', 'razon_social', 'cuit_cuil'] },
+          { model: Usuario, as: 'Usuario', attributes: ['id', 'nombre', 'apellido'] },
         ],
       });
 
       res.json({
         success: true,
         data: rows,
-        pagination: {
-          total: count,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(count / parseInt(limit)),
-        },
+        pagination: { total: count, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(count / parseInt(limit)) },
       });
     } catch (error) {
       next(error);
     }
   },
 
-  // Obtener OI por ID
+  // GET /api/unusual-operations/:id
   async getById(req, res, next) {
     try {
-      const operation = await UnusualOperation.findByPk(req.params.id, {
+      const oi = await OperacionInusual.findByPk(req.params.id, {
         include: [
-          { model: Client },
-          { model: SuspiciousReport, as: 'suspiciousReport' },
+          { model: SociedadTag, attributes: ['id_sociedad', 'razon_social', 'cuit_cuil'] },
+          { model: OIComentario, include: [{ model: Usuario, attributes: ['id', 'nombre', 'apellido'] }], order: [['created_at', 'ASC']] },
+          { model: OIAdjunto, include: [{ model: Usuario, attributes: ['id', 'nombre', 'apellido'] }] },
         ],
       });
-
-      if (!operation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Operación inusual no encontrada',
-        });
-      }
-
-      await auditLogger.log({
-        entityType: 'UnusualOperation',
-        entityId: operation.id,
-        action: 'view',
-        userId: req.user.id,
-        req,
-      });
-
-      res.json({
-        success: true,
-        data: operation,
-      });
+      if (!oi) return res.status(404).json({ success: false, message: 'OI no encontrada' });
+      res.json({ success: true, data: oi });
     } catch (error) {
       next(error);
     }
   },
 
-  // Crear OI manual
+  // POST /api/unusual-operations (ingreso desde sistema externo)
   async create(req, res, next) {
     try {
-      const data = req.body;
+      const nextNum = await sequelize.query("SELECT nextval('oi_codigo_seq') AS n", { type: sequelize.QueryTypes.SELECT });
+      const codigo = `OI-${String(nextNum[0].n).padStart(4, '0')}`;
 
-      // Generar número de operación
-      const count = await UnusualOperation.count();
-      data.operationNumber = `OI-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
-      data.detectionDate = new Date();
-
-      const operation = await UnusualOperation.create(data);
-
-      await auditLogger.log({
-        entityType: 'UnusualOperation',
-        entityId: operation.id,
-        action: 'create',
-        changes: data,
-        userId: req.user.id,
-        req,
+      const oi = await OperacionInusual.create({
+        codigo,
+        ...req.body,
+        origen: req.body.origen || 'sistema_externo',
       });
 
-      res.status(201).json({
-        success: true,
-        message: 'Operación inusual registrada',
-        data: operation,
-      });
+      res.status(201).json({ success: true, data: oi });
     } catch (error) {
       next(error);
     }
   },
 
-  // Analizar OI
-  async analyze(req, res, next) {
-    try {
-      const operation = await UnusualOperation.findByPk(req.params.id);
-
-      if (!operation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Operación inusual no encontrada',
-        });
-      }
-
-      const { analysis } = req.body;
-
-      await operation.update({
-        status: 'en_analisis',
-        analysis,
-        analyzedBy: req.user.id,
-        analyzedAt: new Date(),
-      });
-
-      await auditLogger.log({
-        entityType: 'UnusualOperation',
-        entityId: operation.id,
-        action: 'update',
-        changes: { status: 'en_analisis', analysis },
-        userId: req.user.id,
-        req,
-      });
-
-      res.json({
-        success: true,
-        message: 'Análisis registrado',
-        data: operation,
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-
-  // Clasificar OI como justificada
+  // POST /api/unusual-operations/:id/justify — cerrar como Justificada
   async markAsJustified(req, res, next) {
     try {
-      const operation = await UnusualOperation.findByPk(req.params.id);
-
-      if (!operation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Operación inusual no encontrada',
-        });
+      const { comentario } = req.body;
+      if (!comentario?.trim()) {
+        return res.status(400).json({ success: false, message: 'El comentario es obligatorio para cerrar la OI' });
       }
 
-      const { conclusion } = req.body;
+      const oi = await OperacionInusual.findByPk(req.params.id);
+      if (!oi) return res.status(404).json({ success: false, message: 'OI no encontrada' });
+      if (oi.estado !== 'nueva') return res.status(400).json({ success: false, message: 'Solo se pueden cerrar OIs en estado Nueva' });
 
-      await operation.update({
-        status: 'justificada',
-        conclusion,
-        approvedBy: req.user.id,
-        approvedAt: new Date(),
-      });
+      await oi.update({ estado: 'justificada', comentario_cierre: comentario, cerrado_por: req.user.id, cerrado_en: new Date() });
 
-      await auditLogger.log({
-        entityType: 'UnusualOperation',
-        entityId: operation.id,
-        action: 'update',
-        changes: { status: 'justificada', conclusion },
-        userId: req.user.id,
-        req,
-      });
+      await OIComentario.create({ id_oi: oi.id, id_usuario: req.user.id, texto: `[CIERRE JUSTIFICADA] ${comentario}` });
 
-      res.json({
-        success: true,
-        message: 'Operación clasificada como justificada',
-        data: operation,
-      });
+      await auditLogger.log({ entityType: 'OperacionInusual', entityId: oi.id, action: 'justify', changes: { estado: 'justificada' }, userId: req.user.id, req });
+
+      res.json({ success: true, data: oi });
     } catch (error) {
       next(error);
     }
   },
 
-  // Clasificar OI como sospechosa (genera ROS)
+  // POST /api/unusual-operations/:id/suspicious — cerrar como OS
   async markAsSuspicious(req, res, next) {
     try {
-      const operation = await UnusualOperation.findByPk(req.params.id, {
-        include: [{ model: Client }],
-      });
-
-      if (!operation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Operación inusual no encontrada',
-        });
+      const { comentario } = req.body;
+      if (!comentario?.trim()) {
+        return res.status(400).json({ success: false, message: 'El comentario es obligatorio para cerrar la OI como OS' });
       }
 
-      const { conclusion, suspicionDescription } = req.body;
+      const oi = await OperacionInusual.findByPk(req.params.id);
+      if (!oi) return res.status(404).json({ success: false, message: 'OI no encontrada' });
+      if (oi.estado !== 'nueva') return res.status(400).json({ success: false, message: 'Solo se pueden cerrar OIs en estado Nueva' });
 
-      await operation.update({
-        status: 'sospechosa',
-        conclusion,
-        approvedBy: req.user.id,
-        approvedAt: new Date(),
-      });
+      await oi.update({ estado: 'os', comentario_cierre: comentario, cerrado_por: req.user.id, cerrado_en: new Date() });
 
-      // Generar ROS
-      const rosCount = await SuspiciousReport.count();
-      const ros = await SuspiciousReport.create({
-        reportNumber: `ROS-${new Date().getFullYear()}-${String(rosCount + 1).padStart(6, '0')}`,
-        reportDate: new Date(),
-        clientId: operation.clientId,
-        unusualOperationId: operation.id,
-        suspicionDescription: suspicionDescription || conclusion,
-        totalAmount: operation.amount,
-        currency: operation.currency,
-        createdBy: req.user.id,
-        isConfidential: true,
-      });
+      await OIComentario.create({ id_oi: oi.id, id_usuario: req.user.id, texto: `[CIERRE OS] ${comentario}` });
 
-      await auditLogger.log({
-        entityType: 'UnusualOperation',
-        entityId: operation.id,
-        action: 'update',
-        changes: { status: 'sospechosa', rosGenerated: ros.reportNumber },
-        userId: req.user.id,
-        req,
-      });
+      await auditLogger.log({ entityType: 'OperacionInusual', entityId: oi.id, action: 'suspicious', changes: { estado: 'os' }, userId: req.user.id, req });
 
-      res.json({
-        success: true,
-        message: 'Operación clasificada como sospechosa. ROS generado.',
-        data: {
-          operation,
-          ros,
-        },
-      });
+      res.json({ success: true, data: oi, mensaje: 'OI cerrada como OS. El ROS debe emitirse fuera de la herramienta.' });
     } catch (error) {
       next(error);
     }
   },
 
-  // Crear OI desde alerta
-  async createFromAlert(req, res, next) {
+  // POST /api/unusual-operations/:id/comment
+  async addComment(req, res, next) {
     try {
-      const alert = await Alert.findByPk(req.params.alertId, {
-        include: [{ model: Client }],
+      const { texto } = req.body;
+      if (!texto?.trim()) return res.status(400).json({ success: false, message: 'El comentario no puede estar vacío' });
+
+      const oi = await OperacionInusual.findByPk(req.params.id);
+      if (!oi) return res.status(404).json({ success: false, message: 'OI no encontrada' });
+
+      const comentario = await OIComentario.create({ id_oi: oi.id, id_usuario: req.user.id, texto });
+      res.status(201).json({ success: true, data: comentario });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // POST /api/unusual-operations/:id/attachment
+  async addAttachment(req, res, next) {
+    try {
+      if (!req.file) return res.status(400).json({ success: false, message: 'No se recibió ningún archivo' });
+
+      const oi = await OperacionInusual.findByPk(req.params.id);
+      if (!oi) return res.status(404).json({ success: false, message: 'OI no encontrada' });
+      if (oi.estado !== 'nueva') return res.status(400).json({ success: false, message: 'No se pueden agregar adjuntos a una OI cerrada' });
+
+      const adjunto = await OIAdjunto.create({
+        id_oi: oi.id,
+        id_usuario: req.user.id,
+        nombre_archivo: req.file.originalname,
+        url_archivo: `/api/uploads/${req.file.filename}`,
+        mime_type: req.file.mimetype,
       });
 
-      if (!alert) {
-        return res.status(404).json({
-          success: false,
-          message: 'Alerta no encontrada',
-        });
-      }
+      res.status(201).json({ success: true, data: adjunto });
+    } catch (error) {
+      next(error);
+    }
+  },
 
-      const count = await UnusualOperation.count();
-      const operation = await UnusualOperation.create({
-        operationNumber: `OI-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`,
-        clientId: alert.clientId,
-        detectionDate: new Date(),
-        operationType: alert.alertType,
-        description: `Generado desde alerta: ${alert.title}. ${alert.description}`,
-        unusualIndicators: [alert.alertType],
-        status: 'pendiente',
-      });
+  // DELETE /api/unusual-operations/:id/attachment/:adjId
+  async deleteAttachment(req, res, next) {
+    try {
+      const oi = await OperacionInusual.findByPk(req.params.id);
+      if (!oi) return res.status(404).json({ success: false, message: 'OI no encontrada' });
+      if (oi.estado !== 'nueva') return res.status(400).json({ success: false, message: 'No se pueden eliminar adjuntos de una OI cerrada' });
 
-      await auditLogger.log({
-        entityType: 'UnusualOperation',
-        entityId: operation.id,
-        action: 'create',
-        changes: { fromAlert: alert.id },
-        userId: req.user.id,
-        req,
-      });
+      const adjunto = await OIAdjunto.findByPk(req.params.adjId);
+      if (!adjunto) return res.status(404).json({ success: false, message: 'Adjunto no encontrado' });
 
-      res.status(201).json({
-        success: true,
-        message: 'Operación inusual creada desde alerta',
-        data: operation,
-      });
+      await adjunto.destroy();
+      res.json({ success: true });
     } catch (error) {
       next(error);
     }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
@@ -40,6 +40,7 @@ import {
   getRequiredDocuments,
   getDocumentFields,
   COMPLEMENTARY_DOCUMENTS,
+  isPersonaHumana,
 } from '../../config/documentRequirements';
 import { clientService } from '../../services/clientService';
 
@@ -50,12 +51,60 @@ const STEPS = [
   { id: 'review', label: 'Alta Final', icon: Check },
 ];
 
+const STEP_INFO = {
+  type: 'Identificá el tipo de cliente (Persona Humana o Jurídica) y revisá la documentación inicial cargada antes de avanzar al alta.',
+  documents: 'Cargá los datos de la sociedad y de cada persona vinculada (titulares, apoderados, firmantes). Podés seleccionar personas existentes del directorio DCAC o crear nuevas.',
+  dd: 'Definí el perfil de riesgo y transaccional del cliente. Esta información alimenta la matriz de riesgo y los controles de monitoreo posteriores.',
+  review: 'Revisá toda la información antes de confirmar el alta. Si la documentación está incompleta podés guardar como pendiente y completar más tarde.',
+};
+
+const StepInfoButton = ({ text }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    const onEsc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onClickOutside);
+    document.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('keydown', onEsc);
+    };
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-[#3179a7] transition-colors"
+        aria-label="Más información sobre este paso"
+        title="Más información"
+      >
+        <Info className="w-3 h-3" />
+      </button>
+      {open && (
+        <div
+          role="dialog"
+          className="absolute z-30 top-full mt-2 left-1/2 -translate-x-1/2 w-72 p-3 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-700 text-xs leading-relaxed text-slate-600 dark:text-slate-300"
+        >
+          {text}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ClientOnboarding = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const [currentStep, setCurrentStep] = useState(0); // Always start at step 0 so entity type selector is always visible
-  const [altaExitosa, setAltaExitosa] = useState(null); // { clientId, clientName, isPendiente, docsIncompletos }
+  const [altaExitosa, setAltaExitosa] = useState(null);
+  const [excepcionModal, setExcepcionModal] = useState(false);
+  const [excepcionMotivo, setExcepcionMotivo] = useState(''); // { clientId, clientName, isPendiente, docsIncompletos }
   const [entityType, setEntityType] = useState(null);
   const [datosSociedad, setDatosSociedad] = useState({
     razonSocial: '',
@@ -88,6 +137,14 @@ const ClientOnboarding = () => {
     nseNotas: '',
     nivelRiesgo: '',
     ventasEstimadasAnuales: '',
+    // Matriz de riesgo
+    esPep: false,
+    residencia: null,
+    nacionalidad: null,
+    actividad: null,
+    antiguedad: null,
+    materialidad: null,
+    riesgoPuntaje: null,
   });
 
 
@@ -144,11 +201,18 @@ const ClientOnboarding = () => {
 
   const personaNueva = {
     apellido: '', nombre: '', email: '', telefono: '', numeroDocumento: '', cuit: '',
-    porcentaje: '', cargo: '', facultades: '', domicilio: '', vigenciaPoder: '',
+    porcentaje: '', cargo: '', facultades: '', vigenciaPoder: '',
+    domicilioCalle: '', domicilioAltura: '', domicilioPiso: '', domicilioLocalidad: '', domicilioProvincia: '',
     fechaOtorgamiento: '', fechaVencimientoPoder: '', camposDelSistema: [],
     vinculoCausante: '', tipoAdministrador: '', aceptoCargo: '',
-    esFirmante: false, esBeneficiarioFinal: false, esPep: false,
-    esAutoridad: false, esApoderado: false, esAccionista: false, esHeredero: false, esAdministrador: false, esSocioSH: false,
+    esBeneficiarioFinal: false, esPep: false,
+    esPresidente: false, esGerente: false, esDirector: false,
+    esApoderado: false, esAccionista: false, esSocioSRL: false, esSocioSH: false,
+    esHeredero: false, esAdministrador: false,
+    // Firma / alcance (presidente autocompleta, apoderado configura)
+    tipoFirmaRol: '', alcanceRol: '', alcanceRolOtro: '', areaRolInterno: '',
+    // Esquema firma conjunta (apoderado conjunta)
+    firmaConjuntaParticipantes: [], firmaConjuntaMinFirmantes: 2, firmaConjuntaPropagada: false,
     // Campos extra Socio SH
     shPorcentaje: '', shFirmaPresente: null, shCargoRol: '', shCargoOtro: '',
     // Screening
@@ -189,6 +253,61 @@ const ClientOnboarding = () => {
     setPersonas((prev) => {
       const u = [...prev];
       u[index] = { ...u[index], [field]: value };
+      return u;
+    });
+  };
+
+  // Toggle de rol con auto-fill para presidente
+  const toggleRol = (idx, key) => {
+    setPersonas(prev => {
+      const u = [...prev];
+      const p = u[idx];
+      const newVal = !p[key];
+      // Solo puede haber un Presidente
+      if (key === 'esPresidente' && newVal) {
+        const yaHayPresidente = u.some((persona, i) => i !== idx && persona.esPresidente);
+        if (yaHayPresidente) {
+          toast.warning('Ya hay un Presidente asignado. Solo puede haber uno por entidad.');
+          return prev;
+        }
+      }
+      const updates = { [key]: newVal };
+      // Presidente (solo SA) → Individual + General automático
+      if (key === 'esPresidente') {
+        updates.tipoFirmaRol = newVal ? 'Individual' : '';
+        updates.alcanceRol   = newVal ? 'General'    : '';
+      }
+      // Apoderado → Individual + General por defecto (analista puede modificar)
+      if (key === 'esApoderado' && newVal) {
+        updates.tipoFirmaRol = updates.tipoFirmaRol || 'Individual';
+        updates.alcanceRol   = updates.alcanceRol   || 'General';
+      }
+      u[idx] = { ...p, ...updates };
+      return u;
+    });
+  };
+
+  // Agregar/quitar participante del esquema conjunta (usa ID estable)
+  const toggleParticipanteConjunta = (idx, participanteId) => {
+    setPersonas(prev => {
+      const u = [...prev];
+      const partic = [...(u[idx].firmaConjuntaParticipantes || [])];
+      const existe = partic.findIndex(p => p.participanteId === participanteId);
+      if (existe >= 0) partic.splice(existe, 1);
+      else partic.push({ participanteId, obligatorio: true, alcance: '', alcanceOtro: '' });
+      u[idx] = { ...u[idx], firmaConjuntaParticipantes: partic };
+      return u;
+    });
+  };
+
+  // Actualizar campo de un participante en el esquema conjunta
+  const updateParticipanteConjunta = (idx, participanteId, field, value) => {
+    setPersonas(prev => {
+      const u = [...prev];
+      const partic = [...(u[idx].firmaConjuntaParticipantes || [])];
+      const i = partic.findIndex(p => p.participanteId === participanteId);
+      if (i >= 0) partic[i] = { ...partic[i], [field]: value };
+      u[idx] = { ...u[idx], firmaConjuntaParticipantes: partic };
       return u;
     });
   };
@@ -274,7 +393,7 @@ const ClientOnboarding = () => {
           tipoControl: '',
           cargo: '',
           facultades: '',
-          domicilio: '',
+          domicilioCalle: '', domicilioAltura: '', domicilioPiso: '', domicilioLocalidad: '', domicilioProvincia: '',
           vigenciaPoder: '',
           fechaOtorgamiento: '',
           fechaVencimientoPoder: '',
@@ -292,6 +411,9 @@ const ClientOnboarding = () => {
           esHeredero: false,
           esAdministrador: false,
           esSocioSH: false,
+          // Monotributista: firmante único Individual + General automático
+          tipoFirmaRol: entityType === ENTITY_TYPES.MONOTRIBUTISTA ? 'Individual' : '',
+          alcanceRol:   entityType === ENTITY_TYPES.MONOTRIBUTISTA ? 'General'    : '',
           shPorcentaje: '', shFirmaPresente: null, shCargoRol: '', shCargoOtro: '',
           screeningAbierto: false,
           figuraEnRepet: null,
@@ -395,11 +517,14 @@ const ClientOnboarding = () => {
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedClientId, setExpandedClientId] = useState(null);
-  const [documentReviews, setDocumentReviews] = useState({}); // { clientId: { docId: 'approved' | 'rejected' | 'solicitado' | null } }
+  const [documentReviews, setDocumentReviews] = useState({}); // { clientId: { docId: 'approved' | 'rejected' | 'observed' | 'solicitado' | null } }
   const [rejectionReasons, setRejectionReasons] = useState({}); // { clientId: { docId: 'motivo' } }
+  const [observationReasons, setObservationReasons] = useState({}); // { clientId: { docId: 'observacion' } }
   const [tableUploadedDocs, setTableUploadedDocs] = useState({}); // { clientId: { docId: { file, dataUrl, name } } }
   const [rejectingDoc, setRejectingDoc] = useState(null); // { clientId, docId, docName } - para modal de rechazo
   const [rejectReason, setRejectReason] = useState('');
+  const [observingDoc, setObservingDoc] = useState(null); // { clientId, docId, docName } - para modal de observación
+  const [observeReason, setObserveReason] = useState('');
 
   // Document viewer modal
   const [viewingDocument, setViewingDocument] = useState(null); // { client, doc, fileUrl }
@@ -431,6 +556,77 @@ const ClientOnboarding = () => {
     agregar(cliente.authorities);
     return lista;
   }, [pendingClients, selectedClientId]);
+
+  // Lista combinada de todos los participantes disponibles para firma conjunta
+  // Incluye: personas ya en el form + personas del directorio de la sociedad no agregadas aún
+  const todosParticipantesDisponibles = React.useMemo(() => {
+    const lista = [];
+    personas.forEach((p, i) => {
+      lista.push({
+        id: p._dirId ? `dir_${p._dirId}` : `form_${i}`,
+        formIdx: i,
+        dirId: p._dirId || null,
+        apellido: p.apellido || '',
+        nombre: p.nombre || '',
+        email: p.email || '',
+        enForm: true,
+      });
+    });
+    personasDeEstaSociedad.forEach(d => {
+      const yaEnForm = personas.some(p => p._dirId === d.id);
+      if (!yaEnForm) {
+        lista.push({
+          id: `dir_${d.id}`,
+          formIdx: null,
+          dirId: d.id,
+          apellido: d.apellido || '',
+          nombre: d.nombre || '',
+          email: d.email || '',
+          enForm: false,
+        });
+      }
+    });
+    return lista;
+  }, [personas, personasDeEstaSociedad]);
+
+  // Propagar el esquema conjunta — agrega al form los del directorio si no están y los tagea
+  const propagarFirmaConjunta = (idx) => {
+    setPersonas(prev => {
+      let u = [...prev];
+      const origen = u[idx];
+      const partic = origen.firmaConjuntaParticipantes || [];
+      const dataPropagada = {
+        esApoderado: true,
+        tipoFirmaRol: 'Multiple',
+        firmaConjuntaParticipantes: partic,
+        firmaConjuntaMinFirmantes: origen.firmaConjuntaMinFirmantes,
+        firmaConjuntaPropagada: true,
+      };
+      partic.forEach(({ participanteId }) => {
+        const candidato = todosParticipantesDisponibles.find(p => p.id === participanteId);
+        if (!candidato) return;
+        if (candidato.enForm && candidato.formIdx !== idx) {
+          u[candidato.formIdx] = { ...u[candidato.formIdx], ...dataPropagada };
+        } else if (!candidato.enForm && candidato.dirId) {
+          const dirPersona = personasDeEstaSociedad.find(d => d.id === candidato.dirId);
+          if (dirPersona) {
+            u = [...u, {
+              ...personaNueva,
+              _dirId: dirPersona.id,
+              apellido: dirPersona.apellido,
+              nombre: dirPersona.nombre,
+              email: dirPersona.email || '',
+              telefono: dirPersona.telefono || '',
+              fromSystem: true,
+              camposDelSistema: ['apellido', 'nombre', 'email', 'telefono'],
+              ...dataPropagada,
+            }];
+          }
+        }
+      });
+      return u;
+    });
+  };
 
   const personasDirectorioFiltradas = personasDeEstaSociedad.filter((p) => {
     const q = personaQuery.toLowerCase();
@@ -479,10 +675,13 @@ const ClientOnboarding = () => {
     if (status === 'rejected' && reason) {
       setRejectionReasons(prev => ({
         ...prev,
-        [clientId]: {
-          ...prev[clientId],
-          [docId]: reason,
-        },
+        [clientId]: { ...prev[clientId], [docId]: reason },
+      }));
+    }
+    if (status === 'observed' && reason) {
+      setObservationReasons(prev => ({
+        ...prev,
+        [clientId]: { ...prev[clientId], [docId]: reason },
       }));
     }
   };
@@ -500,7 +699,24 @@ const ClientOnboarding = () => {
       toast.warning('Documento rechazado');
       setRejectingDoc(null);
       setRejectReason('');
-      setViewingDocument(null); // cerrar visor al confirmar rechazo
+      setViewingDocument(null);
+    }
+  };
+
+  // Abrir modal de observación
+  const openObserveModal = (clientId, docId, docName) => {
+    setObservingDoc({ clientId, docId, docName });
+    setObserveReason('');
+  };
+
+  // Confirmar observación con motivo
+  const confirmObserve = () => {
+    if (observingDoc && observeReason.trim()) {
+      handleDocumentReview(observingDoc.clientId, observingDoc.docId, 'observed', observeReason);
+      toast.info('Documento marcado con observaciones');
+      setObservingDoc(null);
+      setObserveReason('');
+      setViewingDocument(null);
     }
   };
 
@@ -523,20 +739,20 @@ const ClientOnboarding = () => {
   // Check if all documents for a client are reviewed
   const areAllDocsReviewed = (clientId, clientDocs) => {
     const reviews = documentReviews[clientId] || {};
-    return clientDocs.every(doc => reviews[doc.id] === 'approved' || reviews[doc.id] === 'rejected');
+    return clientDocs.every(doc => ['approved', 'rejected', 'observed'].includes(reviews[doc.id]));
   };
 
-  // Check if all REQUIRED docs are approved (for "Dar de Alta")
+  // Check if all REQUIRED docs are approved or observed (for "Dar de Alta")
   const areRequiredDocsApproved = (clientId, clientDocs) => {
     const reviews = documentReviews[clientId] || {};
     const requiredDocs = clientDocs.filter(doc => doc.required);
-    return requiredDocs.length > 0 && requiredDocs.every(doc => reviews[doc.id] === 'approved');
+    return requiredDocs.length > 0 && requiredDocs.every(doc => ['approved', 'observed'].includes(reviews[doc.id]));
   };
 
-  // Check if client can proceed (all docs approved)
+  // Check if client can proceed (all docs approved or observed)
   const canProceed = (clientId, clientDocs) => {
     const reviews = documentReviews[clientId] || {};
-    return clientDocs.every(doc => reviews[doc.id] === 'approved');
+    return clientDocs.every(doc => ['approved', 'observed'].includes(reviews[doc.id]));
   };
 
   // Handle client selection from list (after docs are reviewed)
@@ -555,7 +771,7 @@ const ClientOnboarding = () => {
     }
 
     setSelectedClientId(client.id);
-    setEntityType(client.legalForm || client.clientType);
+    setEntityType((client.legalForm || client.clientType)?.toLowerCase());
 
     // Merge backend documents with any docs uploaded inline in the review table
     const mergedDocs = {
@@ -889,7 +1105,8 @@ const ClientOnboarding = () => {
     }
   };
 
-  const handleFinish = async () => {
+  const handleFinish = async (opts = {}) => {
+    const { excepcion = false, motivoExcepcion = '' } = opts;
     try {
       // VALIDACIÓN: Duplicado por CUIT — solo bloquea si ya hay un cliente aprobado/activo
       if (datosSociedad.cuit) {
@@ -924,7 +1141,8 @@ const ClientOnboarding = () => {
         return !hasData && !isAutoGenerated;
       });
 
-      const clientStatus = docsIncompletos.length > 0 ? 'pendiente_documentacion' : 'aprobado';
+      // Si es alta por excepción, queda aprobado aunque falten docs; quedan registrados los flags de auditoría.
+      const clientStatus = excepcion ? 'aprobado' : (docsIncompletos.length > 0 ? 'pendiente_documentacion' : 'aprobado');
 
       if (docsIncompletos.length > 0) {
         toast.info(
@@ -969,6 +1187,9 @@ const ClientOnboarding = () => {
           email: p.email,
           phone: p.telefono,
         })),
+        // Auditoría: alta por excepción
+        altaPorExcepcion: excepcion,
+        motivoAltaPorExcepcion: excepcion ? motivoExcepcion.trim() : null,
       };
 
       const response = await clientService.create(clientData);
@@ -1005,9 +1226,11 @@ const ClientOnboarding = () => {
       }
 
       toast.success(
-        clientStatus === 'pendiente_documentacion'
-          ? 'Cliente guardado como Pendiente. Completá la documentación faltante.'
-          : 'Alta confirmada exitosamente.',
+        excepcion
+          ? 'Alta por excepción registrada. Motivo guardado para auditoría.'
+          : clientStatus === 'pendiente_documentacion'
+            ? 'Cliente guardado como Pendiente. Completá la documentación faltante.'
+            : 'Alta confirmada exitosamente.',
         { autoClose: 4000 }
       );
       navigate(`/clients/${newClientId}`);
@@ -1070,7 +1293,7 @@ const ClientOnboarding = () => {
                   placeholder="Buscar por CUIT, razón social..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-sm w-72 bg-white dark:bg-gray-800 focus:border-[#3879a3] focus:ring-2 focus:ring-[#3879a3]/20 transition-all"
+                  className="pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-sm w-72 bg-white dark:bg-gray-800 focus:border-[#3179a7] focus:ring-2 focus:ring-[#3179a7]/20 transition-all"
                 />
               </div>
             </div>
@@ -1090,12 +1313,12 @@ const ClientOnboarding = () => {
 
             {loadingClients ? (
               <div className="flex flex-col items-center justify-center py-20 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#3879a3]/5 via-transparent to-[#2d6a8a]/5 rounded-2xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#3179a7]/5 via-transparent to-[#235677]/5 rounded-2xl"></div>
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#3879a3] to-[#2d6a8a] flex items-center justify-center mb-5 shadow-xl shadow-[#3879a3]/20 animate-pulse">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#3179a7] to-[#235677] flex items-center justify-center mb-5 shadow-xl shadow-[#3179a7]/20 animate-pulse">
                     <Loader2 className="w-10 h-10 animate-spin text-white" />
                   </div>
-                  <div className="absolute -inset-4 bg-[#3879a3]/20 rounded-full blur-2xl animate-pulse"></div>
+                  <div className="absolute -inset-4 bg-[#3179a7]/20 rounded-full blur-2xl animate-pulse"></div>
                 </div>
                 <span className="text-lg font-medium text-foreground mt-2">Cargando clientes...</span>
                 <span className="text-sm text-muted-foreground">Por favor espere</span>
@@ -1118,34 +1341,45 @@ const ClientOnboarding = () => {
             ) : (
               <div className="rounded-b-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
                 {filteredClients.map((client, index) => {
-                  const clientDocs = getRequiredDocuments(client.legalForm || client.clientType);
+                  const clientEntityType = (client.legalForm || client.clientType)?.toLowerCase();
+                  const clientEsPH = isPersonaHumana(clientEntityType);
+                  const clientDocs = getRequiredDocuments(clientEntityType);
                   const reviews = documentReviews[client.id] || {};
                   const reviewedCount = Object.values(reviews).filter(r => r).length;
                   const approvedCount = Object.values(reviews).filter(r => r === 'approved').length;
                   const isExpanded = expandedClientId === client.id;
                   const allReviewed = areAllDocsReviewed(client.id, clientDocs);
                   const allApproved = canProceed(client.id, clientDocs);
+                  const hasSomeRejected = Object.values(reviews).some(r => r === 'rejected');
+                  const hasSomeObserved = Object.values(reviews).some(r => r === 'observed');
+                  const observedCount = Object.values(reviews).filter(r => r === 'observed').length;
 
-                  const readyForAlta = areRequiredDocsApproved(client.id, clientDocs);
+                  // PH: docs vienen por 4i, no hay desplegable de revisión → mostramos botón inline.
+                  // PJ: hay que abrir el desplegable, revisar docs, y reci\u00e9n ah\u00ed aparece el bot\u00f3n al final del listado.
+                  const canContinue = clientEsPH;
+                  const docsAprobados = areRequiredDocsApproved(client.id, clientDocs);
 
                   // Determine status label
                   const getStatusLabel = () => {
                     if (client.status === 'aprobado') return { text: 'Aprobado', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: 'check', glow: 'shadow-emerald-500/20' };
-                    if (readyForAlta) return { text: 'Listo para Alta', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: 'check', glow: 'shadow-emerald-500/20' };
-                    if (allReviewed) return { text: 'Con Observaciones', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: 'warning', glow: 'shadow-amber-500/20' };
-                    return { text: 'Pendiente', color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400', icon: 'clock', glow: '' };
+                    if (clientEsPH) return { text: 'Doc. vía 4i', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: 'check', glow: '' };
+                    if (docsAprobados && !hasSomeObserved) return { text: 'Docs Aprobados', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: 'check', glow: 'shadow-emerald-500/20' };
+                    if (docsAprobados && hasSomeObserved) return { text: 'Alta c/ Observaciones', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: 'warning', glow: 'shadow-amber-500/20' };
+                    if (allReviewed && hasSomeRejected) return { text: 'Con Rechazados', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'warning', glow: 'shadow-red-500/20' };
+                    if (hasSomeObserved) return { text: 'Con Observaciones', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: 'warning', glow: 'shadow-amber-500/20' };
+                    return { text: 'Pendiente revisión', color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400', icon: 'clock', glow: '' };
                   };
                   const statusInfo = getStatusLabel();
 
                   return (
-                    <div key={client.id} className={`${index > 0 ? 'border-t border-slate-100 dark:border-slate-800' : ''} transition-all duration-300 ${readyForAlta
+                    <div key={client.id} className={`${index > 0 ? 'border-t border-slate-100 dark:border-slate-800' : ''} transition-all duration-300 ${canContinue
                       ? 'bg-gradient-to-r from-emerald-50 via-emerald-50/80 to-teal-50/60 dark:from-emerald-900/20 dark:via-emerald-900/15 dark:to-teal-900/10'
                       : isExpanded
                         ? 'bg-slate-50/50 dark:bg-slate-800/30'
                         : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
                       }`}>
-                      {/* Client Row - When ready for alta, show different layout */}
-                      {readyForAlta ? (
+                      {/* Client Row — siempre muestra botón Continuar */}
+                      {canContinue ? (
                         <div className="flex items-center justify-between px-6 py-5">
                           <div className="flex items-center gap-5">
                             <div className="relative">
@@ -1167,17 +1401,30 @@ const ClientOnboarding = () => {
                               </p>
                               <div className="flex items-center gap-1.5 mt-2 text-emerald-600 dark:text-emerald-400">
                                 <Check className="w-4 h-4" />
-                                <span className="text-sm font-medium">Documentación aprobada - Listo para continuar</span>
+                                <span className="text-sm font-medium">
+                                  {clientEsPH ? 'Documentación procesada vía 4i' : docsAprobados ? 'Documentación aprobada' : 'Carga de datos disponible'}
+                                </span>
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={() => handleSelectClient(client)}
-                            className="group relative px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98]"
-                          >
-                            <span>Continuar Carga de Datos</span>
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                          </button>
+                          <div className="flex items-center gap-3">
+                            {!clientEsPH && (
+                              <button
+                                onClick={() => handleToggleExpand(client.id)}
+                                className="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 transition-all"
+                                title="Ver/ocultar documentos"
+                              >
+                                {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleSelectClient(client)}
+                              className="group relative px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                              <span>Continuar Carga de Datos</span>
+                              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <>
@@ -1189,8 +1436,8 @@ const ClientOnboarding = () => {
                             {/* Sociedad */}
                             <div className="col-span-4 flex items-center gap-3">
                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${isExpanded
-                                ? 'bg-[#3879a3] text-white rotate-0'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-[#3879a3]/10 group-hover:text-[#3879a3]'
+                                ? 'bg-[#3179a7] text-white rotate-0'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-[#3179a7]/10 group-hover:text-[#3179a7]'
                                 }`}>
                                 {isExpanded ? (
                                   <ChevronUp className="w-5 h-5" />
@@ -1199,7 +1446,7 @@ const ClientOnboarding = () => {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <span className="font-semibold text-foreground block truncate group-hover:text-[#3879a3] transition-colors">
+                                <span className="font-semibold text-foreground block truncate group-hover:text-[#3179a7] transition-colors">
                                   {client.legalName || `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Sin nombre'}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
@@ -1243,15 +1490,15 @@ const ClientOnboarding = () => {
                         </>
                       )}
 
-                      {/* Expanded Documents Table - Only show when not ready for alta */}
-                      {isExpanded && !readyForAlta && (
+                      {/* Expanded Documents Table */}
+                      {isExpanded && (
                         <div className="px-6 pb-6 pt-2">
                           <div className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-lg">
                             {/* Section Header */}
-                            <div className="px-5 py-4 bg-gradient-to-r from-[#3879a3]/10 to-[#2d6a8a]/5 border-b border-slate-200 dark:border-slate-700">
+                            <div className="px-5 py-4 bg-gradient-to-r from-[#3179a7]/10 to-[#235677]/5 border-b border-slate-200 dark:border-slate-700">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3879a3] to-[#2d6a8a] flex items-center justify-center shadow-md">
+                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3179a7] to-[#235677] flex items-center justify-center shadow-md">
                                     <FileCheck className="w-5 h-5 text-white" />
                                   </div>
                                   <div>
@@ -1289,10 +1536,11 @@ const ClientOnboarding = () => {
                                       <React.Fragment key={doc.id}>
                                         <tr
                                           className={`transition-all duration-200 ${hasDocument
-                                            ? 'hover:bg-[#3879a3]/5'
+                                            ? 'hover:bg-[#3179a7]/5'
                                             : 'opacity-50 bg-slate-50/50 dark:bg-slate-800/20'
                                             } ${reviewStatus === 'approved' ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}
-                                        ${reviewStatus === 'rejected' ? 'bg-red-50/50 dark:bg-red-900/10' : ''}`}
+                                        ${reviewStatus === 'rejected' ? 'bg-red-50/50 dark:bg-red-900/10' : ''}
+                                        ${reviewStatus === 'observed' ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''}`}
                                         >
                                           <td className="px-5 py-4">
                                             {hasDocument && reviewStatus !== 'solicitado' ? (
@@ -1304,18 +1552,20 @@ const ClientOnboarding = () => {
                                                 }}
                                                 className="flex items-center gap-3 transition-all group cursor-pointer"
                                               >
-                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3879a3]/20 to-[#2d6a8a]/10 flex items-center justify-center group-hover:from-[#3879a3] group-hover:to-[#2d6a8a] transition-all">
-                                                  <FileText className="w-5 h-5 text-[#3879a3] group-hover:text-white transition-colors" />
+                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3179a7]/20 to-[#235677]/10 flex items-center justify-center group-hover:from-[#3179a7] group-hover:to-[#235677] transition-all">
+                                                  <FileText className="w-5 h-5 text-[#3179a7] group-hover:text-white transition-colors" />
                                                 </div>
                                                 <div className="text-left">
-                                                  <span className="text-sm font-semibold text-foreground group-hover:text-[#3879a3] transition-colors block">{doc.name}</span>
+                                                  <span className="text-sm font-semibold text-foreground group-hover:text-[#3179a7] transition-colors block">{doc.name}</span>
                                                   <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                                     <Eye className="w-3 h-3" />
                                                     Click para ver
                                                   </span>
                                                 </div>
                                               </button>
-                                            ) : (() => {
+                                            ) : reviewStatus === 'solicitado' ? (() => {
+                                              // Doc re-solicitado al cliente despu\u00e9s de un rechazo. El analista puede
+                                              // cargar el nuevo archivo recibido.
                                               const handleFileUpload = (e) => {
                                                 const file = e.target.files[0];
                                                 if (!file) return;
@@ -1331,26 +1581,32 @@ const ClientOnboarding = () => {
                                                 reader.readAsDataURL(file);
                                               };
                                               return (
-                                                <label className={`flex items-center gap-3 cursor-pointer group w-fit rounded-xl px-3 py-2 border-2 border-dashed transition-all ${
-                                                  reviewStatus === 'solicitado'
-                                                    ? 'border-blue-300 dark:border-blue-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                                                    : 'border-slate-300 dark:border-slate-600 hover:border-[#3879a3] hover:bg-[#3879a3]/5'
-                                                }`}>
-                                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                                    reviewStatus === 'solicitado' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-slate-100 dark:bg-slate-800'
-                                                  }`}>
-                                                    <Upload className={`w-4 h-4 ${reviewStatus === 'solicitado' ? 'text-blue-500' : 'text-slate-400 group-hover:text-[#3879a3]'}`} />
+                                                <label className="flex items-center gap-3 cursor-pointer group w-fit rounded-xl px-3 py-2 border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
+                                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-blue-100 dark:bg-blue-900/30">
+                                                    <Upload className="w-4 h-4 text-blue-500" />
                                                   </div>
                                                   <div>
                                                     <span className="text-sm font-medium text-foreground block">{doc.name}</span>
-                                                    <span className={`text-xs ${reviewStatus === 'solicitado' ? 'text-blue-500' : 'text-muted-foreground'}`}>
-                                                      {reviewStatus === 'solicitado' ? 'Cargar nuevo documento' : 'Cargar archivo'}
-                                                    </span>
+                                                    <span className="text-xs text-blue-500">Cargar archivo recibido</span>
                                                   </div>
                                                   <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} />
                                                 </label>
                                               );
-                                            })()}
+                                            })() : (
+                                              // Sin documento y sin solicitud activa. Para obligatorios esto no deber\u00eda
+                                              // ocurrir (la app client-facing los fuerza); aplica a opcionales/condicionales.
+                                              <div className="flex items-center gap-3 px-3 py-2">
+                                                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800">
+                                                  <Clock className="w-5 h-5 text-slate-400" />
+                                                </div>
+                                                <div>
+                                                  <span className="text-sm font-medium text-foreground block">{doc.name}</span>
+                                                  <span className="text-xs text-muted-foreground">
+                                                    {doc.required === false ? 'Opcional \u2014 no presentado' : 'No presentado'}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            )}
                                           </td>
                                           <td className="px-4 py-4 text-center">
                                             {doc.required !== false ? (
@@ -1374,6 +1630,11 @@ const ClientOnboarding = () => {
                                                   <XCircle className="w-4 h-4" />
                                                   Rechazado
                                                 </span>
+                                              ) : reviewStatus === 'observed' ? (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold rounded-lg border border-amber-200 dark:border-amber-700">
+                                                  <AlertTriangle className="w-4 h-4" />
+                                                  Con Observaciones
+                                                </span>
                                               ) : reviewStatus === 'solicitado' ? (
                                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-semibold rounded-lg">
                                                   <Send className="w-4 h-4" />
@@ -1396,7 +1657,7 @@ const ClientOnboarding = () => {
                                                     onClick={(e) => {
                                                       e.stopPropagation();
                                                       e.preventDefault();
-                                                      handleDocumentReview(client.id, doc.id, 'approved');
+                                                      handleDocumentReview(client.id, doc.id, reviewStatus === 'approved' ? null : 'approved');
                                                     }}
                                                     className={`p-2.5 rounded-xl transition-all duration-200 ${reviewStatus === 'approved'
                                                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
@@ -1405,6 +1666,23 @@ const ClientOnboarding = () => {
                                                     title="Aprobar"
                                                   >
                                                     <CheckCircle className="w-5 h-5" />
+                                                  </button>
+                                                )}
+                                                {reviewStatus !== 'rejected' && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      e.preventDefault();
+                                                      openObserveModal(client.id, doc.id, doc.name);
+                                                    }}
+                                                    className={`p-2.5 rounded-xl transition-all duration-200 ${reviewStatus === 'observed'
+                                                      ? 'bg-amber-400 text-white shadow-lg shadow-amber-400/30'
+                                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/30'
+                                                      }`}
+                                                    title="Observar"
+                                                  >
+                                                    <AlertTriangle className="w-5 h-5" />
                                                   </button>
                                                 )}
                                                 {reviewStatus === 'rejected' ? (
@@ -1473,6 +1751,20 @@ const ClientOnboarding = () => {
                                             </td>
                                           </tr>
                                         )}
+                                        {/* Fila para observación */}
+                                        {reviewStatus === 'observed' && observationReasons[client.id]?.[doc.id] && (
+                                          <tr className="bg-amber-50/60 dark:bg-amber-900/10">
+                                            <td colSpan={4} className="px-5 py-2.5">
+                                              <div className="flex items-center gap-3 pl-12">
+                                                <div className="w-1 h-6 rounded-full bg-amber-400 shrink-0"></div>
+                                                <span className="text-xs text-amber-700 dark:text-amber-400">
+                                                  <span className="font-bold">Observación: </span>
+                                                  {observationReasons[client.id][doc.id]}
+                                                </span>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        )}
                                       </React.Fragment>
                                     );
                                   })}
@@ -1480,8 +1772,38 @@ const ClientOnboarding = () => {
                               </table>
                             </div>
 
+                            {/* Continuar Carga de Datos — al final del listado, salvo cuando hay rechazados (que muestran su propio CTA amber abajo) */}
+                            {!(allReviewed && hasSomeRejected) && (
+                              <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50/50 dark:from-emerald-900/20 dark:to-teal-900/10 border-t border-emerald-200 dark:border-emerald-800">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                                      <FileCheck className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                      <p className="font-bold text-emerald-800 dark:text-emerald-200">
+                                        {docsAprobados ? 'Documentación aprobada' : 'Revisión de documentación'}
+                                      </p>
+                                      <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                                        {approvedCount}/{clientDocs.length} aprobado(s)
+                                        {observedCount > 0 ? ` · ${observedCount} con observaciones` : ''}
+                                        {(clientDocs.length - reviewedCount) > 0 ? ` · ${clientDocs.length - reviewedCount} sin revisar` : ''}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => handleSelectClient(client)}
+                                    className="group px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+                                  >
+                                    Continuar Carga de Datos
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
                             {/* Continue with observations - only if all reviewed but some rejected */}
-                            {allReviewed && (
+                            {allReviewed && hasSomeRejected && (
                               <div className="p-5 bg-gradient-to-r from-amber-50 to-orange-50/50 dark:from-amber-900/20 dark:to-orange-900/10 border-t border-amber-200 dark:border-amber-800">
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-4">
@@ -1542,7 +1864,8 @@ const ClientOnboarding = () => {
         const nextDoc = currentDocIdx < allDocs.length - 1 ? allDocs[currentDocIdx + 1] : null;
 
         return (
-          <div className="flex h-[calc(100vh-280px)] min-h-[500px] overflow-hidden">
+          <div className="flex flex-col h-[calc(100vh-280px)] min-h-[500px] overflow-hidden">
+            <div className="flex flex-1 overflow-hidden">
             {/* PDF Viewer */}
             <div className="flex-1 bg-slate-100 dark:bg-slate-800 min-w-0 overflow-hidden">
               <PDFViewer
@@ -1620,7 +1943,7 @@ const ClientOnboarding = () => {
                       {/* ── Header ── */}
                       <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-slate-50 dark:bg-slate-800/50 shrink-0">
                         <button type="button" onClick={() => setPersonaDetalleIdx(null)}
-                          className="flex items-center gap-1 text-xs text-[#3879a3] hover:underline shrink-0">
+                          className="flex items-center gap-1 text-xs text-[#3179a7] hover:underline shrink-0">
                           <ChevronLeft className="w-3.5 h-3.5" /> Lista
                         </button>
                         {/* Prev / dots / Next */}
@@ -1631,7 +1954,7 @@ const ClientOnboarding = () => {
                           </button>
                           {personas.map((_, i) => (
                             <button key={i} type="button" onClick={() => irAPersona(i)}
-                              className={`rounded-full transition-all ${i === idx ? 'w-4 h-2 bg-[#3879a3]' : 'w-2 h-2 bg-slate-300 dark:bg-slate-600 hover:bg-[#3879a3]/50'}`} />
+                              className={`rounded-full transition-all ${i === idx ? 'w-4 h-2 bg-[#3179a7]' : 'w-2 h-2 bg-slate-300 dark:bg-slate-600 hover:bg-[#3179a7]/50'}`} />
                           ))}
                           <button type="button" onClick={() => irAPersona(idx + 1)} disabled={idx === total - 1}
                             className="p-1 rounded text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
@@ -1647,7 +1970,7 @@ const ClientOnboarding = () => {
 
                           {/* Avatar + nombre */}
                           <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
-                            <div className="w-11 h-11 rounded-full bg-[#3879a3] text-white flex items-center justify-center text-base font-bold shrink-0 shadow">
+                            <div className="w-11 h-11 rounded-full bg-[#3179a7] text-white flex items-center justify-center text-base font-bold shrink-0 shadow">
                               {p.apellido?.[0] || p.nombre?.[0] || '?'}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -1669,18 +1992,19 @@ const ClientOnboarding = () => {
                             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Roles</p>
                             <div className="flex flex-wrap gap-1.5">
                               {[
-                                { key: 'esFirmante', label: 'Firmante' },
                                 { key: 'esBeneficiarioFinal', label: 'Benef. Final' },
-                                { key: 'esPep', label: 'PEP' },
-                                { key: 'esAccionista', label: entityType === ENTITY_TYPES.SA ? 'Accionista' : 'Socio', show: [ENTITY_TYPES.SA, ENTITY_TYPES.SRL].includes(entityType) },
+                                { key: 'esAccionista', label: 'Accionista', show: entityType === ENTITY_TYPES.SA },
+                                { key: 'esSocioSRL', label: 'Socio', show: entityType === ENTITY_TYPES.SRL },
                                 { key: 'esSocioSH', label: 'Socio', show: entityType === ENTITY_TYPES.SH },
-                                { key: 'esAutoridad', label: 'Autoridad' },
-                                { key: 'esApoderado', label: 'Apoderado' },
+                                { key: 'esPresidente', label: 'Presidente', show: entityType === ENTITY_TYPES.SA },
+                                { key: 'esDirector', label: 'Director', show: entityType === ENTITY_TYPES.SA },
+                                { key: 'esGerente', label: 'Gerente', show: [ENTITY_TYPES.SA, ENTITY_TYPES.SRL].includes(entityType) },
+                                { key: 'esApoderado', label: 'Apoderado', show: entityType !== ENTITY_TYPES.MONOTRIBUTISTA },
                                 { key: 'esHeredero', label: 'Heredero', show: entityType === ENTITY_TYPES.SUCESION },
                                 { key: 'esAdministrador', label: 'Administrador', show: entityType === ENTITY_TYPES.SUCESION },
                               ].filter(r => r.show !== false).map(({ key, label }) => (
-                                <button key={key} type="button" onClick={() => upd(key, !p[key])}
-                                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all ${p[key] ? 'bg-[#3879a3] text-white border-[#3879a3]' : 'bg-transparent text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600 hover:border-[#3879a3] hover:text-[#3879a3]'}`}>
+                                <button key={key} type="button" onClick={() => toggleRol(idx, key)}
+                                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all ${p[key] ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600 hover:border-[#3179a7] hover:text-[#3179a7]'}`}>
                                   {label}
                                 </button>
                               ))}
@@ -1713,37 +2037,47 @@ const ClientOnboarding = () => {
                               <div><label className="label text-[10px]">Teléfono</label>
                                 <input type="tel" className="input text-sm py-1.5 w-full" placeholder="11-1234-5678"
                                   value={p.telefono || ''} onChange={e => upd('telefono', e.target.value)} /></div>
-                              <div><label className="label text-[10px]">Domicilio</label>
-                                <input type="text" className="input text-sm py-1.5 w-full" placeholder="Av. Corrientes 1234, CABA"
-                                  value={p.domicilio || ''} onChange={e => upd('domicilio', e.target.value)} /></div>
+                              <div className="col-span-2">
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Domicilio</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div><label className="label text-[10px]">Calle / Avenida *</label>
+                                    <input type="text" className="input text-sm py-1.5" placeholder="Av. Corrientes"
+                                      value={p.domicilioCalle || ''} onChange={e => upd('domicilioCalle', e.target.value)} /></div>
+                                  <div><label className="label text-[10px]">Altura *</label>
+                                    <input type="text" className="input text-sm py-1.5" placeholder="1234"
+                                      value={p.domicilioAltura || ''} onChange={e => upd('domicilioAltura', e.target.value)} /></div>
+                                  <div><label className="label text-[10px]">Piso / Depto (opcional)</label>
+                                    <input type="text" className="input text-sm py-1.5" placeholder="3° B"
+                                      value={p.domicilioPiso || ''} onChange={e => upd('domicilioPiso', e.target.value)} /></div>
+                                  <div><label className="label text-[10px]">Localidad *</label>
+                                    <input type="text" className="input text-sm py-1.5" placeholder="CABA"
+                                      value={p.domicilioLocalidad || ''} onChange={e => upd('domicilioLocalidad', e.target.value)} /></div>
+                                  <div><label className="label text-[10px]">Provincia *</label>
+                                    <input type="text" className="input text-sm py-1.5" placeholder="Buenos Aires"
+                                      value={p.domicilioProvincia || ''} onChange={e => upd('domicilioProvincia', e.target.value)} /></div>
+                                </div>
+                              </div>
                             </div>
                           </div>
 
                           {/* Datos por rol */}
-                          {p.esAutoridad && (
-                            <div className="space-y-2">
-                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Cargo</p>
-                              <input type="text" className="input text-sm py-1.5 w-full" placeholder="Ej: Presidente, Director"
-                                value={p.cargo || ''} onChange={e => upd('cargo', e.target.value)} />
-                              <div><label className="label text-[10px]">Inicio de mandato</label>
-                                <input type="date" className="input text-sm py-1.5 w-full" value={p.fechaInicioMandato || ''} onChange={e => upd('fechaInicioMandato', e.target.value)} /></div>
-                              <div>
-                                <label className="label text-[10px]">¿Se indica fecha de caducidad?</label>
-                                <div className="flex gap-2 mt-0.5">
-                                  {['Sí', 'No'].map(opt => (
-                                    <button key={opt} type="button" onClick={() => upd('indicaFinMandato', opt === 'Sí')}
-                                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${p.indicaFinMandato === (opt === 'Sí') && p.indicaFinMandato !== undefined ? 'bg-[#3879a3] text-white border-[#3879a3]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3879a3] hover:text-[#3879a3]'}`}>
-                                      {opt}
-                                    </button>
-                                  ))}
+                          {p.esPresidente && (
+                            <div className="space-y-2 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                              <p className="text-[10px] font-semibold text-[#3179a7] uppercase tracking-wider">Firma — Presidente</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="label text-[10px]">Tipo de Firma</label>
+                                  <div className="input text-sm py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-500 cursor-not-allowed select-none">Individual</div>
+                                </div>
+                                <div>
+                                  <label className="label text-[10px]">Alcance</label>
+                                  <div className="input text-sm py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-500 cursor-not-allowed select-none">General</div>
                                 </div>
                               </div>
-                              {p.indicaFinMandato === true && (
-                                <div><label className="label text-[10px]">Fin de mandato</label>
-                                  <input type="date" className="input text-sm py-1.5 w-full" value={p.fechaFinMandato || ''} onChange={e => upd('fechaFinMandato', e.target.value)} /></div>
-                              )}
+                              <p className="text-[10px] text-slate-400">El presidente siempre firma en forma individual con alcance general.</p>
                             </div>
                           )}
+
                           {p.esAccionista && (
                             <div><p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">% Participación</p>
                               <input type="text" className="input text-sm py-1.5 w-full" placeholder="Ej: 33.33%"
@@ -1772,7 +2106,7 @@ const ClientOnboarding = () => {
                                 <div className="flex gap-2 mt-0.5">
                                   {['Sí', 'No'].map(opt => (
                                     <button key={opt} type="button" onClick={() => upd('shFirmaPresente', opt)}
-                                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${p.shFirmaPresente === opt ? 'bg-[#3879a3] text-white border-[#3879a3]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3879a3] hover:text-[#3879a3]'}`}>
+                                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${p.shFirmaPresente === opt ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7] hover:text-[#3179a7]'}`}>
                                       {opt}
                                     </button>
                                   ))}
@@ -1781,16 +2115,16 @@ const ClientOnboarding = () => {
                             </div>
                           )}
                           {p.esApoderado && (
-                            <div className="space-y-2">
-                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Poder</p>
-                              <div><label className="label text-[10px]">Otorgamiento</label>
+                            <div className="space-y-3">
+                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Poder</p>
+                              <div><label className="label text-[10px]">Fecha de Otorgamiento</label>
                                 <input type="date" className="input text-sm py-1.5 w-full" value={p.fechaOtorgamiento || ''} onChange={e => upd('fechaOtorgamiento', e.target.value)} /></div>
                               <div>
                                 <label className="label text-[10px]">¿Se indica fecha de caducidad?</label>
                                 <div className="flex gap-2 mt-0.5">
                                   {['Sí', 'No'].map(opt => (
                                     <button key={opt} type="button" onClick={() => upd('indicaFinPoder', opt === 'Sí')}
-                                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${p.indicaFinPoder === (opt === 'Sí') && p.indicaFinPoder !== undefined ? 'bg-[#3879a3] text-white border-[#3879a3]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3879a3] hover:text-[#3879a3]'}`}>
+                                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${p.indicaFinPoder === (opt === 'Sí') && p.indicaFinPoder !== undefined ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7] hover:text-[#3179a7]'}`}>
                                       {opt}
                                     </button>
                                   ))}
@@ -1799,6 +2133,260 @@ const ClientOnboarding = () => {
                               {p.indicaFinPoder === true && (
                                 <div><label className="label text-[10px]">Vencimiento del poder</label>
                                   <input type="date" className="input text-sm py-1.5 w-full" value={p.fechaVencimientoPoder || ''} onChange={e => upd('fechaVencimientoPoder', e.target.value)} /></div>
+                              )}
+
+                              {/* Esquema de firma — oculto para Monotributista (siempre Individual + General) */}
+                              {entityType !== ENTITY_TYPES.MONOTRIBUTISTA && !p.firmaConjuntaPropagada && !p.esPresidente && (
+                                <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-700">
+                                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Esquema de Firma</p>
+                                  <div>
+                                    <label className="label text-[10px]">Tipo de Firma</label>
+                                    <div className="flex gap-2">
+                                      {['Individual', 'Multiple'].map(opt => (
+                                        <button key={opt} type="button" onClick={() => upd('tipoFirmaRol', opt)}
+                                          className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${p.tipoFirmaRol === opt ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7] hover:text-[#3179a7]'}`}>
+                                          {opt}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Individual: solo alcance */}
+                                  {p.tipoFirmaRol === 'Individual' && (
+                                    <div>
+                                      <label className="label text-[10px]">Alcance</label>
+                                      <select className="input text-sm py-1.5 w-full" value={p.alcanceRol || ''} onChange={e => upd('alcanceRol', e.target.value)}>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="General">General</option>
+                                        <option value="Crédito">Crédito</option>
+                                        <option value="Pagos">Pagos</option>
+                                        <option value="Otro">Otro</option>
+                                      </select>
+                                      {p.alcanceRol === 'Otro' && (
+                                        <input type="text" className="input text-sm py-1.5 w-full mt-1.5" placeholder="Especificar alcance..."
+                                          value={p.alcanceRolOtro || ''} onChange={e => upd('alcanceRolOtro', e.target.value)} />
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Multiple: cantidad requerida + participantes, obligatorio/opcional, alcance por persona */}
+                                  {p.tipoFirmaRol === 'Multiple' && (
+                                    <div className="space-y-3">
+                                      <div>
+                                        <label className="label text-[10px]">Firmantes requeridos</label>
+                                        <div className="flex gap-2">
+                                          {[1, 2, 3, 4, 5].map(n => (
+                                            <button key={n} type="button"
+                                              onClick={() => upd('firmaConjuntaMinFirmantes', n)}
+                                              className={`flex-1 py-1.5 rounded-lg text-sm font-bold border transition-all ${p.firmaConjuntaMinFirmantes === n ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7] hover:text-[#3179a7]'}`}>
+                                              {n}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+
+                                      {/* Configuración propia del apoderado (esta persona) */}
+                                      <div className="p-3 rounded-xl border border-[#3179a7]/30 bg-blue-50/30 dark:bg-blue-900/10 space-y-2">
+                                        <p className="text-[10px] font-semibold text-[#3179a7] uppercase tracking-wider">
+                                          Tu configuración como firmante
+                                        </p>
+                                        <div className="space-y-2 pl-1">
+                                          <div>
+                                            <label className="label text-[10px]">Participación</label>
+                                            <div className="flex gap-2">
+                                              {['Obligatorio', 'Optativo'].map(opt => (
+                                                <button key={opt} type="button"
+                                                  onClick={() => upd('participacionRol', opt === 'Obligatorio')}
+                                                  className={`flex-1 py-1 rounded-lg text-xs font-medium border transition-all ${(p.participacionRol === undefined ? true : p.participacionRol) === (opt === 'Obligatorio') ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7]'}`}>
+                                                  {opt}
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <label className="label text-[10px]">Alcance</label>
+                                            <select className="input text-sm py-1 w-full" value={p.alcanceRol || ''} onChange={e => upd('alcanceRol', e.target.value)}>
+                                              <option value="">Seleccionar...</option>
+                                              <option value="General">General</option>
+                                              <option value="Crédito">Crédito</option>
+                                              <option value="Pagos">Pagos</option>
+                                              <option value="Otro">Otro</option>
+                                            </select>
+                                            {p.alcanceRol === 'Otro' && (
+                                              <input type="text" className="input text-sm py-1 w-full mt-1.5" placeholder="Especificar alcance..."
+                                                value={p.alcanceRolOtro || ''} onChange={e => upd('alcanceRolOtro', e.target.value)} />
+                                            )}
+                                          </div>
+                                          <div>
+                                            <label className="label text-[10px]">Monto autorizado</label>
+                                            <div className="flex gap-1 mb-2">
+                                              {[
+                                                { val: 'sin', label: 'Sin monto' },
+                                                { val: 'min', label: 'Mínimo' },
+                                                { val: 'max', label: 'Máximo' },
+                                                { val: 'rango', label: 'Rango' },
+                                              ].map(({ val, label }) => (
+                                                <button key={val} type="button"
+                                                  onClick={() => upd('montoTipoRol', val)}
+                                                  className={`flex-1 py-1 rounded-lg text-[11px] font-medium border transition-all ${(p.montoTipoRol || 'sin') === val ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7]'}`}>
+                                                  {label}
+                                                </button>
+                                              ))}
+                                            </div>
+                                            {(p.montoTipoRol === 'min' || p.montoTipoRol === 'rango') && (
+                                              <div className="mb-1">
+                                                <label className="label text-[9px]">Mínimo ($)</label>
+                                                <input type="number" min="0" placeholder="0"
+                                                  className="input text-sm py-1 w-full"
+                                                  value={p.montoMinRol ?? ''}
+                                                  onChange={e => upd('montoMinRol', e.target.value === '' ? null : Number(e.target.value))} />
+                                              </div>
+                                            )}
+                                            {(p.montoTipoRol === 'max' || p.montoTipoRol === 'rango') && (
+                                              <div>
+                                                <label className="label text-[9px]">Máximo ($)</label>
+                                                <input type="number" min="0" placeholder="0"
+                                                  className="input text-sm py-1 w-full"
+                                                  value={p.montoMaxRol ?? ''}
+                                                  onChange={e => upd('montoMaxRol', e.target.value === '' ? null : Number(e.target.value))} />
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <p className="text-[10px] text-slate-400">Seleccioná los firmantes del esquema:</p>
+                                      {todosParticipantesDisponibles.map((op) => {
+                                        if (op.id === `form_${idx}`) return null;
+                                        const seleccionado = (p.firmaConjuntaParticipantes || []).some(fp => fp.participanteId === op.id);
+                                        const fp = (p.firmaConjuntaParticipantes || []).find(fp => fp.participanteId === op.id);
+                                        const displayName = op.apellido || op.nombre ? `${op.apellido || ''} ${op.nombre || ''}`.trim() : op.razon_social || op.id;
+                                        return (
+                                          <div key={op.id} className={`p-3 rounded-xl border transition-all ${seleccionado ? 'border-[#3179a7] bg-blue-50/50 dark:bg-blue-900/10' : 'border-slate-200 dark:border-slate-700'}`}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                              <input type="checkbox" checked={seleccionado} onChange={() => toggleParticipanteConjunta(idx, op.id)}
+                                                className="w-4 h-4 accent-[#3179a7]" />
+                                              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                                {displayName}
+                                              </span>
+                                              {op.id.startsWith('dir_') && (
+                                                <span className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full">DCAC</span>
+                                              )}
+                                            </div>
+                                            {seleccionado && (
+                                              <div className="space-y-2 pl-6">
+                                                <div>
+                                                  <label className="label text-[10px]">Participación</label>
+                                                  <div className="flex gap-2">
+                                                    {['Obligatorio', 'Optativo'].map(opt => (
+                                                      <button key={opt} type="button"
+                                                        onClick={() => updateParticipanteConjunta(idx, op.id, 'obligatorio', opt === 'Obligatorio')}
+                                                        className={`flex-1 py-1 rounded-lg text-xs font-medium border transition-all ${fp?.obligatorio === (opt === 'Obligatorio') ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7]'}`}>
+                                                        {opt}
+                                                      </button>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                                <div>
+                                                  <label className="label text-[10px]">Alcance</label>
+                                                  <select className="input text-sm py-1 w-full" value={fp?.alcance || ''} onChange={e => updateParticipanteConjunta(idx, op.id, 'alcance', e.target.value)}>
+                                                    <option value="">Seleccionar...</option>
+                                                    <option value="General">General</option>
+                                                    <option value="Crédito">Crédito</option>
+                                                    <option value="Pagos">Pagos</option>
+                                                  </select>
+                                                </div>
+                                                <div>
+                                                  <label className="label text-[10px]">Monto autorizado</label>
+                                                  <div className="flex gap-1 mb-2">
+                                                    {[
+                                                      { val: 'sin', label: 'Sin monto' },
+                                                      { val: 'min', label: 'Mínimo' },
+                                                      { val: 'max', label: 'Máximo' },
+                                                      { val: 'rango', label: 'Rango' },
+                                                    ].map(({ val, label }) => (
+                                                      <button key={val} type="button"
+                                                        onClick={() => updateParticipanteConjunta(idx, op.id, 'montoTipo', val)}
+                                                        className={`flex-1 py-1 rounded-lg text-[11px] font-medium border transition-all ${(fp?.montoTipo || 'sin') === val ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7]'}`}>
+                                                        {label}
+                                                      </button>
+                                                    ))}
+                                                  </div>
+                                                  {(fp?.montoTipo === 'min' || fp?.montoTipo === 'rango') && (
+                                                    <div className="mb-1">
+                                                      <label className="label text-[9px]">Mínimo ($)</label>
+                                                      <input type="number" min="0" placeholder="0"
+                                                        className="input text-sm py-1 w-full"
+                                                        value={fp?.montoMin ?? ''}
+                                                        onChange={e => updateParticipanteConjunta(idx, op.id, 'montoMin', e.target.value === '' ? null : Number(e.target.value))} />
+                                                    </div>
+                                                  )}
+                                                  {(fp?.montoTipo === 'max' || fp?.montoTipo === 'rango') && (
+                                                    <div>
+                                                      <label className="label text-[9px]">Máximo ($)</label>
+                                                      <input type="number" min="0" placeholder="0"
+                                                        className="input text-sm py-1 w-full"
+                                                        value={fp?.montoMax ?? ''}
+                                                        onChange={e => updateParticipanteConjunta(idx, op.id, 'montoMax', e.target.value === '' ? null : Number(e.target.value))} />
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                      {(p.firmaConjuntaParticipantes || []).length > 0 && (
+                                        <button type="button" onClick={() => propagarFirmaConjunta(idx)}
+                                          className="w-full py-2 rounded-xl bg-[#3179a7] text-white text-sm font-bold hover:bg-[#2d6285] transition-all active:scale-95">
+                                          Guardar y propagar esquema conjunto
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Vista readonly si fue propagado y no es presidente */}
+                              {p.firmaConjuntaPropagada && !p.esPresidente && (
+                                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-900/30 space-y-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">✓ Esquema Conjunta — cargado automáticamente</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => upd('firmaConjuntaPropagada', false)}
+                                      className="text-[10px] font-semibold text-[#3179a7] hover:text-[#235677] underline underline-offset-2 shrink-0"
+                                      title="Editar este esquema de forma independiente"
+                                    >
+                                      Editar este esquema
+                                    </button>
+                                  </div>
+                                  {(p.firmaConjuntaParticipantes || []).map(fp => {
+                                    const op = todosParticipantesDisponibles.find(x => x.id === fp.participanteId);
+                                    const displayName = op ? (op.apellido || op.nombre ? `${op.apellido || ''} ${op.nombre || ''}`.trim() : op.razon_social || fp.participanteId) : fp.participanteId;
+                                    const fmtMoney = (n) => n != null ? `$${Number(n).toLocaleString('es-AR')}` : '';
+                                    let montoLabel = null;
+                                    if (fp.montoTipo === 'min') montoLabel = `Desde ${fmtMoney(fp.montoMin)}`;
+                                    else if (fp.montoTipo === 'max') montoLabel = `Hasta ${fmtMoney(fp.montoMax)}`;
+                                    else if (fp.montoTipo === 'rango') montoLabel = `${fmtMoney(fp.montoMin)} – ${fmtMoney(fp.montoMax)}`;
+                                    return (
+                                      <div key={fp.participanteId} className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium">{displayName}</span>
+                                        <span className="text-slate-400">·</span>
+                                        <span>{fp.obligatorio ? 'Obligatorio' : 'Optativo'}</span>
+                                        <span className="text-slate-400">·</span>
+                                        <span>{fp.alcance || '-'}</span>
+                                        {montoLabel && (
+                                          <>
+                                            <span className="text-slate-400">·</span>
+                                            <span className="text-[#3179a7] font-medium">{montoLabel}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                  <p className="text-[10px] text-slate-400">Mínimo de firmantes: {p.firmaConjuntaMinFirmantes}</p>
+                                </div>
                               )}
                             </div>
                           )}
@@ -1836,16 +2424,30 @@ const ClientOnboarding = () => {
                           {/* Screening */}
                           <div>
                             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Screening</p>
-                            <div className="flex items-center justify-between p-3 border-2 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700">
-                              <div>
-                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">RepET</p>
-                                <p className="text-[10px] text-slate-400">¿Figura en la lista?</p>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between p-3 border-2 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700">
+                                <div>
+                                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">PEP</p>
+                                  <p className="text-[10px] text-slate-400">¿Es Persona Expuesta Políticamente?</p>
+                                </div>
+                                <div className="flex gap-1.5">
+                                  <button type="button" onClick={() => upd('esPep', true)}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${p.esPep === true ? 'bg-red-500 border-red-500 text-white' : 'border-slate-200 text-slate-400 hover:border-red-300 hover:text-red-500'}`}>SÍ</button>
+                                  <button type="button" onClick={() => upd('esPep', false)}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${p.esPep === false ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'}`}>NO</button>
+                                </div>
                               </div>
-                              <div className="flex gap-1.5">
-                                <button type="button" onClick={() => upd('figuraEnRepet', true)}
-                                  className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${p.figuraEnRepet === true ? 'bg-red-500 border-red-500 text-white' : 'border-slate-200 text-slate-400 hover:border-red-300 hover:text-red-500'}`}>SÍ</button>
-                                <button type="button" onClick={() => upd('figuraEnRepet', false)}
-                                  className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${p.figuraEnRepet === false ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'}`}>NO</button>
+                              <div className="flex items-center justify-between p-3 border-2 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700">
+                                <div>
+                                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">RepET</p>
+                                  <p className="text-[10px] text-slate-400">¿Figura en la lista?</p>
+                                </div>
+                                <div className="flex gap-1.5">
+                                  <button type="button" onClick={() => upd('figuraEnRepet', true)}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${p.figuraEnRepet === true ? 'bg-red-500 border-red-500 text-white' : 'border-slate-200 text-slate-400 hover:border-red-300 hover:text-red-500'}`}>SÍ</button>
+                                  <button type="button" onClick={() => upd('figuraEnRepet', false)}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${p.figuraEnRepet === false ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'}`}>NO</button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1862,18 +2464,18 @@ const ClientOnboarding = () => {
                         </button>
                         <div className="flex-1 flex items-center justify-center gap-2">
                           <button type="button" disabled={idx === 0} onClick={() => irAPersona(idx - 1)}
-                            className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-[#3879a3] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0">
+                            className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-[#3179a7] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0">
                             <ChevronLeft className="w-4 h-4" />
                           </button>
                           <span className="text-xs font-semibold text-muted-foreground tabular-nums">{idx + 1} / {total}</span>
                           <button type="button" disabled={idx >= total - 1} onClick={() => irAPersona(idx + 1)}
-                            className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-[#3879a3] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0">
+                            className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-[#3179a7] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0">
                             <ChevronRight className="w-4 h-4" />
                           </button>
                         </div>
                         <button type="button"
                           onClick={() => toast.success('Datos de persona guardados')}
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#3879a3] text-white hover:bg-[#2d6a8a] transition-colors shrink-0">
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#3179a7] text-white hover:bg-[#235677] transition-colors shrink-0">
                           <Save className="w-3.5 h-3.5" />
                           Guardar
                         </button>
@@ -1887,31 +2489,28 @@ const ClientOnboarding = () => {
 
                     {/* ── Chips de personas seleccionadas ── */}
                     {personas.length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-3 bg-[#3879a3]/5 rounded-xl border border-[#3879a3]/20">
-                        <p className="w-full text-[10px] font-semibold text-[#3879a3] uppercase tracking-wider mb-1">
+                      <div className="flex flex-wrap gap-2 p-3 bg-[#3179a7]/5 rounded-xl border border-[#3179a7]/20">
+                        <p className="w-full text-[10px] font-semibold text-[#3179a7] uppercase tracking-wider mb-1">
                           Seleccionadas ({personas.length})
                         </p>
                         {personas.map((p, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => irAPersona(idx)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-[#3879a3]/30 rounded-full text-xs font-medium text-gray-700 dark:text-gray-200 shadow-sm cursor-pointer hover:border-[#3879a3] hover:bg-[#3879a3]/5 transition-colors"
-                          >
-                            <span className="w-5 h-5 rounded-full bg-[#3879a3] text-white text-[9px] font-bold flex items-center justify-center shrink-0">
-                              {p.apellido?.[0] || p.nombre?.[0] || '?'}
-                            </span>
-                            <span className="truncate max-w-[100px]">{`${p.apellido} ${p.nombre}`.trim() || 'Nueva persona'}</span>
-                            <span
-                              className={`ml-1 w-2 h-2 rounded-full shrink-0 ${p.figuraEnRepet === true ? 'bg-red-400' : p.figuraEnRepet === false ? 'bg-emerald-400' : 'bg-slate-200'}`}
-                              title={p.figuraEnRepet === true ? 'RepET: Figura' : p.figuraEnRepet === false ? 'RepET: No figura' : 'RepET: Pendiente'}
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); quitarPersona(idx); }}
-                              className="ml-1 text-gray-400 hover:text-red-500 transition-colors"
+                          <div key={idx} className="flex flex-col bg-white dark:bg-slate-800 border border-[#3179a7]/30 rounded-xl shadow-sm overflow-hidden">
+                            <div
+                              onClick={() => irAPersona(idx)}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-[#3179a7]/5 transition-colors"
                             >
-                              <X className="w-3 h-3" />
-                            </button>
+                              <span className="w-5 h-5 rounded-full bg-[#3179a7] text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                                {p.apellido?.[0] || p.nombre?.[0] || '?'}
+                              </span>
+                              <span className="truncate max-w-[100px]">{`${p.apellido} ${p.nombre}`.trim() || 'Nueva persona'}</span>
+                              <span
+                                className={`ml-1 w-2 h-2 rounded-full shrink-0 ${p.figuraEnRepet === true ? 'bg-red-400' : p.figuraEnRepet === false ? 'bg-emerald-400' : 'bg-slate-200'}`}
+                                title={p.figuraEnRepet === true ? 'RepET: Figura' : p.figuraEnRepet === false ? 'RepET: No figura' : 'RepET: Pendiente'}
+                              />
+                              <button type="button" onClick={(e) => { e.stopPropagation(); quitarPersona(idx); }} className="ml-auto text-gray-400 hover:text-red-500 transition-colors">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1923,7 +2522,7 @@ const ClientOnboarding = () => {
                       {/* Header del panel */}
                       <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-gray-800">
                         <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                          <Users className="w-4 h-4 text-[#3879a3]" />
+                          <Users className="w-4 h-4 text-[#3179a7]" />
                           Personas disponibles
                         </p>
                         <p className="text-[11px] text-gray-400 mt-0.5">
@@ -1936,38 +2535,26 @@ const ClientOnboarding = () => {
                         {personasDeEstaSociedad.map((p) => {
                           const seleccionada = personas.some((per) => per._dirId === p.id);
                           return (
-                            <div
-                              key={p.id}
-                              className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${seleccionada
-                                ? 'bg-[#3879a3]/5 dark:bg-[#3879a3]/10'
-                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                                }`}
-                              onClick={() => togglePersonaDelSistema(p)}
-                            >
-                              {/* Checkbox visual */}
-                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${seleccionada
-                                ? 'bg-[#3879a3] border-[#3879a3]'
-                                : 'border-gray-300 dark:border-gray-600'
-                                }`}>
-                                {seleccionada && <Check className="w-3 h-3 text-white" />}
+                            <div key={p.id} className={`px-4 py-3 transition-colors ${seleccionada ? 'bg-[#3179a7]/5 dark:bg-[#3179a7]/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}>
+                              <div className="flex items-center gap-3 cursor-pointer" onClick={() => togglePersonaDelSistema(p)}>
+                                {/* Checkbox visual */}
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${seleccionada ? 'bg-[#3179a7] border-[#3179a7]' : 'border-gray-300 dark:border-gray-600'}`}>
+                                  {seleccionada && <Check className="w-3 h-3 text-white" />}
+                                </div>
+                                {/* Avatar */}
+                                <div className="w-8 h-8 rounded-full bg-[#3179a7] text-white flex items-center justify-center text-sm font-bold shrink-0">
+                                  {p.apellido?.[0] || p.nombre?.[0] || '?'}
+                                </div>
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                    {`${p.apellido} ${p.nombre}`.trim() || 'Sin nombre'}
+                                  </p>
+                                  <p className="text-[11px] text-gray-400 truncate">
+                                    {p.email || 'Sin email'}{p.telefono ? ` · ${p.telefono}` : ''}
+                                  </p>
+                                </div>
                               </div>
-
-                              {/* Avatar */}
-                              <div className="w-8 h-8 rounded-full bg-[#3879a3] text-white flex items-center justify-center text-sm font-bold shrink-0">
-                                {p.apellido?.[0] || p.nombre?.[0] || '?'}
-                              </div>
-
-                              {/* Info */}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                  {`${p.apellido} ${p.nombre}`.trim() || 'Sin nombre'}
-                                </p>
-                                <p className="text-[11px] text-gray-400 truncate">
-                                  {p.email || 'Sin email'}{p.telefono ? ` · ${p.telefono}` : ''}
-                                </p>
-                              </div>
-
-                              {seleccionada && <CheckCircle className="w-4 h-4 text-[#3879a3] shrink-0" />}
                             </div>
                           );
                         })}
@@ -2055,7 +2642,7 @@ const ClientOnboarding = () => {
                           const primeraExistente = personas.findIndex(p => p.fromSystem);
                           setPersonaDetalleIdx(primeraExistente >= 0 ? primeraExistente : 0);
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-[#3879a3] to-[#2d6a8a] text-white font-semibold text-sm hover:shadow-lg hover:shadow-[#3879a3]/30 transition-all active:scale-[0.99]"
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-[#3179a7] to-[#235677] text-white font-semibold text-sm hover:shadow-lg hover:shadow-[#3179a7]/30 transition-all active:scale-[0.99]"
                       >
                         Carga de datos — {personas.length} persona{personas.length !== 1 ? 's' : ''}
                         <ChevronRight className="w-4 h-4" />
@@ -2076,6 +2663,7 @@ const ClientOnboarding = () => {
                 )}
               </div>
             </div>
+            </div>
           </div>
         );
       }
@@ -2085,7 +2673,7 @@ const ClientOnboarding = () => {
           <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#3879a3] to-[#2d6a8a] rounded-2xl flex items-center justify-center shadow-lg shadow-[#3879a3]/20 shrink-0">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#3179a7] to-[#235677] rounded-2xl flex items-center justify-center shadow-lg shadow-[#3179a7]/20 shrink-0">
                 <Search className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -2096,8 +2684,8 @@ const ClientOnboarding = () => {
 
             <div className="grid grid-cols-2 gap-5">
 
-                {/* NSE */}
-                <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                {/* NSE — solo Persona Humana (Monotributista) */}
+                {entityType === ENTITY_TYPES.MONOTRIBUTISTA && <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                   <div className="flex items-center gap-3 px-5 py-4 bg-violet-500/5 dark:bg-violet-500/10 border-b border-slate-200 dark:border-slate-700">
                     <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
                       <Users className="w-4 h-4 text-violet-600" />
@@ -2121,8 +2709,8 @@ const ClientOnboarding = () => {
                           onClick={() => setDdData(prev => ({ ...prev, nseNivel: val }))}
                           className={`py-2.5 rounded-xl border-2 text-center transition-all ${
                             ddData.nseNivel === val
-                              ? 'bg-[#3879a3] border-[#3879a3] text-white shadow-md shadow-[#3879a3]/20'
-                              : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-[#3879a3]/50 hover:bg-[#3879a3]/5'
+                              ? 'bg-[#3179a7] border-[#3179a7] text-white shadow-md shadow-[#3179a7]/20'
+                              : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-[#3179a7]/50 hover:bg-[#3179a7]/5'
                           }`}>
                           <p className="text-xs font-bold">{label}</p>
                           <p className={`text-[9px] ${ddData.nseNivel === val ? 'text-white/80' : 'text-muted-foreground'}`}>{desc}</p>
@@ -2130,60 +2718,136 @@ const ClientOnboarding = () => {
                       ))}
                     </div>
                     <textarea
-                      className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm resize-none placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3] transition-all"
+                      className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm resize-none placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7] transition-all"
                       rows={2}
                       placeholder="Observaciones sobre NSE..."
                       value={ddData.nseNotas}
                       onChange={e => setDdData(prev => ({ ...prev, nseNotas: e.target.value }))}
                     />
                   </div>
-                </div>
+                </div>}
 
-                {/* Nivel de Riesgo */}
+                {/* Matriz de Riesgo */}
                 <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                   <div className="flex items-center gap-3 px-5 py-4 bg-amber-500/5 dark:bg-amber-500/10 border-b border-slate-200 dark:border-slate-700">
                     <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
                       <AlertTriangle className="w-4 h-4 text-amber-600" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm text-foreground">Nivel de Riesgo</h3>
-                      <p className="text-[10px] text-muted-foreground">Clasificación según política de riesgo</p>
+                      <h3 className="font-bold text-sm text-foreground">Matriz de Riesgo</h3>
+                      <p className="text-[10px] text-muted-foreground">Completar todos los factores para calcular el nivel</p>
                     </div>
                   </div>
                   <div className="p-5 space-y-4">
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        { val: 'bajo',  label: 'Bajo',  color: 'emerald', desc: 'DDS' },
-                        { val: 'medio', label: 'Medio', color: 'amber',   desc: 'DDM' },
-                        { val: 'alto',  label: 'Alto',  color: 'red',     desc: 'DDR' },
-                      ].map(({ val, label, color, desc }) => {
-                        const isActive = ddData.nivelRiesgo === val;
-                        const activeCls =
-                          color === 'emerald' ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                          : color === 'amber'   ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20'
-                          :                       'bg-red-500 border-red-500 text-white shadow-md shadow-red-500/20';
-                        return (
-                          <button key={val} type="button"
-                            onClick={() => setDdData(prev => ({ ...prev, nivelRiesgo: val }))}
-                            className={`py-3 rounded-xl border-2 text-center transition-all ${isActive ? activeCls : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-slate-400'}`}>
-                            <p className="text-sm font-bold">{label}</p>
-                            <p className={`text-[10px] font-medium ${isActive ? 'text-white/80' : 'text-muted-foreground'}`}>{desc}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {(ddData.nivelRiesgo === 'bajo' || ddData.nivelRiesgo === 'medio' || ddData.nivelRiesgo === 'alto') && (
+
+                    {/* PEP — detectado automáticamente desde personas vinculadas */}
+                    {!personas.some(p => p.esPep === true) && (
+                      <div className="rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-800 p-3">
+                        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">Sin PEP detectado — completar factores de riesgo</p>
+                      </div>
+                    )}
+
+                    {/* Factores ponderados — solo si no hay PEP */}
+                    {!personas.some(p => p.esPep === true) && (() => {
+                      const esHumana = entityType === ENTITY_TYPES.MONOTRIBUTISTA;
+                      const factores = esHumana
+                        ? [
+                            { key: 'residencia',   label: 'Residencia',   peso: '10%', opts: [{ val: 1, label: 'Bajo', sub: 'Local' }, { val: 3, label: 'Medio', sub: 'Extranjero' }, { val: 5, label: 'Alto', sub: 'País de riesgo' }] },
+                            { key: 'nacionalidad', label: 'Nacionalidad', peso: '10%', opts: [{ val: 1, label: 'Bajo', sub: 'Argentina' }, { val: 3, label: 'Medio', sub: 'Extranjero' }, { val: 5, label: 'Alto', sub: 'País de riesgo' }] },
+                            { key: 'actividad',    label: 'Actividad',    peso: '30%', opts: [{ val: 1, label: 'Bajo', sub: 'Común' }, { val: 3, label: 'Medio', sub: 'Moderada' }, { val: 5, label: 'Alto', sub: 'Alto riesgo' }] },
+                            { key: 'antiguedad',   label: 'Antigüedad',   peso: '20%', opts: [{ val: 1, label: 'Bajo', sub: '>24 meses' }, { val: 5, label: 'Alto', sub: '<24 meses' }] },
+                            { key: 'materialidad', label: 'Materialidad', peso: '30%', opts: [{ val: 1, label: 'Bajo', sub: 'Baja' }, { val: 3, label: 'Medio', sub: 'Media' }, { val: 5, label: 'Alto', sub: 'Alta' }] },
+                          ]
+                        : [
+                            { key: 'residencia',   label: 'Residencia',   peso: '20%', opts: [{ val: 1, label: 'Bajo', sub: 'Local' }, { val: 3, label: 'Medio', sub: 'Extranjero' }, { val: 5, label: 'Alto', sub: 'País de riesgo' }] },
+                            { key: 'actividad',    label: 'Actividad',    peso: '30%', opts: [{ val: 1, label: 'Bajo', sub: 'Común' }, { val: 3, label: 'Medio', sub: 'Moderada' }, { val: 5, label: 'Alto', sub: 'Alto riesgo' }] },
+                            { key: 'antiguedad',   label: 'Antigüedad',   peso: '20%', opts: [{ val: 1, label: 'Bajo', sub: '>24 meses' }, { val: 5, label: 'Alto', sub: '<24 meses' }] },
+                            { key: 'materialidad', label: 'Materialidad', peso: '30%', opts: [{ val: 1, label: 'Bajo', sub: 'Baja' }, { val: 3, label: 'Medio', sub: 'Media' }, { val: 5, label: 'Alto', sub: 'Alta' }] },
+                          ];
+
+                      return factores.map(({ key, label, peso, opts }) => (
+                        <div key={key}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+                            <span className="text-[9px] bg-slate-200 dark:bg-slate-700 text-muted-foreground px-2 py-0.5 rounded-full font-medium">Pond. {peso}</span>
+                          </div>
+                          <div className={`grid gap-2 ${opts.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                            {opts.map(({ val, label: optLabel, sub }) => (
+                              <button key={val} type="button"
+                                onClick={() => {
+                                  const newF = { ...ddData, [key]: val };
+                                  const todosCompletos = esHumana
+                                    ? newF.residencia && newF.nacionalidad && newF.actividad && newF.antiguedad && newF.materialidad
+                                    : newF.residencia && newF.actividad && newF.antiguedad && newF.materialidad;
+                                  if (todosCompletos) {
+                                    const p = esHumana
+                                      ? Math.round((newF.residencia*0.10 + newF.nacionalidad*0.10 + newF.actividad*0.30 + newF.antiguedad*0.20 + newF.materialidad*0.30)*100)/100
+                                      : Math.round((newF.residencia*0.20 + newF.actividad*0.30 + newF.antiguedad*0.20 + newF.materialidad*0.30)*100)/100;
+                                    const n = p <= 2.00 ? 'bajo' : p <= 3.00 ? 'medio' : 'alto';
+                                    setDdData(prev => ({ ...prev, [key]: val, riesgoPuntaje: p, nivelRiesgo: n }));
+                                  } else {
+                                    setDdData(prev => ({ ...prev, [key]: val }));
+                                  }
+                                }}
+                                className={`py-2 rounded-xl border-2 text-center text-xs transition-all ${
+                                  ddData[key] === val
+                                    ? val === 1 ? 'bg-emerald-500 border-emerald-500 text-white' : val === 3 ? 'bg-amber-500 border-amber-500 text-white' : 'bg-red-500 border-red-500 text-white'
+                                    : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-slate-400'
+                                }`}>
+                                <p className="font-bold">{optLabel}</p>
+                                <p className={`text-[9px] ${ddData[key] === val ? 'text-white/80' : 'text-muted-foreground'}`}>{sub}</p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+
+                    {/* Resultado calculado */}
+                    {(() => {
+                      const pepDetectado = personas.some(p => p.esPep === true);
+                      const nivelEfectivo = pepDetectado ? 'alto' : ddData.nivelRiesgo;
+                      const puntajeEfectivo = pepDetectado ? 5.00 : ddData.riesgoPuntaje;
+                      if (!nivelEfectivo) return null;
+                      return (
+                        <div className={`mt-2 rounded-xl p-4 border-2 flex items-center justify-between ${
+                          nivelEfectivo === 'bajo'  ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-700' :
+                          nivelEfectivo === 'medio' ? 'bg-amber-50 border-amber-300 dark:bg-amber-900/20 dark:border-amber-700' :
+                                                      'bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-700'
+                        }`}>
+                          <div>
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Resultado{pepDetectado ? ' (PEP)' : ''}</p>
+                            <p className={`text-xl font-bold mt-0.5 ${
+                              nivelEfectivo === 'bajo' ? 'text-emerald-700 dark:text-emerald-400' :
+                              nivelEfectivo === 'medio' ? 'text-amber-700 dark:text-amber-400' : 'text-red-700 dark:text-red-400'
+                            }`}>
+                              {nivelEfectivo.charAt(0).toUpperCase() + nivelEfectivo.slice(1)}
+                              {' '}—{' '}
+                              {nivelEfectivo === 'bajo' ? 'DDS' : nivelEfectivo === 'medio' ? 'DDM' : 'DDR'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] text-muted-foreground">Puntaje</p>
+                            <p className={`text-2xl font-bold ${
+                              nivelEfectivo === 'bajo' ? 'text-emerald-600' : nivelEfectivo === 'medio' ? 'text-amber-600' : 'text-red-600'
+                            }`}>{puntajeEfectivo?.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Ventas estimadas */}
+                    {ddData.nivelRiesgo && (
                       <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
                         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Ventas estimadas anuales</p>
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">$</span>
                           <input type="text"
-                            className="w-full pl-7 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3] transition-all placeholder:text-slate-400"
+                            className="w-full pl-7 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7] transition-all placeholder:text-slate-400"
                             placeholder="Ej: 5.000.000"
                             value={ddData.ventasEstimadasAnuales}
                             onChange={e => setDdData(prev => ({ ...prev, ventasEstimadasAnuales: e.target.value }))} />
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1.5">Requerido para todos los niveles de riesgo</p>
                       </div>
                     )}
                   </div>
@@ -2231,7 +2895,7 @@ const ClientOnboarding = () => {
         const cardActions = (cardId, onEditInit, onSave) => (
           reviewEditCard !== cardId ? (
             <button onClick={() => { setReviewEditCard(cardId); onEditInit?.(); }}
-              className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-[#3879a3] transition-colors">
+              className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-[#3179a7] transition-colors">
               <Pencil className="w-3 h-3" /> Editar
             </button>
           ) : (
@@ -2254,8 +2918,8 @@ const ClientOnboarding = () => {
 
             {/* ── HERO: identidad + estado ── */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 flex items-center gap-5">
-              <div className="w-9 h-9 rounded-xl bg-[#3879a3]/10 flex items-center justify-center shrink-0">
-                <Building2 className="w-5 h-5 text-[#3879a3]" />
+              <div className="w-9 h-9 rounded-xl bg-[#3179a7]/10 flex items-center justify-center shrink-0">
+                <Building2 className="w-5 h-5 text-[#3179a7]" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-bold text-foreground truncate">{razonSocial || <span className="text-muted-foreground italic">Sin razón social</span>}</h2>
@@ -2283,28 +2947,16 @@ const ClientOnboarding = () => {
             </div>
 
             {/* ── MÉTRICAS: Riesgo / NSE / Ventas ── */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className={`grid gap-4 ${entityType === ENTITY_TYPES.MONOTRIBUTISTA ? 'grid-cols-3' : 'grid-cols-2'}`}>
 
-              {/* Nivel de Riesgo */}
+              {/* Nivel de Riesgo — readonly, calculado por matriz */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 dark:border-slate-700">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Nivel de Riesgo</p>
-                  {cardActions('risk',
-                    () => setReviewEditBuf({ nivelRiesgo: ddData.nivelRiesgo }),
-                    () => setDdData(prev => ({ ...prev, nivelRiesgo: reviewEditBuf.nivelRiesgo }))
-                  )}
+                  <span className="ml-auto text-[10px] text-muted-foreground italic" title="Calculado por la matriz de riesgo. No es editable.">Calculado por matriz</span>
                 </div>
                 <div className="p-4">
-                  {reviewEditCard === 'risk' ? (
-                    <select value={reviewEditBuf.nivelRiesgo || ''}
-                      onChange={e => setReviewEditBuf(prev => ({ ...prev, nivelRiesgo: e.target.value }))}
-                      className="w-full p-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]">
-                      <option value="">Seleccione...</option>
-                      <option value="bajo">Bajo</option>
-                      <option value="medio">Medio</option>
-                      <option value="alto">Alto</option>
-                    </select>
-                  ) : riskMeta ? (
+                  {riskMeta ? (
                     <>
                       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-bold ${riskMeta.badge}`}>
                         <Shield className="w-4 h-4" />{riskMeta.label}
@@ -2315,8 +2967,8 @@ const ClientOnboarding = () => {
                 </div>
               </div>
 
-              {/* NSE */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              {/* NSE — solo Persona Humana (Monotributista) */}
+              {entityType === ENTITY_TYPES.MONOTRIBUTISTA && <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 dark:border-slate-700">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">NSE</p>
                   {cardActions('nse',
@@ -2329,7 +2981,7 @@ const ClientOnboarding = () => {
                     <div className="space-y-2">
                       <select value={reviewEditBuf.nseNivel || ''}
                         onChange={e => setReviewEditBuf(prev => ({ ...prev, nseNivel: e.target.value }))}
-                        className="w-full p-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]">
+                        className="w-full p-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]">
                         <option value="">Seleccione...</option>
                         <option value="ABC1">ABC1 — Alto</option>
                         <option value="C2">C2 — Medio-Alto</option>
@@ -2340,7 +2992,7 @@ const ClientOnboarding = () => {
                       </select>
                       <textarea value={reviewEditBuf.nseNotas || ''}
                         onChange={e => setReviewEditBuf(prev => ({ ...prev, nseNotas: e.target.value }))}
-                        className="w-full p-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3] resize-none"
+                        className="w-full p-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7] resize-none"
                         rows={2} placeholder="Notas..." />
                     </div>
                   ) : ddData.nseNivel ? (
@@ -2350,7 +3002,7 @@ const ClientOnboarding = () => {
                     </>
                   ) : <p className="text-xs text-muted-foreground italic">Sin definir</p>}
                 </div>
-              </div>
+              </div>}
 
               {/* Ventas Est. Anuales */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -2365,7 +3017,7 @@ const ClientOnboarding = () => {
                   {reviewEditCard === 'ventas' ? (
                     <input type="number" value={reviewEditBuf.ventasEstimadasAnuales || ''}
                       onChange={e => setReviewEditBuf(prev => ({ ...prev, ventasEstimadasAnuales: e.target.value }))}
-                      className="w-full p-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]"
+                      className="w-full p-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]"
                       placeholder="Monto en $..." />
                   ) : ddData.ventasEstimadasAnuales ? (
                     <p className="text-xl font-bold text-foreground">
@@ -2382,7 +3034,7 @@ const ClientOnboarding = () => {
               {/* Datos Entidad */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700">
-                  <Building2 className="w-4 h-4 text-[#3879a3]" />
+                  <Building2 className="w-4 h-4 text-[#3179a7]" />
                   <h4 className="text-sm font-bold text-foreground">Datos de la Entidad</h4>
                   {cardActions('entidad',
                     () => setReviewEditBuf({ ...datosSociedad }),
@@ -2404,7 +3056,7 @@ const ClientOnboarding = () => {
                         <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</label>
                         <input type="text" value={reviewEditBuf[key] || ''}
                           onChange={e => setReviewEditBuf(prev => ({ ...prev, [key]: e.target.value }))}
-                          className="w-full mt-0.5 p-1.5 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3879a3]/30 focus:border-[#3879a3]" />
+                          className="w-full mt-0.5 p-1.5 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]" />
                       </div>
                     ))}
                   </div>
@@ -2423,7 +3075,7 @@ const ClientOnboarding = () => {
               {/* Personas */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700">
-                  <Users className="w-4 h-4 text-[#3879a3]" />
+                  <Users className="w-4 h-4 text-[#3179a7]" />
                   <h4 className="text-sm font-bold text-foreground">Personas</h4>
                   <span className="text-xs text-muted-foreground ml-1">({personas.length})</span>
                   {cardActions('personas', () => {}, () => {})}
@@ -2436,7 +3088,7 @@ const ClientOnboarding = () => {
                       return (
                         <div key={i}>
                           <div className="flex items-center gap-2.5 px-4 py-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-[#3879a3]/10 flex items-center justify-center text-[#3879a3] font-bold text-[11px] shrink-0 uppercase">
+                            <div className="w-7 h-7 rounded-lg bg-[#3179a7]/10 flex items-center justify-center text-[#3179a7] font-bold text-[11px] shrink-0 uppercase">
                               {p.apellido?.[0] || p.nombre?.[0] || '?'}
                             </div>
                             <span className="text-xs font-semibold text-foreground flex-1 truncate">{p.apellido} {p.nombre}</span>
@@ -2470,14 +3122,14 @@ const ClientOnboarding = () => {
                                 { key: 'numeroDocumento', label: 'Nro. Doc.' },
                                 { key: 'email', label: 'Email' },
                                 { key: 'telefono', label: 'Teléfono' },
-                                { key: 'domicilio', label: 'Domicilio' },
+                                { key: 'domicilioCalle', label: 'Domicilio', transform: (_, p) => [p.domicilioCalle, p.domicilioAltura, p.domicilioPiso, p.domicilioLocalidad, p.domicilioProvincia].filter(Boolean).join(' · ') },
                                 { key: 'cargo', label: 'Cargo' },
                               ].map(({ key, label }) => (
                                 <div key={key}>
                                   <label className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider block">{label}</label>
                                   <input type="text" value={personaInlineBuf[key] || ''}
                                     onChange={e => setPersonaInlineBuf(prev => ({ ...prev, [key]: e.target.value }))}
-                                    className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background focus:ring-1 focus:ring-[#3879a3]/30 focus:border-[#3879a3]" />
+                                    className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded bg-background focus:ring-1 focus:ring-[#3179a7]/30 focus:border-[#3179a7]" />
                                 </div>
                               ))}
                             </div>
@@ -2503,8 +3155,9 @@ const ClientOnboarding = () => {
                       {personas.map((p, i) => {
                         const primaryRole = [
                           { key: 'esAdministrador', label: 'Administrador' },
-                          { key: 'esAutoridad', label: 'Autoridad' },
-                          { key: 'esFirmante', label: 'Firmante' },
+                          { key: 'esPresidente', label: 'Presidente' },
+                          { key: 'esGerente', label: 'Gerente' },
+                          { key: 'esDirector', label: 'Director' },
                           { key: 'esApoderado', label: 'Apoderado' },
                           { key: 'esAccionista', label: entityType === ENTITY_TYPES.SA ? 'Accionista' : 'Socio' },
                           { key: 'esBeneficiarioFinal', label: 'B. Final' },
@@ -2524,7 +3177,7 @@ const ClientOnboarding = () => {
                               <span className="text-[10px] text-muted-foreground truncate">{p.cargo || 'Sin definir'}</span>
                               <div className="flex items-center gap-1 flex-wrap">
                                 {primaryRole ? (
-                                  <span className="px-1.5 py-px rounded text-[9px] font-semibold bg-[#3879a3]/10 text-[#3879a3] whitespace-nowrap truncate">
+                                  <span className="px-1.5 py-px rounded text-[9px] font-semibold bg-[#3179a7]/10 text-[#3179a7] whitespace-nowrap truncate">
                                     {primaryRole.label}
                                   </span>
                                 ) : (
@@ -2538,7 +3191,7 @@ const ClientOnboarding = () => {
                               </div>
                               <button type="button"
                                 onClick={() => setPersonaInlineEditIdx(isExpanded ? null : i)}
-                                className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:text-[#3879a3] hover:bg-[#3879a3]/10 transition-colors">
+                                className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:text-[#3179a7] hover:bg-[#3179a7]/10 transition-colors">
                                 <Info className="w-3 h-3" />
                               </button>
                             </div>
@@ -2549,7 +3202,7 @@ const ClientOnboarding = () => {
                                   { label: 'Teléfono', value: p.telefono },
                                   { label: 'CUIT', value: p.cuit },
                                   { label: 'Nro. Documento', value: p.numeroDocumento },
-                                  { label: 'Domicilio', value: p.domicilio },
+                                  { label: 'Domicilio', value: [p.domicilioCalle, p.domicilioAltura, p.domicilioPiso, p.domicilioLocalidad, p.domicilioProvincia].filter(Boolean).join(' · ') },
                                   { label: '% Participación', value: p.porcentaje ? `${p.porcentaje}%` : null },
                                 ].filter(d => d.value).map(d => (
                                   <div key={d.label}>
@@ -2571,7 +3224,7 @@ const ClientOnboarding = () => {
             {/* ── DOCUMENTACIÓN ── */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700">
-                <FileText className="w-4 h-4 text-[#3879a3]" />
+                <FileText className="w-4 h-4 text-[#3179a7]" />
                 <h4 className="text-sm font-bold text-foreground">Documentación</h4>
                 <div className="flex items-center gap-3 text-xs">
                   <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle className="w-3.5 h-3.5" />{docsCompletos} completos</span>
@@ -2593,11 +3246,11 @@ const ClientOnboarding = () => {
                           {hasUpload && (
                             <button type="button"
                               onClick={() => setViewingDocument({ doc, client: { legalName: datosSociedad.razonSocial || 'Alta en proceso', cuit: datosSociedad.cuit || '' }, fileName: hasUpload.name || doc.name, fileUrl: hasUpload.dataUrl || null })}
-                              className="w-6 h-6 rounded flex items-center justify-center text-[#3879a3] hover:bg-[#3879a3]/10 transition-colors shrink-0" title="Ver documento">
+                              className="w-6 h-6 rounded flex items-center justify-center text-[#3179a7] hover:bg-[#3179a7]/10 transition-colors shrink-0" title="Ver documento">
                               <Eye className="w-3.5 h-3.5" />
                             </button>
                           )}
-                          <label className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-[#3879a3]/10 text-[#3879a3] hover:bg-[#3879a3]/20 cursor-pointer transition-colors shrink-0">
+                          <label className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-[#3179a7]/10 text-[#3179a7] hover:bg-[#3179a7]/20 cursor-pointer transition-colors shrink-0">
                             <Upload className="w-3 h-3" />
                             {hasUpload ? 'Cambiar' : 'Subir'}
                             <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -2622,13 +3275,26 @@ const ClientOnboarding = () => {
                   {documents.map(doc => {
                     const hasUpload = uploadedDocs[doc.id];
                     const hasData = docData[doc.id] && Object.keys(docData[doc.id]).some(k => docData[doc.id][k]);
-                    const status = hasUpload && hasData ? 'completo' : hasUpload ? 'cargado' : doc.required ? 'faltante' : 'opcional';
+                    const reviewState = hasUpload?.review || null; // 'aprobado' | 'rechazado' | null
+                    const status = reviewState === 'aprobado' ? 'aprobado'
+                                 : reviewState === 'rechazado' ? 'rechazado'
+                                 : hasUpload && hasData ? 'completo'
+                                 : hasUpload ? 'cargado'
+                                 : doc.required ? 'faltante'
+                                 : 'opcional';
                     const statusCfg = {
-                      completo: { icon: <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />, badge: null },
-                      cargado:  { icon: <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />, badge: <span className="text-[9px] font-bold text-amber-500 uppercase">Sin datos</span> },
-                      faltante: { icon: <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />, badge: <span className="text-[9px] font-bold text-red-500 uppercase">Req.</span> },
-                      opcional: { icon: <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-slate-600 shrink-0" />, badge: null },
+                      aprobado:  { icon: <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />, badge: <span className="text-[9px] font-bold text-emerald-600 uppercase">Aprobado</span> },
+                      rechazado: { icon: <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />, badge: <span className="text-[9px] font-bold text-red-600 uppercase">Rechazado</span> },
+                      completo:  { icon: <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />, badge: null },
+                      cargado:   { icon: <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />, badge: <span className="text-[9px] font-bold text-amber-500 uppercase">Sin datos</span> },
+                      faltante:  { icon: <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />, badge: <span className="text-[9px] font-bold text-red-500 uppercase">Req.</span> },
+                      opcional:  { icon: <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-slate-600 shrink-0" />, badge: null },
                     }[status];
+                    const setReview = (next) => {
+                      // Toggle: si ya estaba en next, vuelve a null
+                      const newReview = reviewState === next ? null : next;
+                      setUploadedDocs(prev => ({ ...prev, [doc.id]: { ...prev[doc.id], review: newReview } }));
+                    };
                     return (
                       <div key={doc.id} className="flex flex-col gap-0.5 px-4 py-2.5">
                         <div className="flex items-center gap-2.5">
@@ -2636,13 +3302,27 @@ const ClientOnboarding = () => {
                           <span className="text-xs text-foreground flex-1">{doc.name}</span>
                           {statusCfg.badge}
                           {hasUpload ? (
-                            <button type="button"
-                              onClick={() => setViewingDocument({ doc, client: { legalName: datosSociedad.razonSocial || 'Alta en proceso', cuit: datosSociedad.cuit || '' }, fileName: hasUpload.name || doc.name, fileUrl: hasUpload.dataUrl || null })}
-                              className="w-6 h-6 rounded flex items-center justify-center text-[#3879a3] hover:bg-[#3879a3]/10 transition-colors shrink-0" title="Ver documento">
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
+                            <>
+                              <button type="button"
+                                onClick={() => setViewingDocument({ doc, client: { legalName: datosSociedad.razonSocial || 'Alta en proceso', cuit: datosSociedad.cuit || '' }, fileName: hasUpload.name || doc.name, fileUrl: hasUpload.dataUrl || null })}
+                                className="w-6 h-6 rounded flex items-center justify-center text-[#3179a7] hover:bg-[#3179a7]/10 transition-colors shrink-0" title="Ver documento">
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                              <button type="button"
+                                onClick={() => setReview('aprobado')}
+                                className={`w-6 h-6 rounded flex items-center justify-center transition-colors shrink-0 ${reviewState === 'aprobado' ? 'bg-emerald-500 text-white' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'}`}
+                                title={reviewState === 'aprobado' ? 'Aprobado — clic para deshacer' : 'Aprobar'}>
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              </button>
+                              <button type="button"
+                                onClick={() => setReview('rechazado')}
+                                className={`w-6 h-6 rounded flex items-center justify-center transition-colors shrink-0 ${reviewState === 'rechazado' ? 'bg-red-500 text-white' : 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+                                title={reviewState === 'rechazado' ? 'Rechazado — clic para deshacer' : 'Rechazar'}>
+                                <XCircle className="w-3.5 h-3.5" />
+                              </button>
+                            </>
                           ) : (
-                            <label className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-[#3879a3]/10 hover:text-[#3879a3] cursor-pointer transition-colors shrink-0">
+                            <label className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-[#3179a7]/10 hover:text-[#3179a7] cursor-pointer transition-colors shrink-0">
                               <Upload className="w-3 h-3" />
                               Subir
                               <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -2670,7 +3350,7 @@ const ClientOnboarding = () => {
             {(ddData.nosisNotas || ddData.nosisArchivo) && (
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700">
-                  <Search className="w-4 h-4 text-[#3879a3]" />
+                  <Search className="w-4 h-4 text-[#3179a7]" />
                   <h4 className="text-sm font-bold text-foreground">NOSIS</h4>
                   {ddData.nosisArchivo && (
                     <span className="ml-auto flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
@@ -2689,10 +3369,10 @@ const ClientOnboarding = () => {
             {/* ── COMENTARIOS INTERNOS ── */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700">
-                <HelpCircle className="w-4 h-4 text-[#3879a3]" />
+                <HelpCircle className="w-4 h-4 text-[#3179a7]" />
                 <h4 className="text-sm font-bold text-foreground">Comentarios internos</h4>
                 {comentariosAlta.length > 0 && (
-                  <span className="ml-auto w-5 h-5 rounded-full bg-[#3879a3] text-white text-[10px] font-bold flex items-center justify-center">
+                  <span className="ml-auto w-5 h-5 rounded-full bg-[#3179a7] text-white text-[10px] font-bold flex items-center justify-center">
                     {comentariosAlta.length}
                   </span>
                 )}
@@ -2702,8 +3382,8 @@ const ClientOnboarding = () => {
                   <div className="space-y-2">
                     {comentariosAlta.map(c => (
                       <div key={c.id} className="flex gap-3 p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-100 dark:border-slate-700">
-                        <div className="w-7 h-7 rounded-full bg-[#3879a3]/15 flex items-center justify-center shrink-0 mt-0.5">
-                          <User className="w-3.5 h-3.5 text-[#3879a3]" />
+                        <div className="w-7 h-7 rounded-full bg-[#3179a7]/15 flex items-center justify-center shrink-0 mt-0.5">
+                          <User className="w-3.5 h-3.5 text-[#3179a7]" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -2731,7 +3411,7 @@ const ClientOnboarding = () => {
                   />
                   <button type="button" onClick={agregarComentario}
                     disabled={!nuevoComentario.trim()}
-                    className="px-4 py-2 rounded-xl bg-[#3879a3] text-white text-sm font-semibold hover:bg-[#2d6285] disabled:opacity-40 disabled:cursor-not-allowed transition-all self-end">
+                    className="px-4 py-2 rounded-xl bg-[#3179a7] text-white text-sm font-semibold hover:bg-[#2d6285] disabled:opacity-40 disabled:cursor-not-allowed transition-all self-end">
                     Agregar
                   </button>
                 </div>
@@ -2752,7 +3432,7 @@ const ClientOnboarding = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header con gradiente */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#3879a3] via-[#4a8ab5] to-[#2d6a8a] sticky top-0 z-10 shadow-lg">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#3179a7] via-[#5a94b9] to-[#235677] sticky top-0 z-10 shadow-lg">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtNi42MjcgMC0xMiA1LjM3My0xMiAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMi01LjM3My0xMi0xMi0xMnoiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4wNSIvPjwvZz48L3N2Zz4=')] opacity-50"></div>
         <div className="relative max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -2784,7 +3464,7 @@ const ClientOnboarding = () => {
                       className={`
                         flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300
                         ${isActive
-                          ? 'bg-white/95 text-[#3879a3] shadow-lg dark:bg-white/15 dark:text-white dark:shadow-black/20'
+                          ? 'bg-white/95 text-[#3179a7] shadow-lg dark:bg-white/15 dark:text-white dark:shadow-black/20'
                           : isCompleted
                             ? 'text-white/90 hover:bg-white/10'
                             : 'text-white/40 cursor-not-allowed'
@@ -2794,7 +3474,7 @@ const ClientOnboarding = () => {
                       <div className={`
                         w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
                         ${isActive
-                          ? 'bg-[#3879a3] text-white dark:bg-white/30 dark:text-white'
+                          ? 'bg-[#3179a7] text-white dark:bg-white/30 dark:text-white'
                           : isCompleted
                             ? 'bg-emerald-400 text-white'
                             : 'bg-white/15 text-white/40'
@@ -2812,43 +3492,120 @@ const ClientOnboarding = () => {
         </div>
       </div>
 
+      {/* Top Step Navigation (entre header y contenido) */}
+      {currentStep > 0 && (
+        <div className="border-b border-border bg-card px-4 py-2 grid grid-cols-3 items-center gap-2">
+          <button
+            onClick={handlePrevStep}
+            className="justify-self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Volver al paso anterior
+          </button>
+
+          <div className="justify-self-center flex items-center gap-2 min-w-0">
+            <h2 className="text-sm font-semibold text-foreground truncate">
+              Paso {currentStep + 1} · {STEPS[currentStep].label}
+            </h2>
+            <StepInfoButton text={STEP_INFO[STEPS[currentStep].id]} />
+          </div>
+
+          <div className="justify-self-end flex items-center gap-2">
+            {currentStep === STEPS.length - 1 ? (
+              /* En Alta Final, la acción de Guardar/Confirmar va al final del contenido, abajo de todo. */
+              <span className="text-[10px] text-muted-foreground italic">Acción al final</span>
+            ) : (
+              <button
+                onClick={handleNextStep}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-[#3179a7] hover:bg-[#235677] transition-colors"
+              >
+                Ir al paso siguiente
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="flex-1">
         {renderStepContent()}
       </div>
 
-      {/* Footer Navigation */}
-      {currentStep > 0 && (
-        <div className="border-t border-border bg-card sticky bottom-0 px-4 py-2 flex items-center justify-between">
+      {/* Footer fijo para Alta Final: abajo de todo el contenido */}
+      {currentStep === STEPS.length - 1 && (
+        <div className="sticky bottom-0 border-t border-border bg-card px-4 py-3 flex justify-end items-center gap-2 shadow-lg z-10">
+          {quedaPendiente && (
+            <button
+              type="button"
+              onClick={() => { setExcepcionMotivo(''); setExcepcionModal(true); }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-orange-700 dark:text-orange-300 bg-white dark:bg-slate-800 border-2 border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+              title="Forzar el alta con motivo justificado (queda en auditoría)"
+            >
+              <AlertTriangle size={16} />
+              Dar de alta por excepción
+            </button>
+          )}
           <button
-            onClick={handlePrevStep}
-            disabled={currentStep === 1 && false /* always enabled when step>0 */}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            onClick={() => handleFinish()}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold text-white transition-colors shadow-md ${
+              quedaPendiente ? 'bg-amber-500 hover:bg-amber-600' : 'bg-[#3179a7] hover:bg-[#235677]'
+            }`}
           >
-            <ChevronLeft className="w-4 h-4" />
-            Anterior
+            <Save size={16} />
+            {quedaPendiente ? 'Guardar como Pendiente' : 'Confirmar Alta'}
           </button>
+        </div>
+      )}
 
-          <div className="flex items-center gap-2">
-            {currentStep === STEPS.length - 1 ? (
+      {/* Modal: Dar de alta por excepción */}
+      {excepcionModal && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              <h3 className="text-base font-bold text-foreground">Dar de alta por excepción</h3>
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                El alta se confirmará como <span className="font-bold">aprobada</span> aunque falte documentación o validaciones.
+                Quedará registrado para auditoría junto con el motivo que indiques.
+              </p>
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  Motivo de la excepción <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={excepcionMotivo}
+                  onChange={(e) => setExcepcionMotivo(e.target.value)}
+                  rows={4}
+                  placeholder="Explicá brevemente el motivo y bajo qué criterio se aprueba la excepción..."
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
               <button
-                onClick={handleFinish}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-colors ${
-                  quedaPendiente ? 'bg-amber-500 hover:bg-amber-600' : 'bg-[#3879a3] hover:bg-[#2d6a8a]'
-                }`}
+                onClick={() => { setExcepcionModal(false); setExcepcionMotivo(''); }}
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
-                <Save size={14} />
-                {quedaPendiente ? 'Guardar como Pendiente' : 'Confirmar Alta'}
+                Cancelar
               </button>
-            ) : (
               <button
-                onClick={handleNextStep}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-[#3879a3] hover:bg-[#2d6a8a] transition-colors"
+                onClick={async () => {
+                  if (!excepcionMotivo.trim()) return;
+                  setExcepcionModal(false);
+                  await handleFinish({ excepcion: true, motivoExcepcion: excepcionMotivo });
+                  setExcepcionMotivo('');
+                }}
+                disabled={!excepcionMotivo.trim()}
+                className="px-4 py-2 text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Siguiente
-                <ChevronRight className="w-4 h-4" />
+                <AlertTriangle className="w-4 h-4" />
+                Confirmar alta por excepción
               </button>
-            )}
+            </div>
           </div>
         </div>
       )}
@@ -2858,7 +3615,7 @@ const ClientOnboarding = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-[92vw] h-[92vh] max-w-7xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#3879a3] via-[#4a8ab5] to-[#2d6a8a] text-white">
+            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#3179a7] via-[#5a94b9] to-[#235677] text-white">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
                   <FileText className="w-6 h-6" />
@@ -2927,6 +3684,15 @@ const ClientOnboarding = () => {
                 </button>
                 <button
                   onClick={() => {
+                    openObserveModal(viewingDocument.client.id, viewingDocument.doc.id, viewingDocument.doc.name);
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-white rounded-xl text-sm font-semibold transition-all"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  Observar
+                </button>
+                <button
+                  onClick={() => {
                     handleDocumentReview(viewingDocument.client.id, viewingDocument.doc.id, 'approved');
                     toast.success('Documento aprobado');
                     handleCloseDocumentViewer();
@@ -2980,6 +3746,47 @@ const ClientOnboarding = () => {
               >
                 <XCircle className="w-4 h-4" />
                 Confirmar Rechazo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Observación */}
+      {observingDoc && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="p-4 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground">Observar Documento</h3>
+              <p className="text-sm text-muted-foreground mt-1">{observingDoc.docName}</p>
+            </div>
+            <div className="p-4">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Observación <span className="text-amber-500">*</span>
+              </label>
+              <textarea
+                value={observeReason}
+                onChange={(e) => setObserveReason(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+                rows={3}
+                placeholder="Registrá la duda o pedido menor sobre este documento..."
+                autoFocus
+              />
+            </div>
+            <div className="p-4 border-t border-border flex justify-end gap-3">
+              <button
+                onClick={() => { setObservingDoc(null); setObserveReason(''); }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmObserve}
+                disabled={!observeReason.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Confirmar Observación
               </button>
             </div>
           </div>
