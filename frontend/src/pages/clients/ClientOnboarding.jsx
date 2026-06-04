@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import {
   ArrowLeft,
   ArrowRight,
+  CreditCard,
   Check,
   Building2,
   User,
@@ -47,15 +48,13 @@ import { clientService } from '../../services/clientService';
 const STEPS = [
   { id: 'type', label: 'Revisión Docs.', icon: FileCheck },
   { id: 'documents', label: 'Datos Entidad', icon: Building2 },
-  { id: 'dd', label: 'Riesgo - Perfil Transaccional', icon: Search },
   { id: 'review', label: 'Alta Final', icon: Check },
 ];
 
 const STEP_INFO = {
   type: 'Identificá el tipo de cliente (Persona Humana o Jurídica) y revisá la documentación inicial cargada antes de avanzar al alta.',
   documents: 'Cargá los datos de la sociedad y de cada persona vinculada (titulares, apoderados, firmantes). Podés seleccionar personas existentes del directorio DCAC o crear nuevas.',
-  dd: 'Definí el perfil de riesgo y transaccional del cliente. Esta información alimenta la matriz de riesgo y los controles de monitoreo posteriores.',
-  review: 'Revisá toda la información antes de confirmar el alta. Si la documentación está incompleta podés guardar como pendiente y completar más tarde.',
+  review: 'Revisá toda la información antes de confirmar el alta. El nivel de riesgo y la puntuación se calculan automáticamente por la lógica del backend a partir de los datos cargados.',
 };
 
 const StepInfoButton = ({ text }) => {
@@ -135,15 +134,8 @@ const ClientOnboarding = () => {
     nosisNotas: '',
     nseNivel: '',
     nseNotas: '',
+    // Resultado de riesgo (calculado por backend)
     nivelRiesgo: '',
-    ventasEstimadasAnuales: '',
-    // Matriz de riesgo
-    esPep: false,
-    residencia: null,
-    nacionalidad: null,
-    actividad: null,
-    antiguedad: null,
-    materialidad: null,
     riesgoPuntaje: null,
   });
 
@@ -516,6 +508,7 @@ const ClientOnboarding = () => {
   const [loadingClients, setLoadingClients] = useState(true);
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroFormaSocial, setFiltroFormaSocial] = useState(''); // '', 'sa', 'srl', 'sh', 'sucesion', 'monotributista'
   const [expandedClientId, setExpandedClientId] = useState(null);
   const [documentReviews, setDocumentReviews] = useState({}); // { clientId: { docId: 'approved' | 'rejected' | 'observed' | 'solicitado' | null } }
   const [rejectionReasons, setRejectionReasons] = useState({}); // { clientId: { docId: 'motivo' } }
@@ -904,14 +897,34 @@ const ClientOnboarding = () => {
 
   // Filter clients based on search
   const filteredClients = useMemo(() => {
-    if (!searchTerm) return pendingClients;
-    const term = searchTerm.toLowerCase();
-    return pendingClients.filter(client =>
-      (client.legalName?.toLowerCase().includes(term)) ||
-      (client.cuit?.includes(term)) ||
-      (client.id?.toString().includes(term))
-    );
-  }, [pendingClients, searchTerm]);
+    let list = pendingClients;
+    // Filtro por forma social
+    if (filtroFormaSocial === 'ph_todos') {
+      // Atajo: todas las PH (Monotributista + Responsable Inscripto)
+      list = list.filter(client => {
+        const lf = (client.legalForm || '').toLowerCase();
+        return lf === 'monotributista' || lf === 'responsable_inscripto';
+      });
+    } else if (filtroFormaSocial) {
+      list = list.filter(client => (client.legalForm || '').toLowerCase() === filtroFormaSocial);
+    }
+    // Filtro por texto
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      list = list.filter(client =>
+        (client.legalName?.toLowerCase().includes(term)) ||
+        (client.cuit?.includes(term)) ||
+        (client.id?.toString().includes(term))
+      );
+    }
+    // Orden fijo: más reciente primero
+    list = [...list].sort((a, b) => {
+      const da = new Date(a.createdAt || 0).getTime();
+      const db = new Date(b.createdAt || 0).getTime();
+      return db - da;
+    });
+    return list;
+  }, [pendingClients, searchTerm, filtroFormaSocial]);
 
   // All persons (unified)
   const allPersons = useMemo(() => {
@@ -1286,15 +1299,36 @@ const ClientOnboarding = () => {
                   Revise la documentación y apruebe para continuar
                 </p>
               </div>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar por CUIT, razón social..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-sm w-72 bg-white dark:bg-gray-800 focus:border-[#3179a7] focus:ring-2 focus:ring-[#3179a7]/20 transition-all"
-                />
+              <div className="flex items-center gap-3 flex-wrap">
+                <select
+                  value={filtroFormaSocial}
+                  onChange={(e) => setFiltroFormaSocial(e.target.value)}
+                  className="px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-white dark:bg-gray-800 focus:border-[#3179a7] focus:ring-2 focus:ring-[#3179a7]/20 transition-all"
+                  title="Filtrar por forma social"
+                >
+                  <option value="">Todas las formas</option>
+                  <optgroup label="Persona Jurídica">
+                    <option value="sa">SA</option>
+                    <option value="srl">SRL</option>
+                    <option value="sh">SH</option>
+                    <option value="sucesion">Sucesión</option>
+                  </optgroup>
+                  <optgroup label="Persona Humana">
+                    <option value="ph_todos">Todas las PH</option>
+                    <option value="monotributista">Monotributo</option>
+                    <option value="responsable_inscripto">Responsable Inscripto</option>
+                  </optgroup>
+                </select>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por CUIT, razón social..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-sm w-72 bg-white dark:bg-gray-800 focus:border-[#3179a7] focus:ring-2 focus:ring-[#3179a7]/20 transition-all"
+                  />
+                </div>
               </div>
             </div>
 
@@ -1372,74 +1406,28 @@ const ClientOnboarding = () => {
                   const statusInfo = getStatusLabel();
 
                   return (
-                    <div key={client.id} className={`${index > 0 ? 'border-t border-slate-100 dark:border-slate-800' : ''} transition-all duration-300 ${canContinue
-                      ? 'bg-gradient-to-r from-emerald-50 via-emerald-50/80 to-teal-50/60 dark:from-emerald-900/20 dark:via-emerald-900/15 dark:to-teal-900/10'
-                      : isExpanded
+                    <div key={client.id} className={`${index > 0 ? 'border-t border-slate-100 dark:border-slate-800' : ''} transition-all duration-300 ${
+                      isExpanded
                         ? 'bg-slate-50/50 dark:bg-slate-800/30'
                         : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
                       }`}>
-                      {/* Client Row — siempre muestra botón Continuar */}
-                      {canContinue ? (
-                        <div className="flex items-center justify-between px-6 py-5">
-                          <div className="flex items-center gap-5">
-                            <div className="relative">
-                              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                                <CheckCircle className="w-5 h-5 text-emerald-600" />
-                              </div>
-                              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center">
-                                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-lg font-bold text-foreground">
-                                {client.legalName || `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Sin nombre'}
-                              </p>
-                              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                <span className="font-mono">{client.cuit}</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <span>{ENTITY_TYPE_LABELS[client.legalForm] || client.legalForm}</span>
-                              </p>
-                              <div className="flex items-center gap-1.5 mt-2 text-emerald-600 dark:text-emerald-400">
-                                <Check className="w-4 h-4" />
-                                <span className="text-sm font-medium">
-                                  {clientEsPH ? 'Documentación procesada vía 4i' : docsAprobados ? 'Documentación aprobada' : 'Carga de datos disponible'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            {!clientEsPH && (
-                              <button
-                                onClick={() => handleToggleExpand(client.id)}
-                                className="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 transition-all"
-                                title="Ver/ocultar documentos"
-                              >
-                                {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleSelectClient(client)}
-                              className="group relative px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                              <span>Continuar Carga de Datos</span>
-                              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          {/* Normal row - Grid matching header */}
+                          {/* Normal row - Grid matching header. PH: click = continuar; PJ: click = expandir docs */}
                           <div
                             className={`grid grid-cols-12 gap-4 px-6 py-4 cursor-pointer transition-all duration-200 items-center group`}
-                            onClick={() => handleToggleExpand(client.id)}
+                            onClick={() => clientEsPH ? handleSelectClient(client) : handleToggleExpand(client.id)}
                           >
                             {/* Sociedad */}
                             <div className="col-span-4 flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${isExpanded
-                                ? 'bg-[#3179a7] text-white rotate-0'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-[#3179a7]/10 group-hover:text-[#3179a7]'
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                                clientEsPH
+                                  ? 'bg-slate-100 dark:bg-slate-800 text-[#3179a7] group-hover:bg-[#3179a7]/10'
+                                  : isExpanded
+                                    ? 'bg-[#3179a7] text-white rotate-0'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-[#3179a7]/10 group-hover:text-[#3179a7]'
                                 }`}>
-                                {isExpanded ? (
+                                {clientEsPH ? (
+                                  <ArrowRight className="w-5 h-5" />
+                                ) : isExpanded ? (
                                   <ChevronUp className="w-5 h-5" />
                                 ) : (
                                   <ChevronDown className="w-5 h-5" />
@@ -1450,7 +1438,7 @@ const ClientOnboarding = () => {
                                   {client.legalName || `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Sin nombre'}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
-                                  {clientDocs.length} documentos
+                                  {clientEsPH ? 'Documentación vía 4i' : `${clientDocs.length} documentos`}
                                 </span>
                               </div>
                             </div>
@@ -1477,18 +1465,28 @@ const ClientOnboarding = () => {
                               </div>
                             </div>
 
-                            {/* Estado */}
+                            {/* Estado / Acción */}
                             <div className="col-span-2">
-                              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm ${statusInfo.color} ${statusInfo.glow}`}>
-                                {statusInfo.icon === 'check' && <CheckCircle className="w-3.5 h-3.5" />}
-                                {statusInfo.icon === 'warning' && <AlertTriangle className="w-3.5 h-3.5" />}
-                                {statusInfo.icon === 'clock' && <Clock className="w-3.5 h-3.5" />}
-                                {statusInfo.text}
-                              </span>
+                              {clientEsPH ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleSelectClient(client); }}
+                                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#3179a7] text-white hover:bg-[#235677] transition-colors shadow-sm"
+                                  title="Continuar carga de datos"
+                                >
+                                  Continuar
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                              ) : (
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm ${statusInfo.color} ${statusInfo.glow}`}>
+                                  {statusInfo.icon === 'check' && <CheckCircle className="w-3.5 h-3.5" />}
+                                  {statusInfo.icon === 'warning' && <AlertTriangle className="w-3.5 h-3.5" />}
+                                  {statusInfo.icon === 'clock' && <Clock className="w-3.5 h-3.5" />}
+                                  {statusInfo.text}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </>
-                      )}
 
                       {/* Expanded Documents Table */}
                       {isExpanded && (
@@ -1849,6 +1847,134 @@ const ClientOnboarding = () => {
         );
 
       case 'documents': {
+        // ── BRANCH PH: form plano sin PDF viewer, Personas locked ──
+        const esPHActivo = entityType === ENTITY_TYPES.MONOTRIBUTISTA || entityType === ENTITY_TYPES.RESPONSABLE_INSCRIPTO;
+        if (esPHActivo) {
+          const titular = personas[0] || {};
+          const getDocVal = (docId, field) => (docData[docId]?.[field] ?? '');
+          const setDocVal = (docId, field, value) => {
+            setDocData(prev => ({ ...prev, [docId]: { ...(prev[docId] || {}), [field]: value } }));
+          };
+          const dniDocId = 'dni_frente';
+          const dorsoDocId = 'dni_dorso';
+          const pepDocId = 'ddjj_pep_monotributo';
+
+          return (
+            <div className="p-6 max-w-5xl mx-auto space-y-5">
+              {/* Header */}
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#3179a7]/10 flex items-center justify-center">
+                  <User className="w-6 h-6 text-[#3179a7]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-bold text-foreground">Datos del Titular</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {entityType === ENTITY_TYPES.MONOTRIBUTISTA ? 'Monotributista' : 'Responsable Inscripto'} · Documentación vía 4i (no se cargan archivos en Compliance)
+                  </p>
+                </div>
+              </div>
+
+              {/* ── Datos personales ── */}
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-[#3179a7]" />
+                  <h3 className="text-sm font-bold text-foreground">Datos personales</h3>
+                </div>
+                <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Apellido</label>
+                    <input type="text" value={getDocVal(dniDocId, 'dni_apellido')} onChange={e => setDocVal(dniDocId, 'dni_apellido', e.target.value)} className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Nombre</label>
+                    <input type="text" value={getDocVal(dniDocId, 'dni_nombre')} onChange={e => setDocVal(dniDocId, 'dni_nombre', e.target.value)} className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">DNI</label>
+                    <input type="text" value={getDocVal(dniDocId, 'dni_numero')} onChange={e => setDocVal(dniDocId, 'dni_numero', e.target.value)} className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7] font-mono" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">CUIT/CUIL</label>
+                    <input type="text" value={datosSociedad.cuit || ''} onChange={e => setDatosSociedad(prev => ({ ...prev, cuit: e.target.value }))} className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7] font-mono" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Sexo</label>
+                    <select value={getDocVal(dniDocId, 'dni_sexo')} onChange={e => setDocVal(dniDocId, 'dni_sexo', e.target.value)} className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]">
+                      <option value="">Seleccionar...</option>
+                      <option value="F">Femenino</option>
+                      <option value="M">Masculino</option>
+                      <option value="X">X</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Nacionalidad</label>
+                    <input type="text" value={getDocVal(dniDocId, 'dni_nacionalidad')} onChange={e => setDocVal(dniDocId, 'dni_nacionalidad', e.target.value)} placeholder="Argentina" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Fecha de Nacimiento</label>
+                    <input type="date" value={getDocVal(dniDocId, 'dni_fecha_nacimiento')} onChange={e => setDocVal(dniDocId, 'dni_fecha_nacimiento', e.target.value)} className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Domicilio ── */}
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#3179a7]" />
+                  <h3 className="text-sm font-bold text-foreground">Domicilio</h3>
+                </div>
+                <div className="p-5 grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Domicilio (según DNI)</label>
+                    <input type="text" value={getDocVal(dorsoDocId, 'dni_domicilio')} onChange={e => setDocVal(dorsoDocId, 'dni_domicilio', e.target.value)} className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── NSE — Nivel Socioeconómico (PH: Monotributista y Responsable Inscripto) ── */}
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-violet-600" />
+                  <h3 className="text-sm font-bold text-foreground">NSE — Nivel Socioeconómico</h3>
+                  <span className="ml-auto text-[10px] text-muted-foreground italic">Clasificación del segmento del cliente</span>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                    {[
+                      { val: 'ABC1', label: 'ABC1', desc: 'Alto' },
+                      { val: 'C2',   label: 'C2',   desc: 'Medio-Alto' },
+                      { val: 'C3',   label: 'C3',   desc: 'Medio' },
+                      { val: 'D1',   label: 'D1',   desc: 'Medio-Bajo' },
+                      { val: 'D2',   label: 'D2',   desc: 'Bajo' },
+                      { val: 'E',    label: 'E',    desc: 'Muy Bajo' },
+                    ].map(({ val, label, desc }) => (
+                      <button key={val} type="button"
+                        onClick={() => setDdData(prev => ({ ...prev, nseNivel: val }))}
+                        className={`py-2.5 rounded-xl border-2 text-center transition-all ${
+                          ddData.nseNivel === val
+                            ? 'bg-[#3179a7] border-[#3179a7] text-white shadow-md shadow-[#3179a7]/20'
+                            : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-[#3179a7]/50 hover:bg-[#3179a7]/5'
+                        }`}>
+                        <p className="text-xs font-bold">{label}</p>
+                        <p className={`text-[9px] ${ddData.nseNivel === val ? 'text-white/80' : 'text-muted-foreground'}`}>{desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm resize-none placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7] transition-all"
+                    rows={2}
+                    placeholder="Observaciones sobre NSE..."
+                    value={ddData.nseNotas}
+                    onChange={e => setDdData(prev => ({ ...prev, nseNotas: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+            </div>
+          );
+        }
+
+        // ── BRANCH PJ (original): tabs Documentos + Personas con PDFViewer ──
         // Todos los documentos en una sola lista
         const allDocs = [...specificDocs, ...complementaryDocs];
 
@@ -2142,10 +2268,13 @@ const ClientOnboarding = () => {
                                   <div>
                                     <label className="label text-[10px]">Tipo de Firma</label>
                                     <div className="flex gap-2">
-                                      {['Individual', 'Multiple'].map(opt => (
-                                        <button key={opt} type="button" onClick={() => upd('tipoFirmaRol', opt)}
-                                          className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${p.tipoFirmaRol === opt ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7] hover:text-[#3179a7]'}`}>
-                                          {opt}
+                                      {[
+                                        { val: 'Individual', label: 'Individual' },
+                                        { val: 'Multiple',   label: 'Conjunta' },
+                                      ].map(({ val, label }) => (
+                                        <button key={val} type="button" onClick={() => upd('tipoFirmaRol', val)}
+                                          className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${p.tipoFirmaRol === val ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7] hover:text-[#3179a7]'}`}>
+                                          {label}
                                         </button>
                                       ))}
                                     </div>
@@ -2160,16 +2289,12 @@ const ClientOnboarding = () => {
                                         <option value="General">General</option>
                                         <option value="Crédito">Crédito</option>
                                         <option value="Pagos">Pagos</option>
-                                        <option value="Otro">Otro</option>
+                                        <option value="Alta CVU">Alta CVU</option>
                                       </select>
-                                      {p.alcanceRol === 'Otro' && (
-                                        <input type="text" className="input text-sm py-1.5 w-full mt-1.5" placeholder="Especificar alcance..."
-                                          value={p.alcanceRolOtro || ''} onChange={e => upd('alcanceRolOtro', e.target.value)} />
-                                      )}
                                     </div>
                                   )}
 
-                                  {/* Multiple: cantidad requerida + participantes, obligatorio/opcional, alcance por persona */}
+                                  {/* Conjunta (valor interno 'Multiple'): cantidad requerida + participantes, obligatorio/opcional, alcance por persona */}
                                   {p.tipoFirmaRol === 'Multiple' && (
                                     <div className="space-y-3">
                                       <div>
@@ -2192,13 +2317,16 @@ const ClientOnboarding = () => {
                                         </p>
                                         <div className="space-y-2 pl-1">
                                           <div>
-                                            <label className="label text-[10px]">Participación</label>
+                                            <label className="label text-[10px]">Es obligatorio</label>
                                             <div className="flex gap-2">
-                                              {['Obligatorio', 'Optativo'].map(opt => (
-                                                <button key={opt} type="button"
-                                                  onClick={() => upd('participacionRol', opt === 'Obligatorio')}
-                                                  className={`flex-1 py-1 rounded-lg text-xs font-medium border transition-all ${(p.participacionRol === undefined ? true : p.participacionRol) === (opt === 'Obligatorio') ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7]'}`}>
-                                                  {opt}
+                                              {[
+                                                { val: true,  label: 'Sí' },
+                                                { val: false, label: 'No' },
+                                              ].map(({ val, label }) => (
+                                                <button key={label} type="button"
+                                                  onClick={() => upd('participacionRol', val)}
+                                                  className={`flex-1 py-1 rounded-lg text-xs font-medium border transition-all ${(p.participacionRol === undefined ? true : p.participacionRol) === val ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7]'}`}>
+                                                  {label}
                                                 </button>
                                               ))}
                                             </div>
@@ -2210,12 +2338,8 @@ const ClientOnboarding = () => {
                                               <option value="General">General</option>
                                               <option value="Crédito">Crédito</option>
                                               <option value="Pagos">Pagos</option>
-                                              <option value="Otro">Otro</option>
+                                              <option value="Alta CVU">Alta CVU</option>
                                             </select>
-                                            {p.alcanceRol === 'Otro' && (
-                                              <input type="text" className="input text-sm py-1 w-full mt-1.5" placeholder="Especificar alcance..."
-                                                value={p.alcanceRolOtro || ''} onChange={e => upd('alcanceRolOtro', e.target.value)} />
-                                            )}
                                           </div>
                                           <div>
                                             <label className="label text-[10px]">Monto autorizado</label>
@@ -2276,13 +2400,16 @@ const ClientOnboarding = () => {
                                             {seleccionado && (
                                               <div className="space-y-2 pl-6">
                                                 <div>
-                                                  <label className="label text-[10px]">Participación</label>
+                                                  <label className="label text-[10px]">Es obligatorio</label>
                                                   <div className="flex gap-2">
-                                                    {['Obligatorio', 'Optativo'].map(opt => (
-                                                      <button key={opt} type="button"
-                                                        onClick={() => updateParticipanteConjunta(idx, op.id, 'obligatorio', opt === 'Obligatorio')}
-                                                        className={`flex-1 py-1 rounded-lg text-xs font-medium border transition-all ${fp?.obligatorio === (opt === 'Obligatorio') ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7]'}`}>
-                                                        {opt}
+                                                    {[
+                                                      { val: true,  label: 'Sí' },
+                                                      { val: false, label: 'No' },
+                                                    ].map(({ val, label }) => (
+                                                      <button key={label} type="button"
+                                                        onClick={() => updateParticipanteConjunta(idx, op.id, 'obligatorio', val)}
+                                                        className={`flex-1 py-1 rounded-lg text-xs font-medium border transition-all ${fp?.obligatorio === val ? 'bg-[#3179a7] text-white border-[#3179a7]' : 'bg-transparent text-slate-500 border-slate-300 hover:border-[#3179a7]'}`}>
+                                                        {label}
                                                       </button>
                                                     ))}
                                                   </div>
@@ -2294,6 +2421,7 @@ const ClientOnboarding = () => {
                                                     <option value="General">General</option>
                                                     <option value="Crédito">Crédito</option>
                                                     <option value="Pagos">Pagos</option>
+                                                    <option value="Alta CVU">Alta CVU</option>
                                                   </select>
                                                 </div>
                                                 <div>
@@ -2668,195 +2796,6 @@ const ClientOnboarding = () => {
         );
       }
 
-      case 'dd':
-        return (
-          <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#3179a7] to-[#235677] rounded-2xl flex items-center justify-center shadow-lg shadow-[#3179a7]/20 shrink-0">
-                <Search className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Riesgo — Perfil Transaccional</h2>
-                <p className="text-sm text-muted-foreground">Nivel socioeconómico · Clasificación de riesgo · Ventas estimadas</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-5">
-
-                {/* NSE — solo Persona Humana (Monotributista) */}
-                {entityType === ENTITY_TYPES.MONOTRIBUTISTA && <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                  <div className="flex items-center gap-3 px-5 py-4 bg-violet-500/5 dark:bg-violet-500/10 border-b border-slate-200 dark:border-slate-700">
-                    <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
-                      <Users className="w-4 h-4 text-violet-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-foreground">NSE — Nivel Socioeconómico</h3>
-                      <p className="text-[10px] text-muted-foreground">Clasificación del segmento del cliente</p>
-                    </div>
-                  </div>
-                  <div className="p-5 space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { val: 'ABC1', label: 'ABC1', desc: 'Alto' },
-                        { val: 'C2',   label: 'C2',   desc: 'Medio-Alto' },
-                        { val: 'C3',   label: 'C3',   desc: 'Medio' },
-                        { val: 'D1',   label: 'D1',   desc: 'Medio-Bajo' },
-                        { val: 'D2',   label: 'D2',   desc: 'Bajo' },
-                        { val: 'E',    label: 'E',    desc: 'Muy Bajo' },
-                      ].map(({ val, label, desc }) => (
-                        <button key={val} type="button"
-                          onClick={() => setDdData(prev => ({ ...prev, nseNivel: val }))}
-                          className={`py-2.5 rounded-xl border-2 text-center transition-all ${
-                            ddData.nseNivel === val
-                              ? 'bg-[#3179a7] border-[#3179a7] text-white shadow-md shadow-[#3179a7]/20'
-                              : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-[#3179a7]/50 hover:bg-[#3179a7]/5'
-                          }`}>
-                          <p className="text-xs font-bold">{label}</p>
-                          <p className={`text-[9px] ${ddData.nseNivel === val ? 'text-white/80' : 'text-muted-foreground'}`}>{desc}</p>
-                        </button>
-                      ))}
-                    </div>
-                    <textarea
-                      className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm resize-none placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7] transition-all"
-                      rows={2}
-                      placeholder="Observaciones sobre NSE..."
-                      value={ddData.nseNotas}
-                      onChange={e => setDdData(prev => ({ ...prev, nseNotas: e.target.value }))}
-                    />
-                  </div>
-                </div>}
-
-                {/* Matriz de Riesgo */}
-                <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                  <div className="flex items-center gap-3 px-5 py-4 bg-amber-500/5 dark:bg-amber-500/10 border-b border-slate-200 dark:border-slate-700">
-                    <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                      <AlertTriangle className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-foreground">Matriz de Riesgo</h3>
-                      <p className="text-[10px] text-muted-foreground">Completar todos los factores para calcular el nivel</p>
-                    </div>
-                  </div>
-                  <div className="p-5 space-y-4">
-
-                    {/* PEP — detectado automáticamente desde personas vinculadas */}
-                    {!personas.some(p => p.esPep === true) && (
-                      <div className="rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-800 p-3">
-                        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">Sin PEP detectado — completar factores de riesgo</p>
-                      </div>
-                    )}
-
-                    {/* Factores ponderados — solo si no hay PEP */}
-                    {!personas.some(p => p.esPep === true) && (() => {
-                      const esHumana = entityType === ENTITY_TYPES.MONOTRIBUTISTA;
-                      const factores = esHumana
-                        ? [
-                            { key: 'residencia',   label: 'Residencia',   peso: '10%', opts: [{ val: 1, label: 'Bajo', sub: 'Local' }, { val: 3, label: 'Medio', sub: 'Extranjero' }, { val: 5, label: 'Alto', sub: 'País de riesgo' }] },
-                            { key: 'nacionalidad', label: 'Nacionalidad', peso: '10%', opts: [{ val: 1, label: 'Bajo', sub: 'Argentina' }, { val: 3, label: 'Medio', sub: 'Extranjero' }, { val: 5, label: 'Alto', sub: 'País de riesgo' }] },
-                            { key: 'actividad',    label: 'Actividad',    peso: '30%', opts: [{ val: 1, label: 'Bajo', sub: 'Común' }, { val: 3, label: 'Medio', sub: 'Moderada' }, { val: 5, label: 'Alto', sub: 'Alto riesgo' }] },
-                            { key: 'antiguedad',   label: 'Antigüedad',   peso: '20%', opts: [{ val: 1, label: 'Bajo', sub: '>24 meses' }, { val: 5, label: 'Alto', sub: '<24 meses' }] },
-                            { key: 'materialidad', label: 'Materialidad', peso: '30%', opts: [{ val: 1, label: 'Bajo', sub: 'Baja' }, { val: 3, label: 'Medio', sub: 'Media' }, { val: 5, label: 'Alto', sub: 'Alta' }] },
-                          ]
-                        : [
-                            { key: 'residencia',   label: 'Residencia',   peso: '20%', opts: [{ val: 1, label: 'Bajo', sub: 'Local' }, { val: 3, label: 'Medio', sub: 'Extranjero' }, { val: 5, label: 'Alto', sub: 'País de riesgo' }] },
-                            { key: 'actividad',    label: 'Actividad',    peso: '30%', opts: [{ val: 1, label: 'Bajo', sub: 'Común' }, { val: 3, label: 'Medio', sub: 'Moderada' }, { val: 5, label: 'Alto', sub: 'Alto riesgo' }] },
-                            { key: 'antiguedad',   label: 'Antigüedad',   peso: '20%', opts: [{ val: 1, label: 'Bajo', sub: '>24 meses' }, { val: 5, label: 'Alto', sub: '<24 meses' }] },
-                            { key: 'materialidad', label: 'Materialidad', peso: '30%', opts: [{ val: 1, label: 'Bajo', sub: 'Baja' }, { val: 3, label: 'Medio', sub: 'Media' }, { val: 5, label: 'Alto', sub: 'Alta' }] },
-                          ];
-
-                      return factores.map(({ key, label, peso, opts }) => (
-                        <div key={key}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
-                            <span className="text-[9px] bg-slate-200 dark:bg-slate-700 text-muted-foreground px-2 py-0.5 rounded-full font-medium">Pond. {peso}</span>
-                          </div>
-                          <div className={`grid gap-2 ${opts.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                            {opts.map(({ val, label: optLabel, sub }) => (
-                              <button key={val} type="button"
-                                onClick={() => {
-                                  const newF = { ...ddData, [key]: val };
-                                  const todosCompletos = esHumana
-                                    ? newF.residencia && newF.nacionalidad && newF.actividad && newF.antiguedad && newF.materialidad
-                                    : newF.residencia && newF.actividad && newF.antiguedad && newF.materialidad;
-                                  if (todosCompletos) {
-                                    const p = esHumana
-                                      ? Math.round((newF.residencia*0.10 + newF.nacionalidad*0.10 + newF.actividad*0.30 + newF.antiguedad*0.20 + newF.materialidad*0.30)*100)/100
-                                      : Math.round((newF.residencia*0.20 + newF.actividad*0.30 + newF.antiguedad*0.20 + newF.materialidad*0.30)*100)/100;
-                                    const n = p <= 2.00 ? 'bajo' : p <= 3.00 ? 'medio' : 'alto';
-                                    setDdData(prev => ({ ...prev, [key]: val, riesgoPuntaje: p, nivelRiesgo: n }));
-                                  } else {
-                                    setDdData(prev => ({ ...prev, [key]: val }));
-                                  }
-                                }}
-                                className={`py-2 rounded-xl border-2 text-center text-xs transition-all ${
-                                  ddData[key] === val
-                                    ? val === 1 ? 'bg-emerald-500 border-emerald-500 text-white' : val === 3 ? 'bg-amber-500 border-amber-500 text-white' : 'bg-red-500 border-red-500 text-white'
-                                    : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-slate-400'
-                                }`}>
-                                <p className="font-bold">{optLabel}</p>
-                                <p className={`text-[9px] ${ddData[key] === val ? 'text-white/80' : 'text-muted-foreground'}`}>{sub}</p>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ));
-                    })()}
-
-                    {/* Resultado calculado */}
-                    {(() => {
-                      const pepDetectado = personas.some(p => p.esPep === true);
-                      const nivelEfectivo = pepDetectado ? 'alto' : ddData.nivelRiesgo;
-                      const puntajeEfectivo = pepDetectado ? 5.00 : ddData.riesgoPuntaje;
-                      if (!nivelEfectivo) return null;
-                      return (
-                        <div className={`mt-2 rounded-xl p-4 border-2 flex items-center justify-between ${
-                          nivelEfectivo === 'bajo'  ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-700' :
-                          nivelEfectivo === 'medio' ? 'bg-amber-50 border-amber-300 dark:bg-amber-900/20 dark:border-amber-700' :
-                                                      'bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-700'
-                        }`}>
-                          <div>
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Resultado{pepDetectado ? ' (PEP)' : ''}</p>
-                            <p className={`text-xl font-bold mt-0.5 ${
-                              nivelEfectivo === 'bajo' ? 'text-emerald-700 dark:text-emerald-400' :
-                              nivelEfectivo === 'medio' ? 'text-amber-700 dark:text-amber-400' : 'text-red-700 dark:text-red-400'
-                            }`}>
-                              {nivelEfectivo.charAt(0).toUpperCase() + nivelEfectivo.slice(1)}
-                              {' '}—{' '}
-                              {nivelEfectivo === 'bajo' ? 'DDS' : nivelEfectivo === 'medio' ? 'DDM' : 'DDR'}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[10px] text-muted-foreground">Puntaje</p>
-                            <p className={`text-2xl font-bold ${
-                              nivelEfectivo === 'bajo' ? 'text-emerald-600' : nivelEfectivo === 'medio' ? 'text-amber-600' : 'text-red-600'
-                            }`}>{puntajeEfectivo?.toFixed(2)}</p>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Ventas estimadas */}
-                    {ddData.nivelRiesgo && (
-                      <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Ventas estimadas anuales</p>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">$</span>
-                          <input type="text"
-                            className="w-full pl-7 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7] transition-all placeholder:text-slate-400"
-                            placeholder="Ej: 5.000.000"
-                            value={ddData.ventasEstimadasAnuales}
-                            onChange={e => setDdData(prev => ({ ...prev, ventasEstimadasAnuales: e.target.value }))} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-            </div>
-          </div>
-        );
-
       case 'review': {
         // Collect all doc data
         const allData = {};
@@ -2880,6 +2819,30 @@ const ClientOnboarding = () => {
           { label: 'Duración', value: allData.duracion_sociedad || allData.srl_plazo_duracion },
           { label: 'Mandato Vigente', value: allData.mandato_vigente },
         ].filter(d => d.value);
+
+        // Datos del titular — Persona Humana (Monotributista / Responsable Inscripto)
+        // Siempre se muestran todos los campos, con placeholder si no hay dato
+        const titularReview = personas[0] || {};
+        const pepValor = titularReview.esPep === true
+          ? 'Sí — Persona Expuesta Políticamente'
+          : titularReview.esPep === false
+            ? 'No'
+            : null;
+        const datosTitular = [
+          { label: 'Apellido', value: allData.dni_apellido || titularReview.apellido },
+          { label: 'Nombre', value: allData.dni_nombre || titularReview.nombre },
+          { label: 'DNI', value: allData.dni_numero || titularReview.numeroDocumento },
+          { label: 'CUIT/CUIL', value: datosSociedad.cuit || titularReview.cuit },
+          { label: 'Sexo', value: allData.dni_sexo },
+          { label: 'Nacionalidad', value: allData.dni_nacionalidad },
+          { label: 'Fecha de Nacimiento', value: allData.dni_fecha_nacimiento },
+          { label: 'Domicilio', value: allData.dni_domicilio || datosSociedad.domicilioLegal },
+          { label: 'Actividad', value: datosSociedad.actividadPrincipal || allData.actividad_principal, fromMari: true },
+          { label: 'PEP', value: pepValor, fromMari: true, isPep: true, esPep: titularReview.esPep },
+        ];
+
+        const esPHReview = entityType === ENTITY_TYPES.MONOTRIBUTISTA || entityType === ENTITY_TYPES.RESPONSABLE_INSCRIPTO;
+        const datosCard = esPHReview ? datosTitular : datosEntidad;
 
         const riskMetaMap = {
           alto:  { label: 'Alto',  badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',     dd: 'DDR — Debida Diligencia Reforzada' },
@@ -2941,29 +2904,46 @@ const ClientOnboarding = () => {
                   <p className={`text-sm font-bold leading-tight ${quedaPendiente ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
                     {quedaPendiente ? 'Quedará Pendiente' : 'Listo para Alta'}
                   </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{uploadedCount}/{documents.length} docs · {personas.length} personas</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {entityType === ENTITY_TYPES.MONOTRIBUTISTA || entityType === ENTITY_TYPES.RESPONSABLE_INSCRIPTO
+                      ? 'Datos vía 4i · 1 titular'
+                      : `${uploadedCount}/${documents.length} docs · ${personas.length} personas`}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* ── MÉTRICAS: Riesgo / NSE / Ventas ── */}
-            <div className={`grid gap-4 ${entityType === ENTITY_TYPES.MONOTRIBUTISTA ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            {/* ── MÉTRICAS: Riesgo / NSE ── */}
+            <div className="grid grid-cols-2 gap-4">
 
-              {/* Nivel de Riesgo — readonly, calculado por matriz */}
+              {/* Nivel de Riesgo — readonly, calculado por backend */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 dark:border-slate-700">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Nivel de Riesgo</p>
-                  <span className="ml-auto text-[10px] text-muted-foreground italic" title="Calculado por la matriz de riesgo. No es editable.">Calculado por matriz</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground italic" title="Calculado automáticamente por la lógica del backend. No es editable.">Calculado por backend</span>
                 </div>
                 <div className="p-4">
                   {riskMeta ? (
-                    <>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-bold ${riskMeta.badge}`}>
-                        <Shield className="w-4 h-4" />{riskMeta.label}
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-bold ${riskMeta.badge}`}>
+                          <Shield className="w-4 h-4" />{riskMeta.label}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-2">{riskMeta.dd}</p>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-2">{riskMeta.dd}</p>
-                    </>
-                  ) : <p className="text-xs text-muted-foreground italic">Sin definir</p>}
+                      {ddData.riesgoPuntaje != null && (
+                        <div className="text-right shrink-0">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Puntaje</p>
+                          <p className={`text-2xl font-bold leading-tight ${
+                            ddData.nivelRiesgo === 'bajo' ? 'text-emerald-600' :
+                            ddData.nivelRiesgo === 'medio' ? 'text-amber-600' : 'text-red-600'
+                          }`}>{Number(ddData.riesgoPuntaje).toFixed(2)}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">Pendiente de cálculo del backend</p>
+                  )}
                 </div>
               </div>
 
@@ -3004,38 +2984,18 @@ const ClientOnboarding = () => {
                 </div>
               </div>}
 
-              {/* Ventas Est. Anuales */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Ventas Est. Anuales</p>
-                  {cardActions('ventas',
-                    () => setReviewEditBuf({ ventasEstimadasAnuales: ddData.ventasEstimadasAnuales }),
-                    () => setDdData(prev => ({ ...prev, ventasEstimadasAnuales: reviewEditBuf.ventasEstimadasAnuales }))
-                  )}
-                </div>
-                <div className="p-4">
-                  {reviewEditCard === 'ventas' ? (
-                    <input type="number" value={reviewEditBuf.ventasEstimadasAnuales || ''}
-                      onChange={e => setReviewEditBuf(prev => ({ ...prev, ventasEstimadasAnuales: e.target.value }))}
-                      className="w-full p-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-[#3179a7]/30 focus:border-[#3179a7]"
-                      placeholder="Monto en $..." />
-                  ) : ddData.ventasEstimadasAnuales ? (
-                    <p className="text-xl font-bold text-foreground">
-                      ${Number(ddData.ventasEstimadasAnuales).toLocaleString('es-AR')}
-                    </p>
-                  ) : <p className="text-xs text-muted-foreground italic">Sin definir</p>}
-                </div>
-              </div>
             </div>
 
             {/* ── DATOS ENTIDAD + PERSONAS (2 col) ── */}
             <div className="grid grid-cols-2 gap-5">
 
-              {/* Datos Entidad */}
+              {/* Datos Entidad / Titular */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700">
                   <Building2 className="w-4 h-4 text-[#3179a7]" />
-                  <h4 className="text-sm font-bold text-foreground">Datos de la Entidad</h4>
+                  <h4 className="text-sm font-bold text-foreground">
+                    {esPHReview ? 'Datos del Titular' : 'Datos de la Entidad'}
+                  </h4>
                   {cardActions('entidad',
                     () => setReviewEditBuf({ ...datosSociedad }),
                     () => setDatosSociedad(prev => ({ ...prev, ...reviewEditBuf }))
@@ -3062,12 +3022,34 @@ const ClientOnboarding = () => {
                   </div>
                 ) : (
                   <div className="p-4 divide-y divide-slate-100 dark:divide-slate-700">
-                    {datosEntidad.length > 0 ? datosEntidad.map((d, i) => (
-                      <div key={i} className="flex justify-between items-baseline gap-3 py-2 first:pt-0 last:pb-0">
-                        <span className="text-xs text-muted-foreground shrink-0">{d.label}</span>
-                        <span className="text-xs font-medium text-foreground text-right">{d.value}</span>
-                      </div>
-                    )) : <p className="text-xs text-muted-foreground italic">Sin datos cargados</p>}
+                    {datosCard.length > 0 ? datosCard.map((d, i) => {
+                      const sinDato = d.value == null || d.value === '';
+                      return (
+                        <div key={i} className="flex justify-between items-baseline gap-3 py-2 first:pt-0 last:pb-0">
+                          <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1.5">
+                            {d.label}
+                            {d.fromMari && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-semibold uppercase tracking-wider">Mari</span>
+                            )}
+                          </span>
+                          {d.isPep ? (
+                            sinDato ? (
+                              <span className="text-xs font-medium text-right px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-500 italic">Sin definir</span>
+                            ) : (
+                              <span className={`text-xs font-bold text-right px-2 py-0.5 rounded-md ${
+                                d.esPep === true
+                                  ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                  : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                              }`}>{d.value}</span>
+                            )
+                          ) : (
+                            <span className={`text-xs text-right ${sinDato ? 'text-muted-foreground italic' : 'font-medium text-foreground'}`}>
+                              {sinDato ? '—' : d.value}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    }) : <p className="text-xs text-muted-foreground italic">Sin datos cargados</p>}
                   </div>
                 )}
               </div>
@@ -3077,8 +3059,10 @@ const ClientOnboarding = () => {
                 <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700">
                   <Users className="w-4 h-4 text-[#3179a7]" />
                   <h4 className="text-sm font-bold text-foreground">Personas</h4>
-                  <span className="text-xs text-muted-foreground ml-1">({personas.length})</span>
-                  {cardActions('personas', () => {}, () => {})}
+                  <span className="text-xs text-muted-foreground ml-1">({Math.max(personas.length, (entityType === ENTITY_TYPES.MONOTRIBUTISTA || entityType === ENTITY_TYPES.RESPONSABLE_INSCRIPTO) ? 1 : 0)})</span>
+                  {(entityType === ENTITY_TYPES.MONOTRIBUTISTA || entityType === ENTITY_TYPES.RESPONSABLE_INSCRIPTO) ? (
+                    <span className="ml-auto text-[10px] text-muted-foreground italic">Titular único</span>
+                  ) : cardActions('personas', () => {}, () => {})}
                 </div>
                 {reviewEditCard === 'personas' ? (
                   <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -3139,7 +3123,20 @@ const ClientOnboarding = () => {
                     })}
                   </div>
                 ) : personas.length === 0 ? (
-                  <p className="px-5 py-4 text-xs text-muted-foreground italic">Sin personas registradas</p>
+                  (entityType === ENTITY_TYPES.MONOTRIBUTISTA || entityType === ENTITY_TYPES.RESPONSABLE_INSCRIPTO) && (datosSociedad.razonSocial || datosSociedad.cuit) ? (
+                    <div className="px-4 py-3 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#3179a7] text-white flex items-center justify-center font-bold text-xs">
+                        {(datosSociedad.razonSocial?.split(' ').pop()?.[0] || '?').toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground truncate">{datosSociedad.razonSocial || 'Titular'}</p>
+                        <p className="text-[10px] text-muted-foreground">{datosSociedad.cuit || '—'} · Rol: Titular</p>
+                      </div>
+                      <span className="text-[9px] font-bold text-[#3179a7] bg-[#3179a7]/10 px-2 py-0.5 rounded-full">PH</span>
+                    </div>
+                  ) : (
+                    <p className="px-5 py-4 text-xs text-muted-foreground italic">Sin personas registradas</p>
+                  )
                 ) : (
                   <>
                     {/* Table header */}
@@ -3221,7 +3218,28 @@ const ClientOnboarding = () => {
               </div>
             </div>
 
-            {/* ── DOCUMENTACIÓN ── */}
+            {/* ── DOCUMENTACIÓN (PJ) / DATOS VÍA 4i (PH) ── */}
+            {(entityType === ENTITY_TYPES.MONOTRIBUTISTA || entityType === ENTITY_TYPES.RESPONSABLE_INSCRIPTO) ? (
+              <div className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-200 dark:border-blue-800 shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-5 py-3.5 border-b border-blue-200/60 dark:border-blue-800/60">
+                  <FileText className="w-4 h-4 text-[#3179a7]" />
+                  <h4 className="text-sm font-bold text-foreground">Documentación</h4>
+                  <span className="ml-auto text-[10px] text-blue-700 dark:text-blue-300 italic">Gestionada vía 4i</span>
+                </div>
+                <div className="p-5 flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                    <CheckCircle className="w-5 h-5 text-[#3179a7]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">Documentación procesada por 4i</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      En PH la documentación (DNI, datos AFIP, DDJJ PEP) se obtiene automáticamente vía el proveedor 4i.
+                      Los datos del titular ya quedaron cargados en el paso anterior; no hay archivos para subir desde Compliance.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700">
                 <FileText className="w-4 h-4 text-[#3179a7]" />
@@ -3345,6 +3363,7 @@ const ClientOnboarding = () => {
                 </div>
               )}
             </div>
+            )}
 
             {/* ── NOSIS ── */}
             {(ddData.nosisNotas || ddData.nosisArchivo) && (
@@ -3554,6 +3573,29 @@ const ClientOnboarding = () => {
           >
             <Save size={16} />
             {quedaPendiente ? 'Guardar como Pendiente' : 'Confirmar Alta'}
+          </button>
+        </div>
+      )}
+
+      {/* Footer fijo para pasos intermedios: Volver / Siguiente */}
+      {currentStep > 0 && currentStep < STEPS.length - 1 && (
+        <div className="sticky bottom-0 border-t border-border bg-card px-4 py-3 flex justify-between items-center gap-2 shadow-lg z-10">
+          <button
+            type="button"
+            onClick={handlePrevStep}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-foreground bg-white dark:bg-slate-800 border border-border hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Volver atrás
+          </button>
+
+          <button
+            type="button"
+            onClick={handleNextStep}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white bg-[#3179a7] hover:bg-[#235677] transition-colors shadow-md"
+          >
+            Siguiente
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}

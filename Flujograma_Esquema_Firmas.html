@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flujograma — Esquema de firmas por persona vinculada</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #2C2C2A; background: #F7F6F2; margin: 0; padding: 24px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.sub { color: #5F5E5A; margin: 0 0 20px; font-size: 14px; }
+  .card { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 16px; overflow: auto; }
+  .legend { display:flex; flex-wrap:wrap; gap:14px; margin-top:16px; font-size:13px; color:#444; }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .dot { width:12px; height:12px; border-radius:3px; display:inline-block; }
+</style>
+</head>
+<body>
+  <h1>Esquema de firmas por persona vinculada</h1>
+  <p class="sub">Paso 2 — Carga de datos de sociedad y personas · Sistema de Compliance HC DCAC</p>
+  <div class="card">
+    <pre class="mermaid">
+flowchart TD
+  A([Persona vinculada cargada]):::start --> B[Definir cargo societario]:::step
+  B --> C{Cargo?}:::dec
+
+  C -->|Presidente| D[Firma = Individual<br/>Alcance = General<br/><i>automático · no editable</i>]:::auto
+  C -->|Apoderado| E{¿Individual o múltiple?}:::dec
+  C -->|Gerente / Director / Socio /<br/>Accionista / Heredero| X[No es firmante<br/>sin esquema de firma]:::nofirm
+
+  E -->|Individual| EI[Firma individual]:::step
+  E -->|Múltiple| EM[Establecer mínimo de firmantes<br/>y seleccionar cuáles]:::step
+  EM --> EMO[Por cada firmante:<br/>obligatorio sí / no opcional]:::step
+
+  D --> CFG[Definir alcance de actos<br/>+ monto: sin límite /<br/>hasta máximo / entre x e y]:::step
+  EI --> CFG
+  EMO --> CFG
+  CFG --> REP[Replicar alcance y monto<br/>en las demás personas<br/>del grupo de firma múltiple]:::rep
+
+  REP --> M[REPET: sí / no]:::step
+  X --> M
+  M --> N{¿Es PEP?}:::dec
+  N -->|Sí| N1[Dispara HU-06 del paso 3<br/>cálculo de riesgo]:::flag
+  N -->|No| O[Continuar]:::step
+  N1 --> P[Guardar borrador]:::step
+  O --> P
+  P --> Q{¿La sociedad tiene<br/>al menos un firmante?}:::dec
+  Q -->|No| Q1[Bloquea el cierre<br/>del paso 2]:::block
+  Q1 --> B
+  Q -->|Sí| R([El paso 2 puede cerrarse]):::start
+
+  classDef start fill:#1D9E75,stroke:#0F6E56,color:#fff,font-weight:bold;
+  classDef step fill:#EEEDFE,stroke:#7F77DD,color:#26215C;
+  classDef dec fill:#E6F1FB,stroke:#378ADD,color:#0b3a66;
+  classDef auto fill:#E1F5EE,stroke:#1D9E75,color:#04342C;
+  classDef nofirm fill:#F1EFE8,stroke:#888780,color:#2C2C2A;
+  classDef rep fill:#FBEAF0,stroke:#D4537E,color:#4B1528;
+  classDef flag fill:#FBEAF0,stroke:#D4537E,color:#4B1528;
+  classDef block fill:#FAECE7,stroke:#D85A30,color:#4A1B0C;
+    </pre>
+  </div>
+  <div class="legend">
+    <span><i class="dot" style="background:#1D9E75"></i> Inicio / fin</span>
+    <span><i class="dot" style="background:#EEEDFE;border:1px solid #7F77DD"></i> Paso de carga</span>
+    <span><i class="dot" style="background:#E6F1FB;border:1px solid #378ADD"></i> Decisión</span>
+    <span><i class="dot" style="background:#E1F5EE;border:1px solid #1D9E75"></i> Regla automática</span>
+    <span><i class="dot" style="background:#F1EFE8;border:1px solid #888780"></i> No firmante</span>
+    <span><i class="dot" style="background:#FBEAF0;border:1px solid #D4537E"></i> Dispara HU paso 3</span>
+    <span><i class="dot" style="background:#FAECE7;border:1px solid #D85A30"></i> Bloqueo / validación</span>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', flowchart: { useMaxWidth: true, htmlLabels: true } });</script>
+</body>
+</html>

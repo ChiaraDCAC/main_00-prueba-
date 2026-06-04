@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
@@ -40,7 +40,7 @@ import {
   X,
 } from 'lucide-react';
 import { clientService } from '../../services/clientService';
-import { ENTITY_TYPE_LABELS, getRequiredDocuments } from '../../config/documentRequirements';
+import { ENTITY_TYPE_LABELS, ENTITY_TYPES, getRequiredDocuments } from '../../config/documentRequirements';
 import { Upload } from 'lucide-react';
 
 const ClientDetail = () => {
@@ -94,6 +94,11 @@ const ClientDetail = () => {
   }
 
   const isHuman = client.clientType === 'persona_humana';
+  // PH activo (Monotributista o Responsable Inscripto): la persona ES el titular,
+  // no hay "Personas" vinculadas adicionales y no se carga documentación (viene de 4i).
+  const esPHActivo = client.legalForm === ENTITY_TYPES.MONOTRIBUTISTA
+    || client.legalForm === ENTITY_TYPES.RESPONSABLE_INSCRIPTO
+    || client.clientType === 'monotributista';
   const clientName = isHuman
     ? `${client.lastName}, ${client.firstName}`
     : client.legalName;
@@ -169,11 +174,22 @@ const ClientDetail = () => {
 
   const tabs = [
     { id: 'general', label: 'General', icon: Building2 },
-    { id: 'personas', label: 'Personas', icon: Users },
-    { id: 'documentos', label: 'Documentos', icon: FileText },
+    // Para PH activo (Monotributista / Responsable Inscripto) no se muestran Personas
+    // ni Documentos: la persona ES el titular y la documentación viene de 4i.
+    ...(esPHActivo ? [] : [
+      { id: 'personas', label: 'Personas', icon: Users },
+      { id: 'documentos', label: 'Documentos', icon: FileText },
+    ]),
     { id: 'riesgo', label: 'Riesgo & DD', icon: Shield },
     { id: 'historial', label: 'Historial', icon: History },
   ];
+
+  // Si el cliente es PH y el tab activo es uno oculto, volver a General
+  useEffect(() => {
+    if (esPHActivo && (activeTab === 'personas' || activeTab === 'documentos')) {
+      setActiveTab('general');
+    }
+  }, [esPHActivo, activeTab]);
 
   // Get personas — new clients store directly in client.personas; legacy in formData
   const personas = client.personas || client.formData?.personas || [];
@@ -305,7 +321,7 @@ const ClientDetail = () => {
       {/* Quick Stats \u2014 4 stat cards informativas. Sin color decorativo: todas neutrales,
            el icono va en brand subtle ya que es info de marca, no estado funcional. */}
       <div className="max-w-7xl mx-auto px-6 -mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-2 ${esPHActivo ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
@@ -342,17 +358,20 @@ const ClientDetail = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
-                <Users className="w-6 h-6 text-brand-600 dark:text-brand-400" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase">Personas</p>
-                <p className="font-semibold text-foreground">{personas.length} vinculadas</p>
+          {/* Card "Personas" — solo PJ. En PH activo el titular ES la persona y ya está en General. */}
+          {!esPHActivo && (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-brand-600 dark:text-brand-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase">Personas</p>
+                  <p className="font-semibold text-foreground">{personas.length} vinculadas</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -933,12 +952,14 @@ const ClientDetail = () => {
                         <option value="E">E — Muy Bajo</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Ventas Est. Anuales</label>
-                      <input type="number" value={editBuf.ventasEstimadasAnuales || ''} onChange={e => setEditBuf(prev => ({ ...prev, ventasEstimadasAnuales: e.target.value }))}
-                        placeholder="Monto en $..."
-                        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand" />
-                    </div>
+                    {!esPHActivo && (
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Ventas Est. Anuales</label>
+                        <input type="number" value={editBuf.ventasEstimadasAnuales || ''} onChange={e => setEditBuf(prev => ({ ...prev, ventasEstimadasAnuales: e.target.value }))}
+                          placeholder="Monto en $..."
+                          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:ring-2 focus:ring-brand-300 focus:border-brand" />
+                      </div>
+                    )}
                     <div>
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Notas NSE</label>
                       <input type="text" value={editBuf.nseNotas || ''} onChange={e => setEditBuf(prev => ({ ...prev, nseNotas: e.target.value }))}
@@ -947,18 +968,20 @@ const ClientDetail = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className={`grid grid-cols-1 ${esPHActivo ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4`}>
                     <div className="p-5 rounded-2xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-center">
                       <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">NSE</p>
                       <p className="text-3xl font-bold text-brand-700 dark:text-brand-400">{dd.nseNivel || '-'}</p>
                       {dd.nseNotas && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{dd.nseNotas}</p>}
                     </div>
-                    <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Ventas Est. Anuales</p>
-                      <p className="text-2xl font-bold text-foreground">
-                        {dd.ventasEstimadasAnuales ? `$${Number(dd.ventasEstimadasAnuales).toLocaleString('es-AR')}` : '-'}
-                      </p>
-                    </div>
+                    {!esPHActivo && (
+                      <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Ventas Est. Anuales</p>
+                        <p className="text-2xl font-bold text-foreground">
+                          {dd.ventasEstimadasAnuales ? `$${Number(dd.ventasEstimadasAnuales).toLocaleString('es-AR')}` : '-'}
+                        </p>
+                      </div>
+                    )}
                     <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center">
                       <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Tipo DD</p>
                       <p className="text-3xl font-bold text-foreground">{risk.ddType}</p>

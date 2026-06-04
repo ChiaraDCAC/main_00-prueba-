@@ -22,7 +22,6 @@
       "nivel": "nivel_2"
     }
   ],
-
   "clientes": [
     {
       "tipo": "SA",
@@ -109,8 +108,16 @@
             "datos_formulario": {
               "fecha_acta": "2024-04-01",
               "autoridades": [
-                { "cargo": "Presidente", "nombre": "Juan Carlos Méndez", "cuit": "20-12345678-9" },
-                { "cargo": "Director", "nombre": "María Laura González", "cuit": "27-23456789-0" }
+                {
+                  "cargo": "Presidente",
+                  "nombre": "Juan Carlos Méndez",
+                  "cuit": "20-12345678-9"
+                },
+                {
+                  "cargo": "Director",
+                  "nombre": "María Laura González",
+                  "cuit": "27-23456789-0"
+                }
               ]
             }
           }
@@ -124,9 +131,24 @@
             "estado": "pendiente",
             "datos_formulario": {
               "accionistas": [
-                { "nombre": "Juan Carlos Méndez", "cuit": "20-12345678-9", "acciones": 25000, "porcentaje": 50 },
-                { "nombre": "María Laura González", "cuit": "27-23456789-0", "acciones": 15000, "porcentaje": 30 },
-                { "nombre": "Pablo Andrés Ferreyra", "cuit": "20-30123456-7", "acciones": 10000, "porcentaje": 20 }
+                {
+                  "nombre": "Juan Carlos Méndez",
+                  "cuit": "20-12345678-9",
+                  "acciones": 25000,
+                  "porcentaje": 50
+                },
+                {
+                  "nombre": "María Laura González",
+                  "cuit": "27-23456789-0",
+                  "acciones": 15000,
+                  "porcentaje": 30
+                },
+                {
+                  "nombre": "Pablo Andrés Ferreyra",
+                  "cuit": "20-30123456-7",
+                  "acciones": 10000,
+                  "porcentaje": 20
+                }
               ]
             }
           }
@@ -140,9 +162,21 @@
             "estado": "aprobado",
             "datos_formulario": {
               "declarantes": [
-                { "nombre": "Juan Carlos Méndez", "cuit": "20-12345678-9", "es_pep": false },
-                { "nombre": "María Laura González", "cuit": "27-23456789-0", "es_pep": false },
-                { "nombre": "Pablo Andrés Ferreyra", "cuit": "20-30123456-7", "es_pep": false }
+                {
+                  "nombre": "Juan Carlos Méndez",
+                  "cuit": "20-12345678-9",
+                  "es_pep": false
+                },
+                {
+                  "nombre": "María Laura González",
+                  "cuit": "27-23456789-0",
+                  "es_pep": false
+                },
+                {
+                  "nombre": "Pablo Andrés Ferreyra",
+                  "cuit": "20-30123456-7",
+                  "es_pep": false
+                }
               ],
               "fecha_declaracion": "2024-04-15"
             }
@@ -157,9 +191,21 @@
             "estado": "pendiente",
             "datos_formulario": {
               "beneficiarios": [
-                { "nombre": "Juan Carlos Méndez", "cuit": "20-12345678-9", "porcentaje": 50 },
-                { "nombre": "María Laura González", "cuit": "27-23456789-0", "porcentaje": 30 },
-                { "nombre": "Pablo Andrés Ferreyra", "cuit": "20-30123456-7", "porcentaje": 20 }
+                {
+                  "nombre": "Juan Carlos Méndez",
+                  "cuit": "20-12345678-9",
+                  "porcentaje": 50
+                },
+                {
+                  "nombre": "María Laura González",
+                  "cuit": "27-23456789-0",
+                  "porcentaje": 30
+                },
+                {
+                  "nombre": "Pablo Andrés Ferreyra",
+                  "cuit": "20-30123456-7",
+                  "porcentaje": 20
+                }
               ],
               "fecha_declaracion": "2024-04-15"
             }
@@ -167,7 +213,6 @@
         }
       ]
     },
-
     {
       "tipo": "SRL",
       "sociedad": {
@@ -238,8 +283,16 @@
             "datos_formulario": {
               "fecha_acta": "2024-01-15",
               "gerentes": [
-                { "nombre": "Roberto Damián Sánchez", "cuit": "20-34567890-3", "tipo_firma": "individual" },
-                { "nombre": "Valeria Romero", "cuit": "27-40123456-8", "tipo_firma": "conjunta" }
+                {
+                  "nombre": "Roberto Damián Sánchez",
+                  "cuit": "20-34567890-3",
+                  "tipo_firma": "individual"
+                },
+                {
+                  "nombre": "Valeria Romero",
+                  "cuit": "27-40123456-8",
+                  "tipo_firma": "conjunta"
+                }
               ]
             }
           }
@@ -253,8 +306,16 @@
             "estado": "aprobado",
             "datos_formulario": {
               "declarantes": [
-                { "nombre": "Roberto Damián Sánchez", "cuit": "20-34567890-3", "es_pep": false },
-                { "nombre": "Valeria Romero", "cuit": "27-40123456-8", "es_pep": false }
+                {
+                  "nombre": "Roberto Damián Sánchez",
+                  "cuit": "20-34567890-3",
+                  "es_pep": false
+                },
+                {
+                  "nombre": "Valeria Romero",
+                  "cuit": "27-40123456-8",
+                  "es_pep": false
+                }
               ],
               "fecha_declaracion": "2024-01-15"
             }
@@ -270,8 +331,16 @@
             "motivo_rechazo": "Los porcentajes de participación declarados no coinciden con el contrato social. El contrato indica 60/40 y la DDJJ declara 50/50. Corregir y reenviar.",
             "datos_formulario": {
               "beneficiarios": [
-                { "nombre": "Roberto Damián Sánchez", "cuit": "20-34567890-3", "porcentaje": 50 },
-                { "nombre": "Valeria Romero", "cuit": "27-40123456-8", "porcentaje": 50 }
+                {
+                  "nombre": "Roberto Damián Sánchez",
+                  "cuit": "20-34567890-3",
+                  "porcentaje": 50
+                },
+                {
+                  "nombre": "Valeria Romero",
+                  "cuit": "27-40123456-8",
+                  "porcentaje": 50
+                }
               ],
               "fecha_declaracion": "2024-01-15"
             }
@@ -279,7 +348,6 @@
         }
       ]
     },
-
     {
       "tipo": "SH",
       "sociedad": {
@@ -347,8 +415,14 @@
             "estado": "pendiente",
             "datos_formulario": {
               "socios": [
-                { "nombre": "Héctor Daniel López", "dni": "15678901" },
-                { "nombre": "Sergio Fabián López", "dni": "18901234" }
+                {
+                  "nombre": "Héctor Daniel López",
+                  "dni": "15678901"
+                },
+                {
+                  "nombre": "Sergio Fabián López",
+                  "dni": "18901234"
+                }
               ]
             }
           }
@@ -362,8 +436,16 @@
             "estado": "pendiente",
             "datos_formulario": {
               "declarantes": [
-                { "nombre": "Héctor Daniel López", "cuit": "20-15678901-4", "es_pep": false },
-                { "nombre": "Sergio Fabián López", "cuit": "20-18901234-5", "es_pep": false }
+                {
+                  "nombre": "Héctor Daniel López",
+                  "cuit": "20-15678901-4",
+                  "es_pep": false
+                },
+                {
+                  "nombre": "Sergio Fabián López",
+                  "cuit": "20-18901234-5",
+                  "es_pep": false
+                }
               ],
               "fecha_declaracion": "2024-03-01"
             }
@@ -378,8 +460,16 @@
             "estado": "pendiente",
             "datos_formulario": {
               "beneficiarios": [
-                { "nombre": "Héctor Daniel López", "cuit": "20-15678901-4", "porcentaje": 50 },
-                { "nombre": "Sergio Fabián López", "cuit": "20-18901234-5", "porcentaje": 50 }
+                {
+                  "nombre": "Héctor Daniel López",
+                  "cuit": "20-15678901-4",
+                  "porcentaje": 50
+                },
+                {
+                  "nombre": "Sergio Fabián López",
+                  "cuit": "20-18901234-5",
+                  "porcentaje": 50
+                }
               ],
               "fecha_declaracion": "2024-03-01"
             }
@@ -387,7 +477,6 @@
         }
       ]
     },
-
     {
       "tipo": "sucesion",
       "sociedad": {
@@ -467,8 +556,16 @@
             "estado": "pendiente",
             "datos_formulario": {
               "herederos": [
-                { "nombre": "Patricio Emilio González", "dni": "26789012", "vinculo": "hijo" },
-                { "nombre": "Lucía María González", "dni": "35678901", "vinculo": "hija" }
+                {
+                  "nombre": "Patricio Emilio González",
+                  "dni": "26789012",
+                  "vinculo": "hijo"
+                },
+                {
+                  "nombre": "Lucía María González",
+                  "dni": "35678901",
+                  "vinculo": "hija"
+                }
               ]
             }
           }
@@ -482,8 +579,16 @@
             "estado": "aprobado",
             "datos_formulario": {
               "declarantes": [
-                { "nombre": "Patricio Emilio González", "cuit": "20-26789012-6", "es_pep": false },
-                { "nombre": "Lucía María González", "cuit": "27-35678901-2", "es_pep": false }
+                {
+                  "nombre": "Patricio Emilio González",
+                  "cuit": "20-26789012-6",
+                  "es_pep": false
+                },
+                {
+                  "nombre": "Lucía María González",
+                  "cuit": "27-35678901-2",
+                  "es_pep": false
+                }
               ],
               "fecha_declaracion": "2024-03-05"
             }
@@ -491,7 +596,6 @@
         }
       ]
     },
-
     {
       "tipo": "monotributista",
       "sociedad": {
@@ -562,9 +666,87 @@
             "estado": "aprobado",
             "datos_formulario": {
               "declarantes": [
-                { "nombre": "Juan Martín Rodríguez", "cuit": "20-28901234-7", "es_pep": false }
+                {
+                  "nombre": "Juan Martín Rodríguez",
+                  "cuit": "20-28901234-7",
+                  "es_pep": false
+                }
               ],
               "fecha_declaracion": "2024-02-10"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "tipo": "monotributista",
+      "sociedad": {
+        "razon_social": "Lucía Beatriz Fernández",
+        "cuit_cuil": "27-32145698-3",
+        "tipo_sociedad": "monotributista",
+        "estado": "pendiente"
+      },
+      "personas": [
+        {
+          "apellido": "Fernández",
+          "nombre": "Lucía Beatriz",
+          "nro_documento": "32145698",
+          "cuit": "27-32145698-3",
+          "correo_electronico": "lfernandez@mail.com",
+          "telefono": "11-2345-6789",
+          "domicilio": "Av. Belgrano 2456, CABA",
+          "es_pep": false,
+          "cargo_societario": "ninguno",
+          "tipo_firma": "individual",
+          "rol": "titular"
+        }
+      ],
+      "documentos": [
+        {
+          "id_documento": "doc_dni",
+          "nombre_documento": "DNI",
+          "categoria": "identificacion",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "aprobado",
+            "datos_formulario": {
+              "mono_apellido": "Fernández",
+              "mono_nombre": "Lucía Beatriz",
+              "mono_dni": "32145698",
+              "mono_cuit": "27-32145698-3",
+              "mono_fecha_nacimiento": "1992-09-22",
+              "mono_nacionalidad": "Argentina",
+              "mono_estado_civil": "soltera",
+              "mono_dom_real": "Av. Belgrano 2456, CABA"
+            }
+          }
+        },
+        {
+          "id_documento": "doc_constancia_monotributo",
+          "nombre_documento": "Constancia de Monotributo (AFIP)",
+          "categoria": "identificacion",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "pendiente",
+            "datos_formulario": {}
+          }
+        },
+        {
+          "id_documento": "doc_ddjj_pep",
+          "nombre_documento": "DDJJ Personas Expuestas Políticamente",
+          "categoria": "pep",
+          "es_obligatorio": true,
+          "version": {
+            "estado": "observado",
+            "motivo_observacion": "Falta fecha de declaración y firma del titular. Se solicita reenvío con los datos completos.",
+            "datos_formulario": {
+              "declarantes": [
+                {
+                  "nombre": "Lucía Beatriz Fernández",
+                  "cuit": "27-32145698-3",
+                  "es_pep": false
+                }
+              ]
             }
           }
         }

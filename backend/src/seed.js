@@ -27,6 +27,12 @@ async function seed() {
     await sequelize.authenticate();
     console.log('Conectado a PostgreSQL...\n');
 
+    // Sincronizar schema: drop + create todas las tablas según los modelos.
+    // ⚠️ ESTO BORRA TODA LA DATA EXISTENTE. Solo usar en dev/test.
+    console.log('Sincronizando schema (drop & recreate)...');
+    await sequelize.sync({ force: true });
+    console.log('  [OK] Schema sincronizado\n');
+
     // Crear carpeta de uploads seed si no existe
     if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
