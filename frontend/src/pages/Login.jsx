@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../context/authStore';
+import { useAuth } from '../auth/AuthContext';
 import { toast } from 'react-toastify';
 import { Loader2, Moon, Sun } from 'lucide-react';
 
@@ -9,7 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState('light');
-  const { login } = useAuthStore();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
