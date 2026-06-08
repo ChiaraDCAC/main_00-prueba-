@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { clientService } from '../../services/clientService';
 import { ENTITY_TYPE_LABELS } from '../../config/documentRequirements';
-import { useAuthStore } from '../../context/authStore';
+import { useAuth } from '../../auth/AuthContext';
 import { can } from '../../config/permissions';
 
 // Modal de Historial del Cliente
@@ -374,7 +374,7 @@ const ClientHistoryModal = ({ client, onClose }) => {
 };
 
 const ClientList = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
