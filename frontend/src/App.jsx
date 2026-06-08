@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './context/authStore';
+import { useAuth } from './auth/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -19,7 +19,7 @@ import DueDiligence from './pages/due-diligence/DueDiligence';
 import Users from './pages/users/Users';
 
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
