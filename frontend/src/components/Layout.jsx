@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { useAuthStore } from '../context/authStore';
 import { getRoleInfo } from '../config/permissions';
 import {
   LayoutDashboard,
@@ -22,7 +22,7 @@ import { useState } from 'react';
 import { ThemeToggle } from './theme-toggle';
 
 const Layout = () => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);

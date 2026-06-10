@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuthStore } from '../../context/authStore';
 import { demoEmployeeDirectory } from '../../services/api';
 import userService from '../../services/userService';
 import { toast } from 'react-toastify';
@@ -368,7 +368,7 @@ function UserRow({ user, onEdit }) {
 // ─── Página principal ────────────────────────────────────────────────────────
 
 const Users = () => {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);

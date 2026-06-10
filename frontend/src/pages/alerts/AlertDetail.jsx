@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { ArrowLeft, CheckCircle, ArrowUp, Loader2, FileSearch } from 'lucide-react';
 import { alertService } from '../../services/alertService';
 import { unusualOperationService } from '../../services/unusualOperationService';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuthStore } from '../../context/authStore';
 import { useInvestigationCaseStore } from '../../context/investigationCaseStore';
 import { InvestigationCaseSection } from '../../components/investigation';
 import { useState, useEffect } from 'react';
@@ -13,7 +13,7 @@ const AlertDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [resolution, setResolution] = useState('');
   const [showInvestigation, setShowInvestigation] = useState(false);
   const [investigationCaseId, setInvestigationCaseId] = useState(null);
